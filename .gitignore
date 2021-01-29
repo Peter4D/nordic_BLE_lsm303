@@ -260,5 +260,6 @@ celerybeat-schedule.*
 
 #uvision
 *.crf
+JLinkLog.txt
 
 # End of https://www.gitignore.io/api/python

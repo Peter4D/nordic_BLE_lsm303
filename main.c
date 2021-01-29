@@ -48,11 +48,16 @@
  */
 
 #include <stdio.h>
+#include <stdbool.h>
 #include "boards.h"
 #include "app_util_platform.h"
 #include "app_error.h"
 #include "nrf_drv_twi.h"
 #include "nrf_delay.h"
+
+#include "nrf_drv_gpiote.h"
+#include "bsp.h"
+
 
 
 #include "nrf_log.h"
@@ -110,13 +115,15 @@ typedef enum {                               // DEFAULT    TYPE
 }lsm303_Accel_Reg_t;
 
 /* Indicates if operation on TWI has ended. */
-static volatile bool m_xfer_done = false;
+static volatile bool m_xfer_done = true;
 
 /* TWI instance. */
 static const nrf_drv_twi_t m_twi = NRF_DRV_TWI_INSTANCE(TWI_INSTANCE_ID);
 
 /* Buffer for samples read from accelerometer sensor. */
 static uint8_t m_who_i_am;
+
+static uint8_t m_btn_state = 0;
 
 /**
  * @brief Function for setting active mode on MMA7660 accelerometer.
@@ -150,7 +157,7 @@ void lsm303_setup(void)
  */
 __STATIC_INLINE void data_handler(uint8_t temp)
 {
-    NRF_LOG_INFO("who i am: %d.", temp);
+    //NRF_LOG_INFO("who i am: %d.", temp);
 }
 
 /**
@@ -199,7 +206,7 @@ void twi_init (void)
 static void read_sensor_data()
 {
     uint8_t reg[1] = {LSM303_REGISTER_ACCEL_WHO_AM_I};
-    ret_code_t err_code;
+    volatile ret_code_t err_code = 0xFF;
     m_xfer_done = false;
 
     
@@ -211,25 +218,84 @@ static void read_sensor_data()
     APP_ERROR_CHECK(err_code);
 }
 
+void in_pin_handler(nrf_drv_gpiote_pin_t pin, nrf_gpiote_polarity_t action)
+{
+    m_btn_state = 1;
+}
+
 /**
  * @brief Function for main application entry.
  */
 int main(void)
 {
+    ret_code_t err_code;
+    static uint32_t btn_idx = 0;
+    static uint32_t btn_2_idx = 0;
+
     APP_ERROR_CHECK(NRF_LOG_INIT(NULL));
     NRF_LOG_DEFAULT_BACKENDS_INIT();
 
-    NRF_LOG_INFO("\r\nTWI sensor example started.");
+    NRF_LOG_INFO("\r\nTWI sensor example started nRF52805.");
     NRF_LOG_FLUSH();
+    
+
+    /* Configure board. */
+    bsp_board_init(BSP_INIT_LEDS | BSP_INIT_BUTTONS);
+    //bsp_board_init(BSP_INIT_LEDS);
+
     twi_init();
     lsm303_setup();
+
+    // nrf_drv_gpiote_in_config_t in_config = GPIOTE_CONFIG_IN_SENSE_TOGGLE(true);
+    // in_config.pull = NRF_GPIO_PIN_PULLUP;
+
+    // err_code = nrf_drv_gpiote_in_init(BUTTON_1, &in_config, in_pin_handler);
+    // APP_ERROR_CHECK(err_code);
+
+    // nrf_drv_gpiote_in_event_enable(BUTTON_1, true);
+
+
+    
+
+    btn_idx = bsp_board_pin_to_button_idx(BUTTON_1);
+    //btn_2_idx = bsp_board_pin_to_button_idx(BUTTON_2);
+		
 
     while (true)
     {
         static uint32_t heart_beat = 0;
+        volatile uint8_t btn_state = 0xFF; 
+				//uint32_t led_idx = bsp_board_pin_to_led_idx(LED_RED);
+				uint32_t led_idx = bsp_board_pin_to_led_idx(LED_1);
 
-        nrf_delay_ms(1000);
+        nrf_delay_ms(50);
         NRF_LOG_INFO("i am alive: %d", heart_beat++);
+        
+
+        // if(bsp_board_button_state_get(BUTTON_1) == 1) {
+        //     m_btn_state = 0;
+
+            for (int i = 0; i < LEDS_NUMBER; i++)
+            {
+                bsp_board_led_invert(i);
+                nrf_delay_ms(500);
+            }
+
+        // }
+
+        //btn_state = bsp_board_button_state_get(btn_idx);
+        // btn_state = bsp_board_button_state_get(btn_2_idx);
+        // if(btn_state == 1) {
+        //     bsp_board_led_on(led_idx);
+        // }else {
+        //     bsp_board_led_off(led_idx);
+        // }
+
+        // for (int i = 0; i < LEDS_NUMBER; i++)
+        // {
+        //     bsp_board_led_invert(i);
+        //     nrf_delay_ms(500);
+        // }
 
         // if(m_xfer_done == true) {
         //     read_sensor_data();
