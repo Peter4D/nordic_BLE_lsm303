@@ -157,7 +157,7 @@ void lsm303_setup(void)
  */
 __STATIC_INLINE void data_handler(uint8_t temp)
 {
-    //NRF_LOG_INFO("who i am: %d.", temp);
+    NRF_LOG_INFO("who i am: %d.", temp);
 }
 
 /**
@@ -235,7 +235,7 @@ int main(void)
     APP_ERROR_CHECK(NRF_LOG_INIT(NULL));
     NRF_LOG_DEFAULT_BACKENDS_INIT();
 
-    NRF_LOG_INFO("\r\nTWI sensor example started nRF52805.");
+    NRF_LOG_INFO("\r\nTWI sensor example started nRF52805. x1");
     NRF_LOG_FLUSH();
     
 
@@ -270,6 +270,7 @@ int main(void)
 
         nrf_delay_ms(50);
         NRF_LOG_INFO("i am alive: %d", heart_beat++);
+        //NRF_LOG_INFO("i am alive");
         
 
         // if(bsp_board_button_state_get(BUTTON_1) == 1) {
