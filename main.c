@@ -52,10 +52,14 @@
 #include "boards.h"
 #include "app_util_platform.h"
 #include "app_error.h"
-#include "nrf_drv_twi.h"
+
+//#include "nrf_drv_twi.h"
+#include "nrfx_twi.h"
+
 #include "nrf_delay.h"
 
-#include "nrf_drv_gpiote.h"
+//#include "nrf_drv_gpiote.h"
+#include "nrfx_gpiote.h"
 #include "bsp.h"
 
 
@@ -117,8 +121,18 @@ typedef enum {                               // DEFAULT    TYPE
 /* Indicates if operation on TWI has ended. */
 static volatile bool m_xfer_done = true;
 
+//#define NRFX_TWI0_ENABLED 1
 /* TWI instance. */
-static const nrf_drv_twi_t m_twi = NRF_DRV_TWI_INSTANCE(TWI_INSTANCE_ID);
+//static const nrf_drv_twi_t m_twi = NRF_DRV_TWI_INSTANCE(TWI_INSTANCE_ID);
+static const nrfx_twi_t m_twi = NRFX_TWI_INSTANCE(TWI_INSTANCE_ID);
+
+// #if(NRFX_TWI_ENABLED_COUNT > 0)
+// static const nrfx_twi_t m_twi = {
+//     .p_twi        = NRF_TWI0, 
+//     .drv_inst_idx = NRFX_TWI0_INST_IDX, 
+// };
+// #endif
+
 
 /* Buffer for samples read from accelerometer sensor. */
 static uint8_t m_who_i_am;
@@ -138,7 +152,7 @@ void lsm303_setup(void)
     /* setup lsm303 accel default */
     uint8_t reg[2] = {LSM303_REGISTER_ACCEL_CTRL_REG1_A, 0x57};
 
-    err_code = nrf_drv_twi_tx(&m_twi, LSM303_ACCEL_ADDR, reg, sizeof(reg), false);
+    err_code = nrfx_twi_tx(&m_twi, LSM303_ACCEL_ADDR, reg, sizeof(reg), false);
     APP_ERROR_CHECK(err_code);
     while (m_xfer_done == false);
 
@@ -163,12 +177,12 @@ __STATIC_INLINE void data_handler(uint8_t temp)
 /**
  * @brief TWI events handler.
  */
-void twi_handler(nrf_drv_twi_evt_t const * p_event, void * p_context)
+void twi_handler(nrfx_twi_evt_t const * p_event, void * p_context)
 {
     switch (p_event->type)
     {
-        case NRF_DRV_TWI_EVT_DONE:
-            if (p_event->xfer_desc.type == NRF_DRV_TWI_XFER_RX)
+        case NRFX_TWI_EVT_DONE:
+            if (p_event->xfer_desc.type == NRFX_TWI_XFER_RX)
             {
                 data_handler(m_who_i_am);
             }
@@ -186,18 +200,18 @@ void twi_init (void)
 {
     ret_code_t err_code;
 
-    const nrf_drv_twi_config_t twi_lsm303_config = {
+    const nrfx_twi_config_t twi_lsm303_config = {
        .scl                = ARDUINO_SCL_PIN,
        .sda                = ARDUINO_SDA_PIN,
-       .frequency          = NRF_DRV_TWI_FREQ_100K,
+       .frequency          = NRF_TWI_FREQ_100K,
        .interrupt_priority = APP_IRQ_PRIORITY_HIGH,
-       .clear_bus_init     = false
+       .hold_bus_uninit    = false
     };
 
-    err_code = nrf_drv_twi_init(&m_twi, &twi_lsm303_config, twi_handler, NULL);
+    err_code = nrfx_twi_init(&m_twi, &twi_lsm303_config, twi_handler, NULL);
     APP_ERROR_CHECK(err_code);
 
-    nrf_drv_twi_enable(&m_twi);
+    nrfx_twi_enable(&m_twi);
 }
 
 /**
@@ -210,18 +224,18 @@ static void read_sensor_data()
     m_xfer_done = false;
 
     
-    err_code = nrf_drv_twi_tx(&m_twi, LSM303_ACCEL_ADDR, reg, sizeof(reg), true);
+    err_code = nrfx_twi_tx(&m_twi, LSM303_ACCEL_ADDR, reg, sizeof(reg), true);
     APP_ERROR_CHECK(err_code);
     while(m_xfer_done == false);
-    /* Read 1 byte from the specified address - skip 3 bits dedicated for fractional part of temperature. */
-    err_code = nrf_drv_twi_rx(&m_twi, LSM303_ACCEL_ADDR, &m_who_i_am, sizeof(m_who_i_am));
+    
+    err_code = nrfx_twi_rx(&m_twi, LSM303_ACCEL_ADDR, &m_who_i_am, sizeof(m_who_i_am));
     APP_ERROR_CHECK(err_code);
 }
 
-void in_pin_handler(nrf_drv_gpiote_pin_t pin, nrf_gpiote_polarity_t action)
-{
-    m_btn_state = 1;
-}
+// void in_pin_handler(nrf_drv_gpiote_pin_t pin, nrf_gpiote_polarity_t action)
+// {
+//     m_btn_state = 1;
+// }
 
 /**
  * @brief Function for main application entry.
