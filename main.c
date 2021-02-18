@@ -61,6 +61,7 @@
 //#include "nrf_drv_gpiote.h"
 #include "nrfx_gpiote.h"
 #include "bsp.h"
+#include "nrf_drv_gpiote.h"
 
 
 
@@ -138,6 +139,54 @@ static const nrfx_twi_t m_twi = NRFX_TWI_INSTANCE(TWI_INSTANCE_ID);
 static uint8_t m_who_i_am;
 
 static uint8_t m_btn_state = 0;
+
+
+
+#ifdef BSP_BUTTON_0
+    #define PIN_IN BSP_BUTTON_0
+#endif
+#ifndef PIN_IN
+    #error "Please indicate input pin"
+#endif
+
+#ifdef BSP_LED_0
+    #define PIN_OUT BSP_LED_0
+#endif
+#ifndef PIN_OUT
+    #error "Please indicate output pin"
+#endif
+
+void in_pin_handler(nrf_drv_gpiote_pin_t pin, nrf_gpiote_polarity_t action)
+{
+    //nrf_drv_gpiote_out_toggle(PIN_OUT);
+    nrfx_gpiote_out_toggle(PIN_OUT);
+}
+/**
+ * @brief Function for configuring: PIN_IN pin for input, PIN_OUT pin for output,
+ * and configures GPIOTE to give an interrupt on pin change.
+ */
+static void gpio_init(void)
+{
+    ret_code_t err_code;
+
+    err_code = nrf_drv_gpiote_init();
+    APP_ERROR_CHECK(err_code);
+
+    nrf_drv_gpiote_out_config_t out_config = GPIOTE_CONFIG_OUT_SIMPLE(false);
+
+    err_code = nrf_drv_gpiote_out_init(PIN_OUT, &out_config);
+    APP_ERROR_CHECK(err_code);
+
+    nrf_drv_gpiote_in_config_t in_config = GPIOTE_CONFIG_IN_SENSE_TOGGLE(true);
+    in_config.pull = NRF_GPIO_PIN_PULLUP;
+
+    err_code = nrf_drv_gpiote_in_init(PIN_IN, &in_config, in_pin_handler);
+    APP_ERROR_CHECK(err_code);
+
+    nrf_drv_gpiote_in_event_enable(PIN_IN, true);
+}
+
+
 
 /**
  * @brief Function for setting active mode on MMA7660 accelerometer.
@@ -255,10 +304,10 @@ int main(void)
 
     /* Configure board. */
     bsp_board_init(BSP_INIT_LEDS | BSP_INIT_BUTTONS);
-    //bsp_board_init(BSP_INIT_LEDS);
 
     twi_init();
     lsm303_setup();
+    gpio_init();
 
     // nrf_drv_gpiote_in_config_t in_config = GPIOTE_CONFIG_IN_SENSE_TOGGLE(true);
     // in_config.pull = NRF_GPIO_PIN_PULLUP;
@@ -284,17 +333,17 @@ int main(void)
 
         nrf_delay_ms(50);
         NRF_LOG_INFO("i am alive: %d", heart_beat++);
-        //NRF_LOG_INFO("i am alive");
+        
         
 
         // if(bsp_board_button_state_get(BUTTON_1) == 1) {
         //     m_btn_state = 0;
 
-            for (int i = 0; i < LEDS_NUMBER; i++)
-            {
-                bsp_board_led_invert(i);
-                nrf_delay_ms(500);
-            }
+            // for (int i = 0; i < LEDS_NUMBER; i++)
+            // {
+            //     bsp_board_led_invert(i);
+            //     nrf_delay_ms(500);
+            // }
 
         // }
 
