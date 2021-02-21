@@ -74,6 +74,8 @@
 #include "nrf_drv_clock.h"
 #include "nrfx_clock.h"
 
+#include "lm303_accel.h"
+
 /* TWI instance ID. */
 #define TWI_INSTANCE_ID     0
 
@@ -282,9 +284,11 @@ __STATIC_INLINE void data_handler(uint8_t temp)
 void app_tmr1_id_handler(void* p_context) {
     static uint32_t heart_beat = 0;
 
-    NRF_LOG_INFO("app_timer: %d", heart_beat++);
+    NRF_LOG_INFO("app_timer: %d [%u]", heart_beat++, LSM303_Accel.who_i_am_get());
     //bsp_board_led_invert(LED_RED);  
     bsp_board_led_invert(bsp_board_pin_to_led_idx(LED_RED));
+
+    LSM303_Accel.update();
 
     NRF_LOG_FLUSH();
 }
@@ -332,6 +336,7 @@ int main(void)
     lfclk_request();
     app_timer_init();
     gpio_init();
+    LSM303_Accel.quick_setup();
 
     app_timer_create(&app_tmr1_id,
                         APP_TIMER_MODE_REPEATED,
