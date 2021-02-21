@@ -448,6 +448,11 @@
               <FileType>1</FileType>
               <FilePath>..\..\..\..\..\..\modules\nrfx\drivers\src\nrfx_clock.c</FilePath>
             </File>
+            <File>
+              <FileName>nrf_drv_clock.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>..\..\..\..\..\..\integration\nrfx\legacy\nrf_drv_clock.c</FilePath>
+            </File>
           </Files>
         </Group>
         <Group>
@@ -513,6 +518,11 @@
               <FileType>1</FileType>
               <FilePath>..\..\..\..\..\..\components\libraries\strerror\nrf_strerror.c</FilePath>
             </File>
+            <File>
+              <FileName>app_timer.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>..\..\..\..\..\..\components\libraries\timer\app_timer.c</FilePath>
+            </File>
           </Files>
         </Group>
         <Group>
@@ -567,6 +577,31 @@
               <FileName>SEGGER_RTT_printf.c</FileName>
               <FileType>1</FileType>
               <FilePath>..\..\..\..\..\..\external\segger_rtt\SEGGER_RTT_printf.c</FilePath>
+            </File>
+          </Files>
+        </Group>
+        <Group>
+          <GroupName>drivers</GroupName>
+          <Files>
+            <File>
+              <FileName>lm303_accel.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>..\..\..\src\lm303_accel.c</FilePath>
+            </File>
+            <File>
+              <FileName>lm303_accel.h</FileName>
+              <FileType>5</FileType>
+              <FilePath>..\..\..\src\lm303_accel.h</FilePath>
+            </File>
+            <File>
+              <FileName>lm303_mag.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>..\..\..\src\lm303_mag.c</FilePath>
+            </File>
+            <File>
+              <FileName>lm303_mag.h</FileName>
+              <FileType>5</FileType>
+              <FilePath>..\..\..\src\lm303_mag.h</FilePath>
             </File>
           </Files>
         </Group>
@@ -911,7 +946,7 @@
               <MiscControls>--reduce_paths</MiscControls>
               <Define>BOARD_SMART_KEY BSP_DEFINES_ONLY CONFIG_GPIO_AS_PINRESET FLOAT_ABI_SOFT  NRF52805_XXAA NRFX_COREDEP_DELAY_US_LOOP_CYCLES=7  __HEAP_SIZE=2048 __STACK_SIZE=2048</Define>
               <Undefine></Undefine>
-              <IncludePath>..\..\..\config;..\..\..\..\..\..\components;..\..\..\..\..\..\components\boards;..\..\..\..\..\..\components\drivers_nrf\nrf_soc_nosd;..\..\..\..\..\..\components\libraries\atomic;..\..\..\..\..\..\components\libraries\balloc;..\..\..\..\..\..\components\libraries\bsp;..\..\..\..\..\..\components\libraries\delay;..\..\..\..\..\..\components\libraries\experimental_section_vars;..\..\..\..\..\..\components\libraries\log;..\..\..\..\..\..\components\libraries\log\src;..\..\..\..\..\..\components\libraries\memobj;..\..\..\..\..\..\components\libraries\ringbuf;..\..\..\..\..\..\components\libraries\strerror;..\..\..\..\..\..\components\libraries\util;..\..\..;..\..\..\..\..\..\external\fprintf;..\..\..\..\..\..\external\segger_rtt;..\..\..\..\..\..\integration\nrfx;..\..\..\..\..\..\modules\nrfx;..\..\..\..\..\..\modules\nrfx\drivers\include;..\..\..\..\..\..\modules\nrfx\hal;..\config;..\..\..\..\..\..\components\libraries\timer;..\..\..\..\..\..\components\libraries\button;..\..\..\..\..\..\components\libraries\bsp;..\..\..\..\..\..\modules\nrfx\drivers;..\..\..\..\..\..\integration\nrfx\legacy</IncludePath>
+              <IncludePath>..\..\..\config;..\..\..\..\..\..\components;..\..\..\..\..\..\components\boards;..\..\..\..\..\..\components\drivers_nrf\nrf_soc_nosd;..\..\..\..\..\..\components\libraries\atomic;..\..\..\..\..\..\components\libraries\balloc;..\..\..\..\..\..\components\libraries\bsp;..\..\..\..\..\..\components\libraries\delay;..\..\..\..\..\..\components\libraries\experimental_section_vars;..\..\..\..\..\..\components\libraries\log;..\..\..\..\..\..\components\libraries\log\src;..\..\..\..\..\..\components\libraries\memobj;..\..\..\..\..\..\components\libraries\ringbuf;..\..\..\..\..\..\components\libraries\strerror;..\..\..\..\..\..\components\libraries\util;..\..\..;..\..\..\..\..\..\external\fprintf;..\..\..\..\..\..\external\segger_rtt;..\..\..\..\..\..\integration\nrfx;..\..\..\..\..\..\modules\nrfx;..\..\..\..\..\..\modules\nrfx\drivers\include;..\..\..\..\..\..\modules\nrfx\hal;..\config;..\..\..\..\..\..\components\libraries\timer;..\..\..\..\..\..\components\libraries\button;..\..\..\..\..\..\components\libraries\bsp;..\..\..\..\..\..\modules\nrfx\drivers;..\..\..\..\..\..\integration\nrfx\legacy;..\..\..\src</IncludePath>
             </VariousControls>
           </Cads>
           <Aads>
@@ -1020,6 +1055,11 @@
               <FileType>1</FileType>
               <FilePath>..\..\..\..\..\..\modules\nrfx\drivers\src\nrfx_clock.c</FilePath>
             </File>
+            <File>
+              <FileName>nrf_drv_clock.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>..\..\..\..\..\..\integration\nrfx\legacy\nrf_drv_clock.c</FilePath>
+            </File>
           </Files>
         </Group>
         <Group>
@@ -1085,6 +1125,11 @@
               <FileType>1</FileType>
               <FilePath>..\..\..\..\..\..\components\libraries\strerror\nrf_strerror.c</FilePath>
             </File>
+            <File>
+              <FileName>app_timer.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>..\..\..\..\..\..\components\libraries\timer\app_timer.c</FilePath>
+            </File>
           </Files>
         </Group>
         <Group>
@@ -1139,6 +1184,31 @@
               <FileName>SEGGER_RTT_printf.c</FileName>
               <FileType>1</FileType>
               <FilePath>..\..\..\..\..\..\external\segger_rtt\SEGGER_RTT_printf.c</FilePath>
+            </File>
+          </Files>
+        </Group>
+        <Group>
+          <GroupName>drivers</GroupName>
+          <Files>
+            <File>
+              <FileName>lm303_accel.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>..\..\..\src\lm303_accel.c</FilePath>
+            </File>
+            <File>
+              <FileName>lm303_accel.h</FileName>
+              <FileType>5</FileType>
+              <FilePath>..\..\..\src\lm303_accel.h</FilePath>
+            </File>
+            <File>
+              <FileName>lm303_mag.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>..\..\..\src\lm303_mag.c</FilePath>
+            </File>
+            <File>
+              <FileName>lm303_mag.h</FileName>
+              <FileType>5</FileType>
+              <FilePath>..\..\..\src\lm303_mag.h</FilePath>
             </File>
           </Files>
         </Group>
