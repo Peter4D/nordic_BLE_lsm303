@@ -140,9 +140,6 @@
 
 
 /* Buffer for samples read from accelerometer sensor. */
-static uint8_t m_who_i_am;
-
-static uint8_t m_btn_state = 0;
 
 APP_TIMER_DEF(app_tmr1_id);
 
@@ -305,14 +302,13 @@ void clock_event_handler(nrfx_clock_evt_type_t event)
 static void lfclk_request(void)
 {
     ret_code_t err_code;
-    //nrfx_clock_init(clock_event_handler);
-    // APP_ERROR_CHECK(err_code);
-
-    err_code = nrf_drv_clock_init();
+    err_code = nrfx_clock_init(clock_event_handler);
+    //err_code = nrf_drv_clock_init();
+    
     APP_ERROR_CHECK(err_code);
 
-    nrf_drv_clock_lfclk_request(NULL);
-    //nrfx_clock_lfclk_start();
+    //nrf_drv_clock_lfclk_request(NULL);
+    nrfx_clock_lfclk_start();
 }
 
 /**
@@ -320,10 +316,7 @@ static void lfclk_request(void)
  */
 int main(void)
 {
-    ret_code_t err_code;
-    static uint32_t btn_idx = 0;
-    static uint32_t btn_2_idx = 0;
-
+   
     APP_ERROR_CHECK(NRF_LOG_INIT(NULL));
     NRF_LOG_DEFAULT_BACKENDS_INIT();
 
@@ -340,20 +333,6 @@ int main(void)
     app_timer_init();
     gpio_init();
 
-    // nrf_drv_gpiote_in_config_t in_config = GPIOTE_CONFIG_IN_SENSE_TOGGLE(true);
-    // in_config.pull = NRF_GPIO_PIN_PULLUP;
-
-    // err_code = nrf_drv_gpiote_in_init(BUTTON_1, &in_config, in_pin_handler);
-    // APP_ERROR_CHECK(err_code);
-
-    // nrf_drv_gpiote_in_event_enable(BUTTON_1, true);
-
-
-    
-
-    btn_idx = bsp_board_pin_to_button_idx(BUTTON_1);
-    //btn_2_idx = bsp_board_pin_to_button_idx(BUTTON_2);
-
     app_timer_create(&app_tmr1_id,
                         APP_TIMER_MODE_REPEATED,
                         app_tmr1_id_handler);
@@ -363,53 +342,7 @@ int main(void)
 
     while (true)
     {
-        // static uint32_t heart_beat = 0;
-        // volatile uint8_t btn_state = 0xFF; 
-        //uint32_t led_idx = bsp_board_pin_to_led_idx(LED_RED);
-        //uint32_t led_idx = bsp_board_pin_to_led_idx(LED_1);
-
-        //nrf_delay_ms(50);
-        //NRF_LOG_INFO("i am alive: %d", heart_beat++);
-        
-        
-
-        // if(bsp_board_button_state_get(BUTTON_1) == 1) {
-        //     m_btn_state = 0;
-
-            // for (int i = 0; i < LEDS_NUMBER; i++)
-            // {
-            //     bsp_board_led_invert(i);
-            //     nrf_delay_ms(500);
-            // }
-
-        // }
-
-        //btn_state = bsp_board_button_state_get(btn_idx);
-        // btn_state = bsp_board_button_state_get(btn_2_idx);
-        // if(btn_state == 1) {
-        //     bsp_board_led_on(led_idx);
-        // }else {
-        //     bsp_board_led_off(led_idx);
-        // }
-
-        // for (int i = 0; i < LEDS_NUMBER; i++)
-        // {
-        //     bsp_board_led_invert(i);
-        //     nrf_delay_ms(500);
-        // }
-
-        // if(m_xfer_done == true) {
-        //     read_sensor_data();
-        //     NRF_LOG_FLUSH();
-        // }
-
-        // do
-        // {
-        //     __WFE();
-        // }while (m_xfer_done == false);
-
-        //read_sensor_data();
-        //NRF_LOG_FLUSH();
+        __WFE();
     }
 }
 
