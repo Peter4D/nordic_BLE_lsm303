@@ -3551,6 +3551,20 @@
 
 // </e>
 
+// <e> NRF_QUEUE_ENABLED - nrf_queue - Queue module
+//==========================================================
+#ifndef NRF_QUEUE_ENABLED
+#define NRF_QUEUE_ENABLED 1
+#endif
+
+// </e>
+
+// <q> NRF_TWI_MNGR_ENABLED  - nrf_twi_mngr - TWI transaction manager
+ 
+#ifndef NRF_TWI_MNGR_ENABLED
+#define NRF_TWI_MNGR_ENABLED 1
+#endif
+
 // <<< end of configuration section >>>
 #endif //SDK_CONFIG_H
 

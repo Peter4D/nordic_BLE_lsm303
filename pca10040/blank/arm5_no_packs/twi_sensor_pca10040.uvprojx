@@ -453,6 +453,11 @@
               <FileType>1</FileType>
               <FilePath>..\..\..\..\..\..\integration\nrfx\legacy\nrf_drv_clock.c</FilePath>
             </File>
+            <File>
+              <FileName>nrf_drv_twi.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>..\..\..\..\..\..\integration\nrfx\legacy\nrf_drv_twi.c</FilePath>
+            </File>
           </Files>
         </Group>
         <Group>
@@ -522,6 +527,16 @@
               <FileName>app_timer.c</FileName>
               <FileType>1</FileType>
               <FilePath>..\..\..\..\..\..\components\libraries\timer\app_timer.c</FilePath>
+            </File>
+            <File>
+              <FileName>nrf_twi_mngr.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>..\..\..\..\..\..\components\libraries\twi_mngr\nrf_twi_mngr.c</FilePath>
+            </File>
+            <File>
+              <FileName>nrf_queue.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>..\..\..\..\..\..\components\libraries\queue\nrf_queue.c</FilePath>
             </File>
           </Files>
         </Group>
@@ -912,8 +927,8 @@
               </OCR_RVCT9>
               <OCR_RVCT10>
                 <Type>0</Type>
-                <StartAddress>0x0</StartAddress>
-                <Size>0x0</Size>
+                <StartAddress>0x800000</StartAddress>
+                <Size>0x6000</Size>
               </OCR_RVCT10>
             </OnChipMemories>
             <RvctStartVector></RvctStartVector>
@@ -944,9 +959,9 @@
             <v6Rtti>0</v6Rtti>
             <VariousControls>
               <MiscControls>--reduce_paths</MiscControls>
-              <Define>BOARD_SMART_KEY BSP_DEFINES_ONLY CONFIG_GPIO_AS_PINRESET FLOAT_ABI_SOFT  NRF52805_XXAA NRFX_COREDEP_DELAY_US_LOOP_CYCLES=7  __HEAP_SIZE=2048 __STACK_SIZE=2048</Define>
+              <Define>BOARD_SMART_KEY BSP_DEFINES_ONLY CONFIG_GPIO_AS_PINRESET FLOAT_ABI_SOFT  NRF52805_XXAA NRFX_COREDEP_DELAY_US_LOOP_CYCLES=7  __HEAP_SIZE=2048 __STACK_SIZE=2048 DEBUG</Define>
               <Undefine></Undefine>
-              <IncludePath>..\..\..\config;..\..\..\..\..\..\components;..\..\..\..\..\..\components\boards;..\..\..\..\..\..\components\drivers_nrf\nrf_soc_nosd;..\..\..\..\..\..\components\libraries\atomic;..\..\..\..\..\..\components\libraries\balloc;..\..\..\..\..\..\components\libraries\bsp;..\..\..\..\..\..\components\libraries\delay;..\..\..\..\..\..\components\libraries\experimental_section_vars;..\..\..\..\..\..\components\libraries\log;..\..\..\..\..\..\components\libraries\log\src;..\..\..\..\..\..\components\libraries\memobj;..\..\..\..\..\..\components\libraries\ringbuf;..\..\..\..\..\..\components\libraries\strerror;..\..\..\..\..\..\components\libraries\util;..\..\..;..\..\..\..\..\..\external\fprintf;..\..\..\..\..\..\external\segger_rtt;..\..\..\..\..\..\integration\nrfx;..\..\..\..\..\..\modules\nrfx;..\..\..\..\..\..\modules\nrfx\drivers\include;..\..\..\..\..\..\modules\nrfx\hal;..\config;..\..\..\..\..\..\components\libraries\timer;..\..\..\..\..\..\components\libraries\button;..\..\..\..\..\..\components\libraries\bsp;..\..\..\..\..\..\modules\nrfx\drivers;..\..\..\..\..\..\integration\nrfx\legacy;..\..\..\src</IncludePath>
+              <IncludePath>..\..\..\config;..\..\..\..\..\..\components;..\..\..\..\..\..\components\boards;..\..\..\..\..\..\components\drivers_nrf\nrf_soc_nosd;..\..\..\..\..\..\components\libraries\atomic;..\..\..\..\..\..\components\libraries\balloc;..\..\..\..\..\..\components\libraries\bsp;..\..\..\..\..\..\components\libraries\delay;..\..\..\..\..\..\components\libraries\experimental_section_vars;..\..\..\..\..\..\components\libraries\log;..\..\..\..\..\..\components\libraries\log\src;..\..\..\..\..\..\components\libraries\memobj;..\..\..\..\..\..\components\libraries\ringbuf;..\..\..\..\..\..\components\libraries\strerror;..\..\..\..\..\..\components\libraries\util;..\..\..;..\..\..\..\..\..\external\fprintf;..\..\..\..\..\..\external\segger_rtt;..\..\..\..\..\..\integration\nrfx;..\..\..\..\..\..\modules\nrfx;..\..\..\..\..\..\modules\nrfx\drivers\include;..\..\..\..\..\..\modules\nrfx\hal;..\config;..\..\..\..\..\..\components\libraries\timer;..\..\..\..\..\..\components\libraries\button;..\..\..\..\..\..\components\libraries\bsp;..\..\..\..\..\..\modules\nrfx\drivers;..\..\..\..\..\..\integration\nrfx\legacy;..\..\..\src;..\..\..\..\..\..\components\libraries\twi_mngr;..\..\..\..\..\..\components\libraries\queue</IncludePath>
             </VariousControls>
           </Cads>
           <Aads>
@@ -1060,6 +1075,11 @@
               <FileType>1</FileType>
               <FilePath>..\..\..\..\..\..\integration\nrfx\legacy\nrf_drv_clock.c</FilePath>
             </File>
+            <File>
+              <FileName>nrf_drv_twi.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>..\..\..\..\..\..\integration\nrfx\legacy\nrf_drv_twi.c</FilePath>
+            </File>
           </Files>
         </Group>
         <Group>
@@ -1129,6 +1149,16 @@
               <FileName>app_timer.c</FileName>
               <FileType>1</FileType>
               <FilePath>..\..\..\..\..\..\components\libraries\timer\app_timer.c</FilePath>
+            </File>
+            <File>
+              <FileName>nrf_twi_mngr.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>..\..\..\..\..\..\components\libraries\twi_mngr\nrf_twi_mngr.c</FilePath>
+            </File>
+            <File>
+              <FileName>nrf_queue.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>..\..\..\..\..\..\components\libraries\queue\nrf_queue.c</FilePath>
             </File>
           </Files>
         </Group>
