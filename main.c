@@ -74,6 +74,7 @@
 
 #include "nrf_drv_clock.h"
 #include "nrfx_clock.h"
+#include "nrf_pwr_mgmt.h"
 
 #include "lm303_accel.h"
 
@@ -118,6 +119,15 @@ void app_tmr1_id_handler(void* p_context);
     #error "Please indicate output pin"
 #endif
 
+#ifndef PIN_OUT
+    #error "Please indicate output pin"
+#endif
+
+#ifndef LED_RED
+#define LED_RED BSP_BOARD_LED_3
+#endif
+
+
 void in_pin_handler(nrf_drv_gpiote_pin_t pin, nrf_gpiote_polarity_t action)
 {
     nrfx_gpiote_out_toggle(PIN_OUT);
@@ -149,8 +159,6 @@ static void gpio_init(void)
 }
 
 
-
-
 /**
  * @brief Function for handling data from temperature sensor.
  *
@@ -168,8 +176,8 @@ void app_tmr1_id_handler(void* p_context) {
     //m_who_i_am = LSM303_Accel.who_i_am_get();
 
     NRF_LOG_INFO("app_timer: %d [%u]", heart_beat++, m_who_i_am);
-    //bsp_board_led_invert(LED_RED);  
-    bsp_board_led_invert(bsp_board_pin_to_led_idx(LED_RED));
+    bsp_board_led_invert(LED_RED);  
+    //bsp_board_led_invert(BSP_BOARD_LED_3);
 
     //LSM303_Accel.update();
     read_accel();
@@ -200,23 +208,24 @@ static void lfclk_request(void)
 }
 
 
-void read_accel_callback(ret_code_t result, void * p_user_data) {
-    if (result != NRF_SUCCESS)
-    {
-        NRF_LOG_WARNING("read lsm303_accel - error: %d", (int)result);
-        return;
-    }
+// void read_accel_callback(ret_code_t result, void * p_user_data) {
+//     if (result != NRF_SUCCESS)
+//     {
+//         NRF_LOG_WARNING("read lsm303_accel - error: %d", (int)result);
+//         return;
+//     }
 
-    NRF_LOG_DEBUG("LSM303_ACCEL:");
-    NRF_LOG_HEXDUMP_DEBUG(p_user_data, 6);
-}
+//     NRF_LOG_DEBUG("LSM303_ACCEL:");
+//     NRF_LOG_HEXDUMP_DEBUG(p_user_data, 6);
+// }
 
 /**
  * @brief Function for main application entry.
  */
 int main(void)
 {
-   
+    ret_code_t err_code;
+
     APP_ERROR_CHECK(NRF_LOG_INIT(NULL));
     NRF_LOG_DEFAULT_BACKENDS_INIT();
 
@@ -230,10 +239,13 @@ int main(void)
     //twi_init();
     //lsm303_setup();
     lfclk_request();
-    app_timer_init();
+    APP_ERROR_CHECK(app_timer_init());
     gpio_init();
 
-    LSM303_Accel.quick_setup();
+    err_code = nrf_pwr_mgmt_init();
+    APP_ERROR_CHECK(err_code);
+
+    
     //twi_config();
     //m_who_i_am = LSM303_Accel.who_i_am_get();
 
@@ -242,11 +254,14 @@ int main(void)
                         app_tmr1_id_handler);
     
     volatile uint32_t periode = APP_TIMER_TICKS(1000);
-    app_timer_start(app_tmr1_id, periode, NULL);
+    APP_ERROR_CHECK(app_timer_start(app_tmr1_id, periode, NULL));
+
+    LSM303_Accel.quick_setup();
 
     while (true)
     {
-        __WFE();
+        //__WFE();
+        nrf_pwr_mgmt_run();
     }
 }
 
