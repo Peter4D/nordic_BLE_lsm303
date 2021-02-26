@@ -112,9 +112,10 @@ void app_tmr1_id_handler(void* p_context);
     #error "Please indicate input pin"
 #endif
 
-#ifdef BSP_LED_0
-    #define PIN_OUT BSP_LED_0
+#ifdef LED_RED
+    #define PIN_OUT LED_RED
 #endif
+
 #ifndef PIN_OUT
     #error "Please indicate output pin"
 #endif
@@ -124,7 +125,7 @@ void app_tmr1_id_handler(void* p_context);
 #endif
 
 #ifndef LED_RED
-#define LED_RED BSP_BOARD_LED_3
+#define LED_RED BSP_BOARD_LED_0
 #endif
 
 
@@ -175,12 +176,13 @@ void app_tmr1_id_handler(void* p_context) {
     
     //m_who_i_am = LSM303_Accel.who_i_am_get();
 
-    NRF_LOG_INFO("app_timer: %d [%u]", heart_beat++, m_who_i_am);
-    bsp_board_led_invert(LED_RED);  
+    NRF_LOG_INFO("App_timer: %d [%u]", heart_beat++, m_who_i_am);
+    //bsp_board_led_invert(LED_GREEN);  
+    //bsp_board_led_invert(LED_RED);  
     //bsp_board_led_invert(BSP_BOARD_LED_3);
 
-    //LSM303_Accel.update();
-    read_accel();
+    LSM303_Accel.update();
+    //read_accel();
 
     NRF_LOG_FLUSH();
 }
