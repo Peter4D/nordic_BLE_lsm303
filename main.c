@@ -103,7 +103,7 @@ APP_TIMER_DEF(app_tmr1_id);
 
 void app_tmr1_id_handler(void* p_context);
 
-
+#define LED_RED BSP_LED_0
 
 #ifdef BSP_BUTTON_0
     #define PIN_IN BSP_BUTTON_0
@@ -176,13 +176,13 @@ void app_tmr1_id_handler(void* p_context) {
     
     //m_who_i_am = LSM303_Accel.who_i_am_get();
 
-    NRF_LOG_INFO("App_timer: %d [%u]", heart_beat++, m_who_i_am);
+    //NRF_LOG_INFO("App_timer: %d [%u]", heart_beat++, m_who_i_am);
     //bsp_board_led_invert(LED_GREEN);  
     //bsp_board_led_invert(LED_RED);  
     //bsp_board_led_invert(BSP_BOARD_LED_3);
 
-    LSM303_Accel.update();
-    //read_accel();
+    //LSM303_Accel.update();
+    read_accel();
 
     NRF_LOG_FLUSH();
 }
