@@ -128,8 +128,6 @@ void read_accel(void)
 
     APP_ERROR_CHECK(nrf_twi_mngr_schedule(&m_nrf_twi_mngr, &transaction));
 
-    // Signal on LED that something is going on.
-    bsp_board_led_invert(BSP_BOARD_LED_1);
 }
 
 
@@ -193,6 +191,4 @@ void read_mag(void)
 
     APP_ERROR_CHECK(nrf_twi_mngr_schedule(&m_nrf_twi_mngr, &transaction));
 
-    // Signal on LED that something is going on.
-    bsp_board_led_invert(BSP_BOARD_LED_1);
 }

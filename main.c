@@ -107,7 +107,7 @@ APP_TIMER_DEF(app_tmr1_id);
 
 void app_tmr1_id_handler(void* p_context);
 
-#define LED_RED BSP_LED_0
+#define APP_LED_RED BSP_LED_0
 
 #ifdef BSP_BUTTON_0
     #define PIN_IN BSP_BUTTON_0
@@ -116,8 +116,8 @@ void app_tmr1_id_handler(void* p_context);
     #error "Please indicate input pin"
 #endif
 
-#ifdef LED_RED
-    #define PIN_OUT LED_RED
+#ifdef APP_LED_RED
+    #define PIN_OUT APP_LED_RED
 #endif
 
 #ifndef PIN_OUT
@@ -128,8 +128,8 @@ void app_tmr1_id_handler(void* p_context);
     #error "Please indicate output pin"
 #endif
 
-#ifndef LED_RED
-#define LED_RED BSP_BOARD_LED_0
+#ifndef APP_LED_RED
+#define APP_LED_RED BSP_BOARD_LED_0
 #endif
 
 
@@ -165,13 +165,13 @@ static void gpio_init(void)
 
 
 void app_tmr1_id_handler(void* p_context) {
-    static uint32_t heart_beat = 0;
+    //static uint32_t heart_beat = 0;
     
-
-    //LSM303_Accel.update();
+    // Signal on LED that something is going on.
+    bsp_board_led_invert(BSP_BOARD_LED_1);
     
     read_accel();
-    //read_mag();
+    read_mag();
 
     NRF_LOG_FLUSH();
 }
