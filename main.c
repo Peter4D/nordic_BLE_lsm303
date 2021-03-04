@@ -76,7 +76,11 @@
 #include "nrfx_clock.h"
 #include "nrf_pwr_mgmt.h"
 
-#include "lm303_accel.h"
+// #include "lm303_accel.h"
+// #include "lm303_mag.h"
+#include "lsm303_drv.h"
+
+#include <math.h>
 
 /* TWI instance ID. */
 #define TWI_INSTANCE_ID     0
@@ -160,29 +164,14 @@ static void gpio_init(void)
 }
 
 
-/**
- * @brief Function for handling data from temperature sensor.
- *
- * @param[in] temp          Temperature in Celsius degrees read from sensor.
- */
-__STATIC_INLINE void data_handler(uint8_t temp)
-{
-    NRF_LOG_INFO("who i am: %d.", temp);
-}
-
-
 void app_tmr1_id_handler(void* p_context) {
     static uint32_t heart_beat = 0;
     
-    //m_who_i_am = LSM303_Accel.who_i_am_get();
-
-    //NRF_LOG_INFO("App_timer: %d [%u]", heart_beat++, m_who_i_am);
-    //bsp_board_led_invert(LED_GREEN);  
-    //bsp_board_led_invert(LED_RED);  
-    //bsp_board_led_invert(BSP_BOARD_LED_3);
 
     //LSM303_Accel.update();
+    
     read_accel();
+    //read_mag();
 
     NRF_LOG_FLUSH();
 }
@@ -210,17 +199,6 @@ static void lfclk_request(void)
 }
 
 
-// void read_accel_callback(ret_code_t result, void * p_user_data) {
-//     if (result != NRF_SUCCESS)
-//     {
-//         NRF_LOG_WARNING("read lsm303_accel - error: %d", (int)result);
-//         return;
-//     }
-
-//     NRF_LOG_DEBUG("LSM303_ACCEL:");
-//     NRF_LOG_HEXDUMP_DEBUG(p_user_data, 6);
-// }
-
 /**
  * @brief Function for main application entry.
  */
@@ -247,10 +225,8 @@ int main(void)
     err_code = nrf_pwr_mgmt_init();
     APP_ERROR_CHECK(err_code);
 
-    
     //twi_config();
-    //m_who_i_am = LSM303_Accel.who_i_am_get();
-
+    
     app_timer_create(&app_tmr1_id,
                         APP_TIMER_MODE_REPEATED,
                         app_tmr1_id_handler);
@@ -258,7 +234,9 @@ int main(void)
     volatile uint32_t periode = APP_TIMER_TICKS(1000);
     APP_ERROR_CHECK(app_timer_start(app_tmr1_id, periode, NULL));
 
-    LSM303_Accel.quick_setup();
+    twi_config();
+    lsm303_accel_setup();
+    //LSM303_Accel.quick_setup();
 
     while (true)
     {

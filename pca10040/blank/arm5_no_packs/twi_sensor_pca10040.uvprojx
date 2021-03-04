@@ -609,24 +609,24 @@
           <GroupName>drivers</GroupName>
           <Files>
             <File>
-              <FileName>lm303_accel.c</FileName>
-              <FileType>1</FileType>
-              <FilePath>..\..\..\src\lm303_accel.c</FilePath>
-            </File>
-            <File>
               <FileName>lm303_accel.h</FileName>
               <FileType>5</FileType>
               <FilePath>..\..\..\src\lm303_accel.h</FilePath>
             </File>
             <File>
-              <FileName>lm303_mag.c</FileName>
-              <FileType>1</FileType>
-              <FilePath>..\..\..\src\lm303_mag.c</FilePath>
-            </File>
-            <File>
               <FileName>lm303_mag.h</FileName>
               <FileType>5</FileType>
               <FilePath>..\..\..\src\lm303_mag.h</FilePath>
+            </File>
+            <File>
+              <FileName>lsm303_drv.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>..\..\..\src\lsm303_drv.c</FilePath>
+            </File>
+            <File>
+              <FileName>lsm303_drv.h</FileName>
+              <FileType>5</FileType>
+              <FilePath>..\..\..\src\lsm303_drv.h</FilePath>
             </File>
           </Files>
         </Group>
@@ -1241,24 +1241,24 @@
           <GroupName>drivers</GroupName>
           <Files>
             <File>
-              <FileName>lm303_accel.c</FileName>
-              <FileType>1</FileType>
-              <FilePath>..\..\..\src\lm303_accel.c</FilePath>
-            </File>
-            <File>
               <FileName>lm303_accel.h</FileName>
               <FileType>5</FileType>
               <FilePath>..\..\..\src\lm303_accel.h</FilePath>
             </File>
             <File>
-              <FileName>lm303_mag.c</FileName>
-              <FileType>1</FileType>
-              <FilePath>..\..\..\src\lm303_mag.c</FilePath>
-            </File>
-            <File>
               <FileName>lm303_mag.h</FileName>
               <FileType>5</FileType>
               <FilePath>..\..\..\src\lm303_mag.h</FilePath>
+            </File>
+            <File>
+              <FileName>lsm303_drv.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>..\..\..\src\lsm303_drv.c</FilePath>
+            </File>
+            <File>
+              <FileName>lsm303_drv.h</FileName>
+              <FileType>5</FileType>
+              <FilePath>..\..\..\src\lsm303_drv.h</FilePath>
             </File>
           </Files>
         </Group>

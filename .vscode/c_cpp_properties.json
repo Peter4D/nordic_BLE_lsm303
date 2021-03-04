@@ -1,0 +1,21 @@
+{
+    "configurations": [
+        {
+            "name": "nordic_arm",
+            "includePath": [
+                "${workspaceFolder}/**",
+                "${config:nordic_sdk}/components/boards/**",
+                "C:/Users/peter.medvesek/Documents/PeterMedvek_Gorenje_RD/ostali_projekti/BLE/Nordic/nRF5_SDK_17.0.2_d674dde/components/boards/**"
+            ],
+            "defines": [
+                "_DEBUG",
+                "UNICODE",
+                "_UNICODE"
+            ],
+            "cppStandard": "c++17",
+            "intelliSenseMode": "gcc-arm",
+            "cStandard": "c99"
+        }
+    ],
+    "version": 4
+}
