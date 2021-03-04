@@ -136,10 +136,39 @@ void read_accel(void)
 /*=============================================================================*/
 /*=============================================================================*/
 
+static uint8_t NRF_TWI_MNGR_BUFFER_LOC_IND mag_default_config[] = {LSM303_REG_MAG_CFG_A, 0x18};
+
+#define LSM303_MAG_INIT_TRANSFER_COUNT 1
+nrf_twi_mngr_transfer_t const lsm303_mag_init_transfers[LSM303_MAG_INIT_TRANSFER_COUNT] =
+{
+    NRF_TWI_MNGR_WRITE(LSM303_MAG_ADDR, mag_default_config, sizeof(mag_default_config), 0)
+};
+
+void lsm303_mag_setup(void) {
+    volatile ret_code_t err_code;
+
+    //twi_config();
+
+
+    err_code = nrf_twi_mngr_perform(&m_nrf_twi_mngr, NULL, lsm303_mag_init_transfers, \
+        LSM303_MAG_INIT_TRANSFER_COUNT, NULL);
+
+    if(err_code != NRF_SUCCESS) {
+        /* sensor initialization fail */
+        NRF_LOG_RAW_INFO("\r\nTWI mag sensor init fail. \r\n");
+        NRF_LOG_FLUSH();
+        //bsp_board_led_invert(BSP_BOARD_LED_0);
+
+        APP_ERROR_CHECK(err_code);
+    }
+}
+
+
 
 static uint8_t NRF_TWI_MNGR_BUFFER_LOC_IND m_mag_out_reg[6];
 
-static uint8_t NRF_TWI_MNGR_BUFFER_LOC_IND lm303_mag_xout_reg_addr = (LSM303_REG_OUT_X_L | 0x80);
+//static uint8_t NRF_TWI_MNGR_BUFFER_LOC_IND lm303_mag_xout_reg_addr = (LSM303_REG_OUT_X_L | 0x80);
+static uint8_t NRF_TWI_MNGR_BUFFER_LOC_IND lm303_mag_xout_reg_addr = LSM303_REG_OUT_X_L;
 
 
 #define LM303_READ_MAG(p_reg_addr, p_buffer, byte_cnt) \

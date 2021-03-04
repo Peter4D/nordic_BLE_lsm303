@@ -236,6 +236,7 @@ int main(void)
 
     twi_config();
     lsm303_accel_setup();
+    lsm303_mag_setup();
     //LSM303_Accel.quick_setup();
 
     while (true)

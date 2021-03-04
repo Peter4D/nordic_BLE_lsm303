@@ -37,6 +37,7 @@ typedef union _accel_data_t {
 }accel_data_t;
 
 void lsm303_accel_setup(void);
+void lsm303_mag_setup(void);
 
 void twi_config(void);
 
