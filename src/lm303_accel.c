@@ -1,3 +1,13 @@
+/**
+ * @file lm303_accel.c
+ * @author Peter Medvesek (peter.medvesek@gorenje.com)
+ * @brief  @todo THIS file is not in use .... loock lsm303_drv
+ * @version 0.1
+ * @date 2021-03-04
+ * 
+ * @copyright Copyright (c) 2021 Gorenje d.o.o
+ * 
+ */
 #include "lm303_accel.h"
 //#include "lsm303_common.h"
 

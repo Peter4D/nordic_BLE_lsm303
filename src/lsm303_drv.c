@@ -132,7 +132,6 @@ void read_accel(void)
 
 
 
-
 /*=============================================================================*/
 /*=============================================================================*/
 
@@ -146,9 +145,6 @@ nrf_twi_mngr_transfer_t const lsm303_mag_init_transfers[LSM303_MAG_INIT_TRANSFER
 
 void lsm303_mag_setup(void) {
     volatile ret_code_t err_code;
-
-    //twi_config();
-
 
     err_code = nrf_twi_mngr_perform(&m_nrf_twi_mngr, NULL, lsm303_mag_init_transfers, \
         LSM303_MAG_INIT_TRANSFER_COUNT, NULL);

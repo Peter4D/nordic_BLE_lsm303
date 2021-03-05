@@ -85,6 +85,8 @@
 /* TWI instance ID. */
 #define TWI_INSTANCE_ID     0
 
+#define BTN_ID_ERROR        0
+
 /* Common addresses definition for temperature sensor. */
 //#define LSM303_ACCEL_ADDR          (0x90U >> 1)
 #define LSM303_ACCEL_ADDR    (0x32 >> 1)
@@ -154,13 +156,42 @@ static void gpio_init(void)
     APP_ERROR_CHECK(err_code);
 
     //nrfx_gpiote_in_config_t in_config = GPIOTE_CONFIG_IN_SENSE_TOGGLE(true);
-    nrfx_gpiote_in_config_t in_config = NRFX_GPIOTE_RAW_CONFIG_IN_SENSE_HITOLO(true);
+
+    //nrfx_gpiote_in_config_t in_config = NRFX_GPIOTE_RAW_CONFIG_IN_SENSE_HITOLO(true);
+    nrfx_gpiote_in_config_t in_config = NRFX_GPIOTE_RAW_CONFIG_IN_SENSE_HITOLO(false);
     in_config.pull = NRF_GPIO_PIN_PULLUP;
 
     err_code = nrfx_gpiote_in_init(PIN_IN, &in_config, in_pin_handler);
     APP_ERROR_CHECK(err_code);
 
     nrfx_gpiote_in_event_enable(PIN_IN, true);
+}
+
+
+
+void bsp_evt_handler(bsp_event_t bsp_event) {
+    (void)bsp_event;
+
+    NRF_LOG_INFO("btn_press \r\n");
+    nrfx_gpiote_out_toggle(PIN_OUT);
+}
+
+static void utils_setup(void)
+{
+    ret_code_t err_code = app_timer_init();
+    APP_ERROR_CHECK(err_code);
+
+    err_code = bsp_init(BSP_INIT_LEDS | BSP_INIT_BUTTONS,
+                        bsp_evt_handler);
+    APP_ERROR_CHECK(err_code);
+
+    err_code = bsp_event_to_button_action_assign(BTN_ID_ERROR,
+                                                 BSP_BUTTON_ACTION_LONG_PUSH,
+                                                 BSP_EVENT_DEFAULT);
+    APP_ERROR_CHECK(err_code);
+
+    err_code = nrf_pwr_mgmt_init();
+    APP_ERROR_CHECK(err_code);
 }
 
 
@@ -209,21 +240,24 @@ int main(void)
     APP_ERROR_CHECK(NRF_LOG_INIT(NULL));
     NRF_LOG_DEFAULT_BACKENDS_INIT();
 
-    NRF_LOG_INFO("\r\nTWI sensor example started nRF52805. x1");
-    NRF_LOG_FLUSH();
+    NRF_LOG_INFO("\r\nTWI sensor example started nRF52805. v2");
+    //NRF_LOG_FLUSH();
     
 
     /* Configure board. */
-    bsp_board_init(BSP_INIT_LEDS | BSP_INIT_BUTTONS);
+    //bsp_board_init(BSP_INIT_LEDS | BSP_INIT_BUTTONS);
 
     //twi_init();
     //lsm303_setup();
+    utils_setup();
+    
     lfclk_request();
     APP_ERROR_CHECK(app_timer_init());
-    gpio_init();
+    //gpio_init();
 
-    err_code = nrf_pwr_mgmt_init();
-    APP_ERROR_CHECK(err_code);
+
+    // err_code = nrf_pwr_mgmt_init();
+    // APP_ERROR_CHECK(err_code);
 
     //twi_config();
     
@@ -237,11 +271,11 @@ int main(void)
     twi_config();
     lsm303_accel_setup();
     lsm303_mag_setup();
-    //LSM303_Accel.quick_setup();
 
     while (true)
     {
         //__WFE();
+        NRF_LOG_FLUSH();
         nrf_pwr_mgmt_run();
     }
 }

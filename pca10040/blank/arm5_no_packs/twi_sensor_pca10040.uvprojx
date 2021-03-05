@@ -548,6 +548,16 @@
               <FileType>1</FileType>
               <FilePath>..\..\..\..\..\..\components\libraries\experimental_section_vars\nrf_section_iter.c</FilePath>
             </File>
+            <File>
+              <FileName>bsp.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>..\..\..\..\..\..\components\libraries\bsp\bsp.c</FilePath>
+            </File>
+            <File>
+              <FileName>app_button.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>..\..\..\..\..\..\components\libraries\button\app_button.c</FilePath>
+            </File>
           </Files>
         </Group>
         <Group>
@@ -969,7 +979,7 @@
             <v6Rtti>0</v6Rtti>
             <VariousControls>
               <MiscControls>--reduce_paths</MiscControls>
-              <Define>BOARD_SMART_KEY BSP_DEFINES_ONLY CONFIG_GPIO_AS_PINRESET FLOAT_ABI_SOFT  NRF52805_XXAA NRFX_COREDEP_DELAY_US_LOOP_CYCLES=7  __HEAP_SIZE=2048 __STACK_SIZE=2048 DEBUG</Define>
+              <Define>BOARD_SMART_KEY CONFIG_GPIO_AS_PINRESET FLOAT_ABI_SOFT  NRF52805_XXAA NRFX_COREDEP_DELAY_US_LOOP_CYCLES=7  __HEAP_SIZE=2048 __STACK_SIZE=2048 DEBUG</Define>
               <Undefine></Undefine>
               <IncludePath>..\..\..\config;..\..\..\..\..\..\components;..\..\..\..\..\..\components\boards;..\..\..\..\..\..\components\drivers_nrf\nrf_soc_nosd;..\..\..\..\..\..\components\libraries\atomic;..\..\..\..\..\..\components\libraries\balloc;..\..\..\..\..\..\components\libraries\bsp;..\..\..\..\..\..\components\libraries\delay;..\..\..\..\..\..\components\libraries\experimental_section_vars;..\..\..\..\..\..\components\libraries\log;..\..\..\..\..\..\components\libraries\log\src;..\..\..\..\..\..\components\libraries\memobj;..\..\..\..\..\..\components\libraries\ringbuf;..\..\..\..\..\..\components\libraries\strerror;..\..\..\..\..\..\components\libraries\util;..\..\..;..\..\..\..\..\..\external\fprintf;..\..\..\..\..\..\external\segger_rtt;..\..\..\..\..\..\integration\nrfx;..\..\..\..\..\..\modules\nrfx;..\..\..\..\..\..\modules\nrfx\drivers\include;..\..\..\..\..\..\modules\nrfx\hal;..\config;..\..\..\..\..\..\components\libraries\timer;..\..\..\..\..\..\components\libraries\button;..\..\..\..\..\..\components\libraries\bsp;..\..\..\..\..\..\modules\nrfx\drivers;..\..\..\..\..\..\integration\nrfx\legacy;..\..\..\src;..\..\..\..\..\..\components\libraries\twi_mngr;..\..\..\..\..\..\components\libraries\queue;..\..\..\..\..\..\components\libraries\mutex;..\..\..\..\..\..\components\libraries\pwr_mgmt</IncludePath>
             </VariousControls>
@@ -1179,6 +1189,16 @@
               <FileName>nrf_section_iter.c</FileName>
               <FileType>1</FileType>
               <FilePath>..\..\..\..\..\..\components\libraries\experimental_section_vars\nrf_section_iter.c</FilePath>
+            </File>
+            <File>
+              <FileName>bsp.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>..\..\..\..\..\..\components\libraries\bsp\bsp.c</FilePath>
+            </File>
+            <File>
+              <FileName>app_button.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>..\..\..\..\..\..\components\libraries\button\app_button.c</FilePath>
             </File>
           </Files>
         </Group>

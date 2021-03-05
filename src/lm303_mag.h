@@ -53,10 +53,6 @@ typedef enum {
 #define LSM303_MAG_ADDR    (0X3C >> 1)
 
 
-
-
-void read_mag(void);
-
 #ifdef __cplusplus
 }
 #endif
