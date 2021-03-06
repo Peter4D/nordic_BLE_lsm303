@@ -85,7 +85,7 @@
 /* TWI instance ID. */
 #define TWI_INSTANCE_ID     0
 
-#define BTN_ID_ERROR        0
+#define BTN_ID_USER         0
 
 /* Common addresses definition for temperature sensor. */
 //#define LSM303_ACCEL_ADDR          (0x90U >> 1)
@@ -106,6 +106,7 @@ static uint8_t m_who_i_am = 0xFF;
 /* Buffer for samples read from accelerometer sensor. */
 
 APP_TIMER_DEF(app_tmr1_id);
+APP_TIMER_DEF(app_tmr_btn_long_press_id);
 
 void app_tmr1_id_handler(void* p_context);
 
@@ -168,12 +169,27 @@ static void gpio_init(void)
 }
 
 
+static void app_tmr_btn_long_press_handler(void* p_context) {
+
+    if(bsp_button_is_pressed(0) == 1) {
+        NRF_LOG_INFO("btn long press\r\n");
+        nrfx_gpiote_out_toggle(PIN_OUT);
+    }
+}
 
 void bsp_evt_handler(bsp_event_t bsp_event) {
-    (void)bsp_event;
 
-    NRF_LOG_INFO("btn_press \r\n");
-    nrfx_gpiote_out_toggle(PIN_OUT);
+    switch(bsp_event) 
+    {
+        case BSP_EVENT_KEY_0:
+        {
+        
+            NRF_LOG_INFO("btn short press\r\n");
+            APP_ERROR_CHECK(app_timer_start(app_tmr_btn_long_press_id, APP_TIMER_TICKS(3000), NULL));
+
+            break;
+        }
+    }
 }
 
 static void utils_setup(void)
@@ -181,13 +197,13 @@ static void utils_setup(void)
     ret_code_t err_code = app_timer_init();
     APP_ERROR_CHECK(err_code);
 
-    err_code = bsp_init(BSP_INIT_LEDS | BSP_INIT_BUTTONS,
-                        bsp_evt_handler);
+    err_code = bsp_event_to_button_action_assign(BTN_ID_USER,
+                                                 BSP_BUTTON_ACTION_PUSH,
+                                                 BSP_EVENT_KEY_0);
     APP_ERROR_CHECK(err_code);
 
-    err_code = bsp_event_to_button_action_assign(BTN_ID_ERROR,
-                                                 BSP_BUTTON_ACTION_LONG_PUSH,
-                                                 BSP_EVENT_DEFAULT);
+    err_code = bsp_init(BSP_INIT_LEDS | BSP_INIT_BUTTONS,
+                        bsp_evt_handler);
     APP_ERROR_CHECK(err_code);
 
     err_code = nrf_pwr_mgmt_init();
@@ -252,7 +268,7 @@ int main(void)
     utils_setup();
     
     lfclk_request();
-    APP_ERROR_CHECK(app_timer_init());
+    //APP_ERROR_CHECK(app_timer_init());
     //gpio_init();
 
 
@@ -264,9 +280,17 @@ int main(void)
     app_timer_create(&app_tmr1_id,
                         APP_TIMER_MODE_REPEATED,
                         app_tmr1_id_handler);
+
+    app_timer_create(&app_tmr_btn_long_press_id,
+                        //APP_TIMER_MODE_REPEATED,
+                        APP_TIMER_MODE_SINGLE_SHOT,
+                        app_tmr_btn_long_press_handler);
     
     volatile uint32_t periode = APP_TIMER_TICKS(1000);
     APP_ERROR_CHECK(app_timer_start(app_tmr1_id, periode, NULL));
+
+    //APP_ERROR_CHECK(app_timer_start(app_tmr_btn_long_press_id, APP_TIMER_TICKS(500), NULL));
+    
 
     twi_config();
     lsm303_accel_setup();
