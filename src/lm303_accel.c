@@ -254,7 +254,7 @@ uint8_t NRF_TWI_MNGR_BUFFER_LOC_IND mma7660_xout_reg_addr = (LSM303_REG_ACCEL_OU
 
 /*=======================================*/
 
-void lms303_accel_vibration_trig_setup() 
+static void lms303_accel_vibration_trig_setup(void) 
 {
 
     /* 0b0010 1111 -> data_rate_10Hz | enable all axis;    0x57  */

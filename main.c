@@ -197,13 +197,13 @@ static void utils_setup(void)
     ret_code_t err_code = app_timer_init();
     APP_ERROR_CHECK(err_code);
 
+
+    err_code = bsp_init(BSP_INIT_LEDS | BSP_INIT_BUTTONS, bsp_evt_handler);
+    APP_ERROR_CHECK(err_code);
+
     err_code = bsp_event_to_button_action_assign(BTN_ID_USER,
                                                  BSP_BUTTON_ACTION_PUSH,
                                                  BSP_EVENT_KEY_0);
-    APP_ERROR_CHECK(err_code);
-
-    err_code = bsp_init(BSP_INIT_LEDS | BSP_INIT_BUTTONS,
-                        bsp_evt_handler);
     APP_ERROR_CHECK(err_code);
 
     err_code = nrf_pwr_mgmt_init();
@@ -293,6 +293,8 @@ int main(void)
     
 
     twi_config();
+    
+    //lms303_accel_vibration_trig_setup();
     lsm303_accel_setup();
     lsm303_mag_setup();
 

@@ -94,6 +94,8 @@ extern LSM303_Accel_methods_t LSM303_Accel;
 void twi_config(void);
 void read_accel(void);
 
+//void lms303_accel_vibration_trig_setup(void);
+
 
 
 

@@ -131,6 +131,69 @@ void read_accel(void)
 }
 
 
+void lms303_accel_vibration_trig_setup(void) 
+{
+
+    /* 0b0010 1111 -> data_rate_10Hz | enable all axis;    0x57  */
+    
+    static uint8_t NRF_TWI_MNGR_BUFFER_LOC_IND ctrl_reg_config[] = {
+        (LSM303_REG_ACCEL_CTRL_1 | 0x80), 
+        0x2F, /* 0b0010 1111 -> data_rate_10Hz | enable all axis; */
+        0x09, /* 0b0000 1001 -> FDS: Filtered Data Selection | HPIS1 (High Pass filter for interrupt) */
+        0x40, /* 0b0100 0000 -> AOI1 interrupt on INT1 pin. */
+        0x80, /* 0b1000 0000 -> output registers not updated until MSB and LSB have been read) */
+        0x08, /* 0b0000 1000 -> Latch interrupt request */
+        0x02  /* 0b0000 0010 -> interrupt active-low)*/
+    };
+
+    /* interrupt threshold:  x * (accel_range / 127 ) mG  @todo this formula needs to be confirmed */
+    static uint8_t NRF_TWI_MNGR_BUFFER_LOC_IND int_th_config[] = {LSM303_REG_ACCEL_INT1_THS, 0x03};
+    
+    /* set interrupt duration 40 ms*/
+    //static uint8_t NRF_TWI_MNGR_BUFFER_LOC_IND int_dur_config[] = {LSM303_REG_ACCEL_INT1_DURATION, 0x00};
+
+
+
+    /* 0b0010 1010 ->
+    b5: Enable interrupt generation on Z low event or on direction recognition.
+    b3: Enable interrupt generation on Y high event or on direction recognition.
+    b1: Enable interrupt generation on X high event or on direction recognition.*/
+    static uint8_t NRF_TWI_MNGR_BUFFER_LOC_IND int_en_config[] = { LSM303_REG_ACCEL_INT1_CFG, 0x2A};
+
+    static nrf_twi_mngr_transfer_t const lsm303_accel_vib_trig_setup_transfers[] =
+    {
+        NRF_TWI_MNGR_WRITE(LSM303_ACCEL_ADDR, default_config, sizeof(default_config), 0),
+        NRF_TWI_MNGR_WRITE(LSM303_ACCEL_ADDR, ctrl_reg_config, sizeof(ctrl_reg_config), 0),
+        NRF_TWI_MNGR_WRITE(LSM303_ACCEL_ADDR, int_th_config, sizeof(int_th_config), 0),
+        NRF_TWI_MNGR_WRITE(LSM303_ACCEL_ADDR, int_en_config, sizeof(int_en_config), 0),
+    };
+    /* Reading at this address clears the INT1_SRC_A (31h) -> if latched option is selected */
+    //readRegister(INT1_SRC, I2C_ADDRESS);
+
+    /* REFERENCE/DATACAPTURE_A (26h): Reference value for interrupt generation. 
+    @note what is purpose of this */
+    // readRegister(LSM303_REG_ACCEL_REFERENCE, I2C_ADDRESS);
+
+    // //x,y,z
+    // /* @note what is purpose of this  */
+
+    // readRegister(LSM303_REG_ACCEL_REFERENCE, I2C_ADDRESS);
+    // readRegister(INT1_SRC, I2C_ADDRESS);
+    // readRegister(LSM303_REG_ACCEL_REFERENCE, I2C_ADDRESS);
+
+   
+    static nrf_twi_mngr_transaction_t NRF_TWI_MNGR_BUFFER_LOC_IND transaction =
+    {
+        .callback            = NULL,
+        .p_user_data         = NULL,
+        .p_transfers         = lsm303_accel_vib_trig_setup_transfers,
+        .number_of_transfers = sizeof(lsm303_accel_vib_trig_setup_transfers) / sizeof(lsm303_accel_vib_trig_setup_transfers[0])
+    };
+
+    APP_ERROR_CHECK(nrf_twi_mngr_schedule(&m_nrf_twi_mngr, &transaction));
+}
+
+
 
 /*=============================================================================*/
 /*=============================================================================*/
