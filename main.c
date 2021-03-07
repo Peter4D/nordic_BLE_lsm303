@@ -107,6 +107,7 @@ static uint8_t m_who_i_am = 0xFF;
 
 APP_TIMER_DEF(app_tmr1_id);
 APP_TIMER_DEF(app_tmr_btn_long_press_id);
+APP_TIMER_DEF(app_tmr_print_out_id);
 
 void app_tmr1_id_handler(void* p_context);
 
@@ -175,6 +176,18 @@ static void app_tmr_btn_long_press_handler(void* p_context) {
         NRF_LOG_INFO("btn long press\r\n");
         nrfx_gpiote_out_toggle(PIN_OUT);
     }
+}
+
+static void app_tmr_print_out_handler(void* p_context) {
+    lsm303_data_t* p_lsm303_data = lsm303_data_p_get();
+
+    /* [angle],[mX],[my],[mZ]*/
+    NRF_LOG_INFO("%d,%d,%d,%d\r\n",
+    p_lsm303_data->accel_angle, 
+    p_lsm303_data->mag.axis.x,
+    p_lsm303_data->mag.axis.y,
+    p_lsm303_data->mag.axis.z
+    );
 }
 
 void bsp_evt_handler(bsp_event_t bsp_event) {
@@ -286,8 +299,13 @@ int main(void)
                         APP_TIMER_MODE_SINGLE_SHOT,
                         app_tmr_btn_long_press_handler);
     
-    volatile uint32_t periode = APP_TIMER_TICKS(1000);
+    app_timer_create(&app_tmr_print_out_id,
+                        APP_TIMER_MODE_REPEATED,
+                        app_tmr_print_out_handler);
+    
+    volatile uint32_t periode = APP_TIMER_TICKS(20);
     APP_ERROR_CHECK(app_timer_start(app_tmr1_id, periode, NULL));
+    APP_ERROR_CHECK(app_timer_start(app_tmr_print_out_id, APP_TIMER_TICKS(200), NULL));
 
     //APP_ERROR_CHECK(app_timer_start(app_tmr_btn_long_press_id, APP_TIMER_TICKS(500), NULL));
     

@@ -36,6 +36,16 @@ typedef union _axis_data_t {
     uint8_t bytes[6];
 }axis_data_t;
 
+typedef struct _lsm303_data_t {
+    axis_data_t accel;
+    float accel_rad;
+    uint16_t accel_rad_int;
+    int16_t accel_angle;
+    
+
+    axis_data_t mag;
+}lsm303_data_t;
+
 void lsm303_accel_setup(void);
 void lsm303_mag_setup(void);
 void lms303_accel_vibration_trig_setup(void);
@@ -45,6 +55,8 @@ void twi_config(void);
 void read_accel(void);
 
 void read_mag(void);
+
+lsm303_data_t* lsm303_data_p_get(void);
 
 #ifdef __cplusplus
 }

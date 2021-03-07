@@ -6,11 +6,11 @@
 #define PI 3.141592654
 
 #ifndef DEBUG_ACCEL_PRINT_OUT_EN
-#define DEBUG_ACCEL_PRINT_OUT_EN 1
+#define DEBUG_ACCEL_PRINT_OUT_EN 0
 #endif
 
 #ifndef DEBUG_MAG_PRINT_OUT_EN
-#define DEBUG_MAG_PRINT_OUT_EN 1
+#define DEBUG_MAG_PRINT_OUT_EN 0
 #endif
 
 
@@ -24,18 +24,21 @@ nrfx_twi_t m_twi = NRFX_TWI_INSTANCE(TWI_INSTANCE_ID);
 NRF_TWI_MNGR_DEF(m_nrf_twi_mngr, MAX_PENDING_TRANSACTIONS, TWI_INSTANCE_ID);
 
 
-typedef struct _lsm303_data_t {
-    axis_data_t accel;
-    uint16_t accel_angle;
-    float accel_rad;
+// typedef struct _lsm303_data_t {
+//     axis_data_t accel;
+//     float accel_rad;
+//     uint16_t accel_rad_int;
+//     int16_t accel_angle;
+    
 
-    axis_data_t mag;
-}lsm303_data_t;
+//     axis_data_t mag;
+// }lsm303_data_t;
 
 static lsm303_data_t lsm303_data = {
     .accel = 0,
-    .accel_angle = 0,
     .accel_rad = 0.0,
+    .accel_rad_int = 0,
+    .accel_angle = 0,
     .mag = 0,
 };
  
@@ -107,7 +110,7 @@ static uint8_t NRF_TWI_MNGR_BUFFER_LOC_IND lm303_accel_xout_reg_addr = (LSM303_R
 
 static void read_accel_cb(ret_code_t result, void * p_user_data) {
     int8_t* p_axis_data = (int8_t*)p_user_data;
-    int32_t angle_rad = 0;
+    //int32_t angle_rad = 0;
     
     if (result != NRF_SUCCESS)
     {
@@ -125,19 +128,19 @@ static void read_accel_cb(ret_code_t result, void * p_user_data) {
     if(lsm303_data.accel.axis.z == 0) { lsm303_data.accel.axis.z = 1; }
 
     /* calculate angle */
-    lsm303_data.accel_rad = atan2f(lsm303_data.accel.axis.z, lsm303_data.accel.axis.x);
+    lsm303_data.accel_rad = atan2f(lsm303_data.accel.axis.z, lsm303_data.accel.axis.x) + PI;
     lsm303_data.accel_angle = lsm303_data.accel_rad * 180.0/PI;
 
     #if (DEBUG_ACCEL_PRINT_OUT_EN == 1)
-    angle_rad = floor( (lsm303_data.accel_rad + PI) * 100 + 0.5 ); 
+    lsm303_data.accel_rad_int = (int16_t)( lsm303_data.accel_rad * 100 + 0.5 ); 
 
     NRF_LOG_RAW_INFO("Accel x[%d] y[%d] z[%d] angle[%d] rad[%d.%d]\r\n", 
     lsm303_data.accel.axis.x,
     lsm303_data.accel.axis.y,
     lsm303_data.accel.axis.z,
     lsm303_data.accel_angle,
-    angle_rad / 100,
-    angle_rad % 100
+    lsm303_data.accel_rad_int / 100,
+    lsm303_data.accel_rad_int % 100
     );
     #endif
 }
@@ -317,3 +320,11 @@ void read_mag(void)
     APP_ERROR_CHECK(nrf_twi_mngr_schedule(&m_nrf_twi_mngr, &transaction));
 
 }
+
+
+/*=============================================================================*/
+
+lsm303_data_t* lsm303_data_p_get(void) {
+    return &lsm303_data;
+}
+
