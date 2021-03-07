@@ -5,6 +5,14 @@
 #include <math.h>
 #define PI 3.141592654
 
+#ifndef DEBUG_ACCEL_PRINT_OUT_EN
+#define DEBUG_ACCEL_PRINT_OUT_EN 1
+#endif
+
+#ifndef DEBUG_MAG_PRINT_OUT_EN
+#define DEBUG_MAG_PRINT_OUT_EN 1
+#endif
+
 
 
 /* TWI instance. */
@@ -15,6 +23,22 @@ nrfx_twi_t m_twi = NRFX_TWI_INSTANCE(TWI_INSTANCE_ID);
 
 NRF_TWI_MNGR_DEF(m_nrf_twi_mngr, MAX_PENDING_TRANSACTIONS, TWI_INSTANCE_ID);
 
+
+typedef struct _lsm303_data_t {
+    axis_data_t accel;
+    uint16_t accel_angle;
+    float accel_rad;
+
+    axis_data_t mag;
+}lsm303_data_t;
+
+static lsm303_data_t lsm303_data = {
+    .accel = 0,
+    .accel_angle = 0,
+    .accel_rad = 0.0,
+    .mag = 0,
+};
+ 
 
 
 void twi_config(void)
@@ -75,11 +99,16 @@ static uint8_t NRF_TWI_MNGR_BUFFER_LOC_IND lm303_accel_xout_reg_addr = (LSM303_R
 
 
 
+// static float app_round(float var) 
+// { 
+//     float value = (int)(var * 100 + 0.5); 
+//     return (float)value / 100; 
+// } 
+
 static void read_accel_cb(ret_code_t result, void * p_user_data) {
     int8_t* p_axis_data = (int8_t*)p_user_data;
-    accel_data_t accel_data; 
-    float angle = 0.0;
-
+    int32_t angle_rad = 0;
+    
     if (result != NRF_SUCCESS)
     {
         NRF_LOG_WARNING("read_accle_cb - error: %d", (int)result);
@@ -87,25 +116,30 @@ static void read_accel_cb(ret_code_t result, void * p_user_data) {
     }
 
     for(uint8_t i = 0; i < 6; i++) {
-        accel_data.bytes[i] = p_axis_data[i];
+        //accel_data.bytes[i] = p_axis_data[i];
+        lsm303_data.accel.bytes[i] = p_axis_data[i];
     }
 
-
- 
-    NRF_LOG_RAW_INFO(" accel read OK x[%d] y[%d] z[%d]\r\n", 
-    accel_data.axis.x,
-    accel_data.axis.y,
-    accel_data.axis.z
-    );
-
-    if(accel_data.axis.x == 0) { accel_data.axis.x = 1; }
-    if(accel_data.axis.y == 0) { accel_data.axis.y = 1; }
-    if(accel_data.axis.z == 0) { accel_data.axis.z = 1; }
+    if(lsm303_data.accel.axis.x == 0) { lsm303_data.accel.axis.x = 1; }
+    if(lsm303_data.accel.axis.y == 0) { lsm303_data.accel.axis.y = 1; }
+    if(lsm303_data.accel.axis.z == 0) { lsm303_data.accel.axis.z = 1; }
 
     /* calculate angle */
-    angle = atan2f(accel_data.axis.z, accel_data.axis.x);
-    angle = angle * 180.0/PI;
-    NRF_LOG_RAW_INFO(" angle[%d]\r\n",(int16_t)angle); 
+    lsm303_data.accel_rad = atan2f(lsm303_data.accel.axis.z, lsm303_data.accel.axis.x);
+    lsm303_data.accel_angle = lsm303_data.accel_rad * 180.0/PI;
+
+    #if (DEBUG_ACCEL_PRINT_OUT_EN == 1)
+    angle_rad = floor( (lsm303_data.accel_rad + PI) * 100 + 0.5 ); 
+
+    NRF_LOG_RAW_INFO("Accel x[%d] y[%d] z[%d] angle[%d] rad[%d.%d]\r\n", 
+    lsm303_data.accel.axis.x,
+    lsm303_data.accel.axis.y,
+    lsm303_data.accel.axis.z,
+    lsm303_data.accel_angle,
+    angle_rad / 100,
+    angle_rad % 100
+    );
+    #endif
 }
 
 
@@ -240,7 +274,7 @@ static uint8_t NRF_TWI_MNGR_BUFFER_LOC_IND lm303_mag_xout_reg_addr = LSM303_REG_
 
 static void read_mag_cb(ret_code_t result, void * p_user_data) {
     int8_t* p_axis_data = (int8_t*)p_user_data;
-    accel_data_t mag_data; 
+    //axis_data_t mag_data; 
 
     if (result != NRF_SUCCESS)
     {
@@ -249,14 +283,17 @@ static void read_mag_cb(ret_code_t result, void * p_user_data) {
     }
 
     for(uint8_t i = 0; i < 6; i++) {
-        mag_data.bytes[i] = p_axis_data[i];
+        //mag_data.bytes[i] = p_axis_data[i];
+        lsm303_data.mag.bytes[i] = p_axis_data[i];
     }
 
-    NRF_LOG_RAW_INFO(" Mag read OK x[%d] y[%d] z[%d]\r\n", 
-    mag_data.axis.x,
-    mag_data.axis.y,
-    mag_data.axis.z
+    #if (DEBUG_MAG_PRINT_OUT_EN == 1)
+    NRF_LOG_RAW_INFO("Mag x[%d] y[%d] z[%d]\r\n", 
+    lsm303_data.mag.axis.x,
+    lsm303_data.mag.axis.y,
+    lsm303_data.mag.axis.z
     );
+    #endif
 
 }
 

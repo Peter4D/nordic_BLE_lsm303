@@ -27,14 +27,14 @@
 extern "C" {
 #endif
 
-typedef union _accel_data_t {
+typedef union _axis_data_t {
     struct {
         int16_t x;
         int16_t y;
         int16_t z;
     }axis;
     uint8_t bytes[6];
-}accel_data_t;
+}axis_data_t;
 
 void lsm303_accel_setup(void);
 void lsm303_mag_setup(void);
