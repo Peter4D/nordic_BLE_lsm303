@@ -182,7 +182,7 @@ static void app_tmr_print_out_handler(void* p_context) {
     lsm303_data_t* p_lsm303_data = lsm303_data_p_get();
 
     /* [angle],[mX],[my],[mZ]*/
-    NRF_LOG_INFO("%d,%d,%d,%d\r\n",
+    NRF_LOG_INFO("%3d,%4d,%4d,%4d\r\n",
     p_lsm303_data->accel_angle, 
     p_lsm303_data->mag.axis.x,
     p_lsm303_data->mag.axis.y,
@@ -269,7 +269,7 @@ int main(void)
     APP_ERROR_CHECK(NRF_LOG_INIT(NULL));
     NRF_LOG_DEFAULT_BACKENDS_INIT();
 
-    NRF_LOG_INFO("\r\nTWI sensor example started nRF52805. v2");
+    NRF_LOG_INFO("\r\nTWI sensor example started nRF52805. [%s] [%s]", __DATE__, __TIME__);
     //NRF_LOG_FLUSH();
     
 
@@ -303,12 +303,8 @@ int main(void)
                         APP_TIMER_MODE_REPEATED,
                         app_tmr_print_out_handler);
     
-    volatile uint32_t periode = APP_TIMER_TICKS(20);
-    APP_ERROR_CHECK(app_timer_start(app_tmr1_id, periode, NULL));
-    APP_ERROR_CHECK(app_timer_start(app_tmr_print_out_id, APP_TIMER_TICKS(200), NULL));
-
-    //APP_ERROR_CHECK(app_timer_start(app_tmr_btn_long_press_id, APP_TIMER_TICKS(500), NULL));
-    
+    APP_ERROR_CHECK(app_timer_start(app_tmr1_id, APP_TIMER_TICKS(10), NULL));
+    //APP_ERROR_CHECK(app_timer_start(app_tmr_print_out_id, APP_TIMER_TICKS(50), NULL));
 
     twi_config();
     

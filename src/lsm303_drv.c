@@ -1,6 +1,7 @@
 #include "lsm303_drv.h"
 #include "lm303_accel.h"
 #include "lm303_mag.h"
+#include "app_timer.h"
 
 #include <math.h>
 #define PI 3.141592654
@@ -24,22 +25,16 @@ nrfx_twi_t m_twi = NRFX_TWI_INSTANCE(TWI_INSTANCE_ID);
 NRF_TWI_MNGR_DEF(m_nrf_twi_mngr, MAX_PENDING_TRANSACTIONS, TWI_INSTANCE_ID);
 
 
-// typedef struct _lsm303_data_t {
-//     axis_data_t accel;
-//     float accel_rad;
-//     uint16_t accel_rad_int;
-//     int16_t accel_angle;
-    
-
-//     axis_data_t mag;
-// }lsm303_data_t;
-
 static lsm303_data_t lsm303_data = {
     .accel = 0,
     .accel_rad = 0.0,
     .accel_rad_int = 0,
     .accel_angle = 0,
+
     .mag = 0,
+    .peak_mag_x = {0},
+    .peak_mag_z = {0},
+    .mag_dir = 0 
 };
  
 
@@ -275,6 +270,60 @@ static uint8_t NRF_TWI_MNGR_BUFFER_LOC_IND lm303_mag_xout_reg_addr = LSM303_REG_
     LM303_READ_MAG(&lm303_mag_xout_reg_addr, p_buffer, 6)
 
 
+void axis_peak_detect_process(void) {
+    static uint32_t event_cnt = 0;
+
+    if(lsm303_data.peak_mag_x.peak_detected_F == 1 && lsm303_data.peak_mag_z.peak_detected_F == 1){
+        if(lsm303_data.peak_mag_z.time < lsm303_data.peak_mag_x.time) {
+            lsm303_data.mag_dir = 1;
+        }else {
+            lsm303_data.mag_dir = 0;
+        }
+
+        NRF_LOG_RAW_INFO("cnt(%d) MAG_dir[%d]. P&tm: x[%d/%d] z[%d/%d] \r\n",
+        event_cnt++, 
+        lsm303_data.mag_dir,
+        lsm303_data.peak_mag_x.value,
+        lsm303_data.peak_mag_x.time,
+
+        lsm303_data.peak_mag_z.value,
+        lsm303_data.peak_mag_z.time
+        );
+
+        lsm303_data.peak_mag_x.peak_detected_F = 0;
+        lsm303_data.peak_mag_x.value = 0;
+        
+        lsm303_data.peak_mag_z.peak_detected_F = 0;
+        lsm303_data.peak_mag_z.value = 0;
+    }
+}
+
+
+#define AXIS_LOW_TH     4000
+#define HYSTERYSIS      1000
+static void axis_peak_detect(int16_t axis_val, axis_peak_detect_t* p_axis_peak) {
+    
+
+    if(axis_val < 0) {
+        p_axis_peak->neg_val_F = 1;
+    }
+
+    axis_val = abs(axis_val);
+    if(axis_val > AXIS_LOW_TH) {
+        if(axis_val > p_axis_peak->value) {
+            p_axis_peak->peak_detected_F = 1;
+            p_axis_peak->value = axis_val;
+            p_axis_peak->time = app_timer_cnt_get();
+        }
+    }else if(axis_val < AXIS_LOW_TH - HYSTERYSIS){
+        if(p_axis_peak->peak_detected_F == 1) {
+            /* peak detected do procesing */
+            axis_peak_detect_process();
+        }
+    }
+}
+
+
 static void read_mag_cb(ret_code_t result, void * p_user_data) {
     int8_t* p_axis_data = (int8_t*)p_user_data;
     //axis_data_t mag_data; 
@@ -289,6 +338,10 @@ static void read_mag_cb(ret_code_t result, void * p_user_data) {
         //mag_data.bytes[i] = p_axis_data[i];
         lsm303_data.mag.bytes[i] = p_axis_data[i];
     }
+
+    /* peak detect */
+    axis_peak_detect(lsm303_data.mag.axis.x, &lsm303_data.peak_mag_x);
+    axis_peak_detect(lsm303_data.mag.axis.z, &lsm303_data.peak_mag_z);
 
     #if (DEBUG_MAG_PRINT_OUT_EN == 1)
     NRF_LOG_RAW_INFO("Mag x[%d] y[%d] z[%d]\r\n", 

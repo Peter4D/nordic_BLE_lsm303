@@ -352,34 +352,34 @@
         <Bp>
           <Number>0</Number>
           <Type>0</Type>
-          <LineNumber>288</LineNumber>
+          <LineNumber>310</LineNumber>
           <EnabledFlag>1</EnabledFlag>
-          <Address>4194</Address>
+          <Address>6348</Address>
           <ByteObject>0</ByteObject>
           <HtxType>0</HtxType>
           <ManyObjects>0</ManyObjects>
           <SizeOfObject>0</SizeOfObject>
           <BreakByAccess>0</BreakByAccess>
           <BreakIfRCount>1</BreakIfRCount>
-          <Filename>..\..\..\..\..\..\components\libraries\button\app_button.c</Filename>
+          <Filename>..\..\..\src\lsm303_drv.c</Filename>
           <ExecCommand></ExecCommand>
-          <Expression>\\smart_key_nrf52805_xxaa\../../../../../../components/libraries/button/app_button.c\288</Expression>
+          <Expression>\\smart_key_nrf52805_xxaa\../../../src/lsm303_drv.c\310</Expression>
         </Bp>
         <Bp>
           <Number>1</Number>
           <Type>0</Type>
-          <LineNumber>570</LineNumber>
+          <LineNumber>273</LineNumber>
           <EnabledFlag>1</EnabledFlag>
-          <Address>16200</Address>
+          <Address>6358</Address>
           <ByteObject>0</ByteObject>
           <HtxType>0</HtxType>
           <ManyObjects>0</ManyObjects>
           <SizeOfObject>0</SizeOfObject>
           <BreakByAccess>0</BreakByAccess>
           <BreakIfRCount>1</BreakIfRCount>
-          <Filename>..\..\..\..\..\..\modules\nrfx\drivers\src\nrfx_gpiote.c</Filename>
+          <Filename>..\..\..\src\lsm303_drv.c</Filename>
           <ExecCommand></ExecCommand>
-          <Expression>\\smart_key_nrf52805_xxaa\../../../../../../modules/nrfx/drivers/src/nrfx_gpiote.c\570</Expression>
+          <Expression>\\smart_key_nrf52805_xxaa\../../../src/lsm303_drv.c\273</Expression>
         </Bp>
       </Breakpoint>
       <WatchWindow1>
@@ -417,6 +417,11 @@
           <count>6</count>
           <WinNumber>1</WinNumber>
           <ItemText>p_btn</ItemText>
+        </Ww>
+        <Ww>
+          <count>7</count>
+          <WinNumber>1</WinNumber>
+          <ItemText>lsm303_data</ItemText>
         </Ww>
       </WatchWindow1>
       <MemoryWindow1>
