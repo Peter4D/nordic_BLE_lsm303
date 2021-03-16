@@ -280,7 +280,7 @@ void axis_peak_detect_process(void) {
             lsm303_data.mag_dir = 0;
         }
 
-        NRF_LOG_RAW_INFO("cnt(%d) MAG_dir[%d]. P&tm: x[%d/%d] z[%d/%d] \r\n",
+        NRF_LOG_RAW_INFO("\n\rcnt(%d) MAG_dir[%d]. P&tm: x[%d/%d] z[%d/%d] \r\n",
         event_cnt++, 
         lsm303_data.mag_dir,
         lsm303_data.peak_mag_x.value,
@@ -299,8 +299,8 @@ void axis_peak_detect_process(void) {
 }
 
 
-#define AXIS_LOW_TH     4000
-#define HYSTERYSIS      1000
+#define AXIS_LOW_TH     6000
+#define HYSTERYSIS      2000
 static void axis_peak_detect(int16_t axis_val, axis_peak_detect_t* p_axis_peak) {
     
 

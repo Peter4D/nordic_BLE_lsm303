@@ -179,13 +179,18 @@ static void app_tmr_btn_long_press_handler(void* p_context) {
 }
 
 static void app_tmr_print_out_handler(void* p_context) {
+    
     lsm303_data_t* p_lsm303_data = lsm303_data_p_get();
+    //static uint32_t last_tick = 0;
+    // uint32_t ticks = app_timer_cnt_get();
+    // uint32_t delta = app_timer_cnt_diff_compute(ticks, last_tick);
+    // last_tick = ticks;
 
     /* [angle],[mX],[my],[mZ]*/
-    NRF_LOG_INFO("%3d,%4d,%4d,%4d\r\n",
+    //NRF_LOG_INFO("angle/x/z | %3d,%4d,%4d\r",
+    NRF_LOG_RAW_INFO("angle/x/z | %3d,%4d,%4d\r",
     p_lsm303_data->accel_angle, 
     p_lsm303_data->mag.axis.x,
-    p_lsm303_data->mag.axis.y,
     p_lsm303_data->mag.axis.z
     );
 }
@@ -304,7 +309,7 @@ int main(void)
                         app_tmr_print_out_handler);
     
     APP_ERROR_CHECK(app_timer_start(app_tmr1_id, APP_TIMER_TICKS(10), NULL));
-    //APP_ERROR_CHECK(app_timer_start(app_tmr_print_out_id, APP_TIMER_TICKS(50), NULL));
+    APP_ERROR_CHECK(app_timer_start(app_tmr_print_out_id, APP_TIMER_TICKS(100), NULL));
 
     twi_config();
     
