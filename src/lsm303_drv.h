@@ -39,9 +39,21 @@ typedef union _axis_data_t {
 typedef struct _axis_peak_detect_t {
     uint32_t time;
     int16_t value;
+    int16_t angle;
     uint8_t neg_val_F;
     uint8_t peak_detected_F;
+    const char* const p_name;
 }axis_peak_detect_t;
+
+#define AXIS_PEAK_DETECT_INIT(name)     \
+    {                                   \
+        .time = 0,                      \
+        .value = 0,                     \
+        .angle = 0,                     \
+        .neg_val_F = 0,                 \
+        .peak_detected_F = 0,           \
+        .p_name = name                  \
+    }
 
 typedef struct _lsm303_data_t {
     axis_data_t accel;
