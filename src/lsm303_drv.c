@@ -370,6 +370,11 @@ static void signal_condition_mag_z(mag_t* p_mag_data) {
     }
 }
 
+static void quadrature_sig_decode(mag_t* p_mag_data) {
+    if(p_mag_data->qd.a != p_mag_data->qd_old.a || p_mag_data->qd.b != p_mag_data->qd_old.b) {
+        /* check direction */
+    }
+} 
 
 static void read_mag_cb(ret_code_t result, void * p_user_data) {
     int8_t* p_axis_data = (int8_t*)p_user_data;
@@ -387,11 +392,13 @@ static void read_mag_cb(ret_code_t result, void * p_user_data) {
     }
 
     /* peak detect */
-    axis_peak_detect(lsm303_data.mag.axis.bit.x, &lsm303_data.peak_mag_x);
-    axis_peak_detect(lsm303_data.mag.axis.bit.z, &lsm303_data.peak_mag_z);
+    // axis_peak_detect(lsm303_data.mag.axis.bit.x, &lsm303_data.peak_mag_x);
+    // axis_peak_detect(lsm303_data.mag.axis.bit.z, &lsm303_data.peak_mag_z);
 
     signal_condition_mag_x(&lsm303_data.mag);
     signal_condition_mag_z(&lsm303_data.mag);
+
+    // quadrature_sig_decode
 
     #if (DEBUG_MAG_PRINT_OUT_EN == 1)
     NRF_LOG_RAW_INFO("Mag x[%d] y[%d] z[%d]\r\n", 
