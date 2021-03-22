@@ -32,9 +32,14 @@ typedef union _axis_data_t {
         int16_t x;
         int16_t y;
         int16_t z;
-    }axis;
+    }bit;
     uint8_t bytes[6];
 }axis_data_t;
+
+typedef struct _axis_mag_digital_t {
+    uint8_t a;
+    uint8_t b;
+}axis_mag_digital_t;
 
 typedef struct _axis_peak_detect_t {
     uint32_t time;
@@ -71,19 +76,25 @@ typedef struct _lsm303_data_t {
 typedef struct _accel_t
 {
     axis_data_t axis;
-    float accel_rad;
-    uint16_t accel_rad_int;
-    uint16_t accel_angle;
+    float rad;
+    uint16_t rad_int;
+    uint16_t angle;
 }accel_t;
 
 typedef struct _mag_t
 {
-    axis_data_t mag;
+    axis_data_t axis;
+    axis_mag_digital_t qd;
+    axis_mag_digital_t qd_old;
 }mag_t;
 
 typedef struct _lsm303_data_2_t {
     accel_t accel;
     mag_t   mag;
+
+    axis_peak_detect_t peak_mag_x;
+    axis_peak_detect_t peak_mag_z;
+    uint8_t mag_dir;
 }lsm303_data_2_t;
 
 void lsm303_accel_setup(void);
@@ -96,7 +107,7 @@ void read_accel(void);
 
 void read_mag(void);
 
-lsm303_data_t* lsm303_data_p_get(void);
+lsm303_data_2_t* lsm303_data_p_get(void);
 
 #ifdef __cplusplus
 }

@@ -25,20 +25,23 @@ nrfx_twi_t m_twi = NRFX_TWI_INSTANCE(TWI_INSTANCE_ID);
 NRF_TWI_MNGR_DEF(m_nrf_twi_mngr, MAX_PENDING_TRANSACTIONS, TWI_INSTANCE_ID);
 
 
-static lsm303_data_t lsm303_data = {
-    .accel = 0,
-    .accel_rad = 0.0,
-    .accel_rad_int = 0,
-    .accel_angle = 0,
+// static lsm303_data_t lsm303_data = {
+//     .accel = 0,
+//     .accel_rad = 0.0,
+//     .accel_rad_int = 0,
+//     .accel_angle = 0,
 
-    .mag = 0,
+//     .mag = 0,
+//     .peak_mag_x = AXIS_PEAK_DETECT_INIT("x"),
+//     .peak_mag_z = AXIS_PEAK_DETECT_INIT("z"),
+//     .mag_dir = 0 
+// };
+
+static lsm303_data_2_t lsm303_data = {
     .peak_mag_x = AXIS_PEAK_DETECT_INIT("x"),
-    .peak_mag_z = AXIS_PEAK_DETECT_INIT("z"),
-    .mag_dir = 0 
+    .peak_mag_z = AXIS_PEAK_DETECT_INIT("z")
 };
  
-
-
 void twi_config(void)
 {
     uint32_t err_code;
@@ -68,9 +71,7 @@ nrf_twi_mngr_transfer_t const lsm303_accel_init_transfers[LSM303_ACCEL_INIT_TRAN
 void lsm303_accel_setup(void) {
     volatile ret_code_t err_code;
 
-    //twi_config();
-
-
+    
     err_code = nrf_twi_mngr_perform(&m_nrf_twi_mngr, NULL, lsm303_accel_init_transfers, \
         LSM303_ACCEL_INIT_TRANSFER_COUNT, NULL);
 
@@ -115,27 +116,28 @@ static void read_accel_cb(ret_code_t result, void * p_user_data) {
 
     for(uint8_t i = 0; i < 6; i++) {
         //accel_data.bytes[i] = p_axis_data[i];
-        lsm303_data.accel.bytes[i] = p_axis_data[i];
+        lsm303_data.accel.axis.bytes[i] = p_axis_data[i];
     }
 
-    if(lsm303_data.accel.axis.x == 0) { lsm303_data.accel.axis.x = 1; }
-    if(lsm303_data.accel.axis.y == 0) { lsm303_data.accel.axis.y = 1; }
-    if(lsm303_data.accel.axis.z == 0) { lsm303_data.accel.axis.z = 1; }
+    if(lsm303_data.accel.axis.bit.x == 0) { lsm303_data.accel.axis.bit.x = 1; }
+    if(lsm303_data.accel.axis.bit.y == 0) { lsm303_data.accel.axis.bit.y = 1; }
+    if(lsm303_data.accel.axis.bit.z == 0) { lsm303_data.accel.axis.bit.z = 1; }
+    
 
     /* calculate angle */
-    lsm303_data.accel_rad = atan2f(lsm303_data.accel.axis.z, lsm303_data.accel.axis.x) + PI;
-    lsm303_data.accel_angle = lsm303_data.accel_rad * 180.0/PI;
+    lsm303_data.accel.rad = atan2f(lsm303_data.accel.axis.bit.z, lsm303_data.accel.axis.bit.x) + PI;
+    lsm303_data.accel.angle = lsm303_data.accel.rad * 180.0/PI;
 
     #if (DEBUG_ACCEL_PRINT_OUT_EN == 1)
-    lsm303_data.accel_rad_int = (int16_t)( lsm303_data.accel_rad * 100 + 0.5 ); 
+    lsm303_data.accel.rad_int = (int16_t)( lsm303_data.accel.rad * 100 + 0.5 ); 
 
     NRF_LOG_RAW_INFO("Accel x[%d] y[%d] z[%d] angle[%d] rad[%d.%d]\r\n", 
-    lsm303_data.accel.axis.x,
-    lsm303_data.accel.axis.y,
-    lsm303_data.accel.axis.z,
-    lsm303_data.accel_angle,
-    lsm303_data.accel_rad_int / 100,
-    lsm303_data.accel_rad_int % 100
+    lsm303_data.accel.axis.bit.x,
+    lsm303_data.accel.axis.bit.y,
+    lsm303_data.accel.axis.bit.z,
+    lsm303_data.accel.angle,
+    lsm303_data.accel.rad_int / 100,
+    lsm303_data.accel.rad_int % 100
     );
     #endif
 }
@@ -323,7 +325,7 @@ static void axis_peak_detect_process_2(axis_peak_detect_t* p_axis_peak) {
 #define HYSTERYSIS      2000
 static void axis_peak_detect(int16_t axis_val, axis_peak_detect_t* p_axis_peak) {
     
-    lsm303_data_t* p_lsm303_data = lsm303_data_p_get();
+    lsm303_data_2_t* p_lsm303_data = lsm303_data_p_get();
 
     if(axis_val < 0) {
         p_axis_peak->neg_val_F = 1;
@@ -335,7 +337,7 @@ static void axis_peak_detect(int16_t axis_val, axis_peak_detect_t* p_axis_peak) 
             p_axis_peak->peak_detected_F = 1;
             p_axis_peak->value = axis_val;
             p_axis_peak->time = app_timer_cnt_get();
-            p_axis_peak->angle = p_lsm303_data->accel_angle;
+            p_axis_peak->angle = p_lsm303_data->accel.angle;
         }
     }else if(axis_val < AXIS_LOW_TH - HYSTERYSIS){
         if(p_axis_peak->peak_detected_F == 1) {
@@ -343,6 +345,28 @@ static void axis_peak_detect(int16_t axis_val, axis_peak_detect_t* p_axis_peak) 
             //axis_peak_detect_process();
             axis_peak_detect_process_2(p_axis_peak);
         }
+    }
+}
+
+#define MAG_X_TH    5000
+#define MAG_X_HYST  500
+
+#define MAG_Z_TH  6000
+#define MAG_Z_HYST  500
+
+static void signal_condition_mag_x(mag_t* p_mag_data) {
+    if(p_mag_data->axis.bit.x > MAG_X_TH) {
+        p_mag_data->qd.a = 1;
+    }else if(p_mag_data->axis.bit.x < (MAG_X_TH - MAG_X_HYST) ) {
+        p_mag_data->qd.a = 0;
+    }
+}
+
+static void signal_condition_mag_z(mag_t* p_mag_data) {
+    if(p_mag_data->axis.bit.z > MAG_Z_TH) {
+        p_mag_data->qd.b = 1;
+    }else if(p_mag_data->axis.bit.z < (MAG_Z_TH - MAG_Z_HYST) ) {
+        p_mag_data->qd.b = 0;
     }
 }
 
@@ -359,18 +383,21 @@ static void read_mag_cb(ret_code_t result, void * p_user_data) {
 
     for(uint8_t i = 0; i < 6; i++) {
         //mag_data.bytes[i] = p_axis_data[i];
-        lsm303_data.mag.bytes[i] = p_axis_data[i];
+        lsm303_data.mag.axis.bytes[i] = p_axis_data[i];
     }
 
     /* peak detect */
-    axis_peak_detect(lsm303_data.mag.axis.x, &lsm303_data.peak_mag_x);
-    axis_peak_detect(lsm303_data.mag.axis.z, &lsm303_data.peak_mag_z);
+    axis_peak_detect(lsm303_data.mag.axis.bit.x, &lsm303_data.peak_mag_x);
+    axis_peak_detect(lsm303_data.mag.axis.bit.z, &lsm303_data.peak_mag_z);
+
+    signal_condition_mag_x(&lsm303_data.mag);
+    signal_condition_mag_z(&lsm303_data.mag);
 
     #if (DEBUG_MAG_PRINT_OUT_EN == 1)
     NRF_LOG_RAW_INFO("Mag x[%d] y[%d] z[%d]\r\n", 
-    lsm303_data.mag.axis.x,
-    lsm303_data.mag.axis.y,
-    lsm303_data.mag.axis.z
+    lsm303_data.mag.axis.bit.x,
+    lsm303_data.mag.axis.bit.y,
+    lsm303_data.mag.axis.bit.z
     );
     #endif
 
@@ -400,7 +427,7 @@ void read_mag(void)
 
 /*=============================================================================*/
 
-lsm303_data_t* lsm303_data_p_get(void) {
+lsm303_data_2_t* lsm303_data_p_get(void) {
     return &lsm303_data;
 }
 

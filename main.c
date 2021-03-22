@@ -180,7 +180,7 @@ static void app_tmr_btn_long_press_handler(void* p_context) {
 
 static void app_tmr_print_out_handler(void* p_context) {
     
-    lsm303_data_t* p_lsm303_data = lsm303_data_p_get();
+    lsm303_data_2_t* p_lsm303_data = lsm303_data_p_get();
     //static uint32_t last_tick = 0;
     // uint32_t ticks = app_timer_cnt_get();
     // uint32_t delta = app_timer_cnt_diff_compute(ticks, last_tick);
@@ -189,9 +189,9 @@ static void app_tmr_print_out_handler(void* p_context) {
     /* [angle],[mX],[my],[mZ]*/
     //NRF_LOG_INFO("angle/x/z | %3d,%4d,%4d\r",
     NRF_LOG_RAW_INFO("angle/x/z | %3d,%4d,%4d\r",
-    p_lsm303_data->accel_angle, 
-    p_lsm303_data->mag.axis.x,
-    p_lsm303_data->mag.axis.z
+    p_lsm303_data->accel.angle, 
+    p_lsm303_data->mag.axis.bit.x,
+    p_lsm303_data->mag.axis.bit.z
     );
 }
 
