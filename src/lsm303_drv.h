@@ -67,6 +67,25 @@ typedef struct _lsm303_data_t {
     uint8_t mag_dir;
 }lsm303_data_t;
 
+
+typedef struct _accel_t
+{
+    axis_data_t axis;
+    float accel_rad;
+    uint16_t accel_rad_int;
+    uint16_t accel_angle;
+}accel_t;
+
+typedef struct _mag_t
+{
+    axis_data_t mag;
+}mag_t;
+
+typedef struct _lsm303_data_2_t {
+    accel_t accel;
+    mag_t   mag;
+}lsm303_data_2_t;
+
 void lsm303_accel_setup(void);
 void lsm303_mag_setup(void);
 void lms303_accel_vibration_trig_setup(void);
