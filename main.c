@@ -206,8 +206,12 @@ void bsp_evt_handler(bsp_event_t bsp_event) {
     {
         case BSP_EVENT_KEY_0:
         {
+            lsm303_data_2_t* p_lsm303_data = lsm303_data_p_get();
         
             NRF_LOG_INFO("btn short press\r\n");
+            p_lsm303_data->mag.qd_cnt = 0;
+
+
             APP_ERROR_CHECK(app_timer_start(app_tmr_btn_long_press_id, APP_TIMER_TICKS(3000), NULL));
 
             break;
