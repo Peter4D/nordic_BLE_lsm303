@@ -36,9 +36,15 @@ typedef union _axis_data_t {
     uint8_t bytes[6];
 }axis_data_t;
 
-typedef struct _axis_mag_digital_t {
-    uint8_t a;
-    uint8_t b;
+typedef union _axis_mag_digital_t {
+    struct {
+        uint8_t b       :1;
+        uint8_t a       :1;
+        uint8_t b_old   :1;
+        uint8_t a_old   :1;
+        uint8_t         :4; //_reseved
+    }bit;
+    uint8_t byte;
 }axis_mag_digital_t;
 
 typedef struct _axis_peak_detect_t {
@@ -84,11 +90,11 @@ typedef struct _accel_t
 typedef struct _mag_t
 {
     axis_data_t axis;
-    axis_mag_digital_t qd_old;
+    //axis_mag_digital_t qd_old;
     axis_mag_digital_t qd;
 
     int32_t qd_cnt;
-    uint8_t qd_dir;
+    int8_t qd_dir;
 }mag_t;
 
 typedef struct _lsm303_data_2_t {

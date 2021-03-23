@@ -188,12 +188,15 @@ static void app_tmr_print_out_handler(void* p_context) {
 
     /* [angle],[mX],[my],[mZ]*/
     //NRF_LOG_INFO("angle/x/z | %3d,%4d,%4d\r",
-    NRF_LOG_RAW_INFO("angle/x/z/a/b | %3d,%5d,%5d,%u,%u\r",
+    //NRF_LOG_RAW_INFO("angle/x/z/a/b/dir/cnt | %3d,%5d,%5d,%u,%u,%d,%d\r",
+    NRF_LOG_INFO("angle/a/b/dir/cnt | %3d,%u,%u,%d,%d\r",
     p_lsm303_data->accel.angle, 
-    p_lsm303_data->mag.axis.bit.x,
-    p_lsm303_data->mag.axis.bit.z,
-    p_lsm303_data->mag.qd.a,
-    p_lsm303_data->mag.qd.b
+    // p_lsm303_data->mag.axis.bit.x,
+    // p_lsm303_data->mag.axis.bit.z,
+    p_lsm303_data->mag.qd.bit.a,
+    p_lsm303_data->mag.qd.bit.b,
+    p_lsm303_data->mag.qd_dir,
+    p_lsm303_data->mag.qd_cnt
     );
 }
 

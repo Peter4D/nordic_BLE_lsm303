@@ -356,23 +356,36 @@ static void axis_peak_detect(int16_t axis_val, axis_peak_detect_t* p_axis_peak) 
 
 static void signal_condition_mag_x(mag_t* p_mag_data) {
     if(p_mag_data->axis.bit.x > MAG_X_TH) {
-        p_mag_data->qd.a = 1;
+        p_mag_data->qd.bit.a = 1;
     }else if(p_mag_data->axis.bit.x < (MAG_X_TH - MAG_X_HYST) ) {
-        p_mag_data->qd.a = 0;
+        p_mag_data->qd.bit.a = 0;
     }
 }
 
 static void signal_condition_mag_z(mag_t* p_mag_data) {
     if(p_mag_data->axis.bit.z > MAG_Z_TH) {
-        p_mag_data->qd.b = 1;
+        p_mag_data->qd.bit.b = 1;
     }else if(p_mag_data->axis.bit.z < (MAG_Z_TH - MAG_Z_HYST) ) {
-        p_mag_data->qd.b = 0;
+        p_mag_data->qd.bit.b = 0;
     }
 }
 
 static void quadrature_sig_decode(mag_t* p_mag_data) {
-    if(p_mag_data->qd.a != p_mag_data->qd_old.a || p_mag_data->qd.b != p_mag_data->qd_old.b) {
+    static uint8_t qd_old = 0;
+    static const int8_t qd_lut[] = {0,-1,1,0,1,0,0,-1,-1,0,0,1,0,1,-1,0};
+
+    if(p_mag_data->qd.byte != qd_old) {
         /* check direction */
+        p_mag_data->qd_cnt += qd_lut[p_mag_data->qd.byte];
+        
+        if(qd_lut[p_mag_data->qd.byte] != 0) {
+            p_mag_data->qd_dir = qd_lut[p_mag_data->qd.byte];
+        }
+
+        p_mag_data->qd.bit.a_old = p_mag_data->qd.bit.a;
+        p_mag_data->qd.bit.b_old = p_mag_data->qd.bit.b;
+        
+        qd_old = p_mag_data->qd.byte;
     }
 } 
 
@@ -398,7 +411,7 @@ static void read_mag_cb(ret_code_t result, void * p_user_data) {
     signal_condition_mag_x(&lsm303_data.mag);
     signal_condition_mag_z(&lsm303_data.mag);
 
-    // quadrature_sig_decode
+    quadrature_sig_decode(&lsm303_data.mag);
 
     #if (DEBUG_MAG_PRINT_OUT_EN == 1)
     NRF_LOG_RAW_INFO("Mag x[%d] y[%d] z[%d]\r\n", 

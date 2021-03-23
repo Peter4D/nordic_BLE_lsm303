@@ -3724,7 +3724,7 @@
       <Doc>
         <Name>..\..\..\src\lsm303_drv.c</Name>
         <ColumnNumber>0</ColumnNumber>
-        <TopLine>349</TopLine>
+        <TopLine>359</TopLine>
         <CurrentLine>383</CurrentLine>
         <Folding>1</Folding>
         <ContractedFolders></ContractedFolders>
