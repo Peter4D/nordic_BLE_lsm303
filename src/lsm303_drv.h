@@ -90,9 +90,9 @@ typedef struct _accel_t
 typedef struct _mag_t
 {
     axis_data_t axis;
-    //axis_mag_digital_t qd_old;
-    axis_mag_digital_t qd;
+    axis_data_t axis_peak;
 
+    axis_mag_digital_t qd;
     int32_t qd_cnt;
     int8_t qd_dir;
 }mag_t;
@@ -101,6 +101,7 @@ typedef struct _lsm303_data_2_t {
     accel_t accel;
     mag_t   mag;
 
+    /* those are deprecated*/
     axis_peak_detect_t peak_mag_x;
     axis_peak_detect_t peak_mag_z;
     uint8_t mag_dir;

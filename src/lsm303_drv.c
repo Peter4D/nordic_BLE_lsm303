@@ -61,7 +61,9 @@ void twi_config(void)
 
 
 // Set Active mode.
-static uint8_t NRF_TWI_MNGR_BUFFER_LOC_IND default_config[] = {LSM303_REG_ACCEL_CTRL_1, 0x57};
+//static uint8_t NRF_TWI_MNGR_BUFFER_LOC_IND default_config[] = {LSM303_REG_ACCEL_CTRL_1, 0x57};
+/* enable only x and z axis for accelerometer */
+static uint8_t NRF_TWI_MNGR_BUFFER_LOC_IND default_config[] = {LSM303_REG_ACCEL_CTRL_1, 0x55};
 
 nrf_twi_mngr_transfer_t const lsm303_accel_init_transfers[LSM303_ACCEL_INIT_TRANSFER_COUNT] =
 {
@@ -272,6 +274,7 @@ static uint8_t NRF_TWI_MNGR_BUFFER_LOC_IND lm303_mag_xout_reg_addr = LSM303_REG_
     LM303_READ_MAG(&lm303_mag_xout_reg_addr, p_buffer, 6)
 
 
+/* deprecated */
 void axis_peak_detect_process(void) {
     static uint32_t event_cnt = 0;
 
@@ -302,11 +305,7 @@ void axis_peak_detect_process(void) {
 
 static void axis_peak_detect_process_2(axis_peak_detect_t* p_axis_peak) {
     static uint32_t event_cnt = 0;
-    // if(lsm303_data.peak_mag_z.time < lsm303_data.peak_mag_x.time) {
-    //     lsm303_data.mag_dir = 1;
-    // }else {
-    //     lsm303_data.mag_dir = 0;
-    // }
+    
 
     NRF_LOG_RAW_INFO("\n\rcnt(%d) (%s) a[%d]. P&tm: [%d/%d] \r\n",
     event_cnt++,
@@ -321,32 +320,48 @@ static void axis_peak_detect_process_2(axis_peak_detect_t* p_axis_peak) {
     p_axis_peak->peak_detected_F = 0;
 }
 
-#define AXIS_LOW_TH     6000
+#define AXIS_NOISE_FLOOR_TH     6000
 #define HYSTERYSIS      2000
-static void axis_peak_detect(int16_t axis_val, axis_peak_detect_t* p_axis_peak) {
+// static void axis_peak_detect(int16_t axis_val, axis_peak_detect_t* p_axis_peak) {
     
-    lsm303_data_2_t* p_lsm303_data = lsm303_data_p_get();
+//     lsm303_data_2_t* p_lsm303_data = lsm303_data_p_get();
 
-    if(axis_val < 0) {
-        p_axis_peak->neg_val_F = 1;
-    }
+//     if(axis_val < 0) {
+//         p_axis_peak->neg_val_F = 1;
+//     }
 
-    axis_val = abs(axis_val);
-    if(axis_val > AXIS_LOW_TH) {
-        if(axis_val > p_axis_peak->value) {
-            p_axis_peak->peak_detected_F = 1;
-            p_axis_peak->value = axis_val;
-            p_axis_peak->time = app_timer_cnt_get();
-            p_axis_peak->angle = p_lsm303_data->accel.angle;
-        }
-    }else if(axis_val < AXIS_LOW_TH - HYSTERYSIS){
-        if(p_axis_peak->peak_detected_F == 1) {
-            /* peak detected do procesing */
-            //axis_peak_detect_process();
-            axis_peak_detect_process_2(p_axis_peak);
+//     axis_val = abs(axis_val);
+//     if(axis_val > AXIS_NOISE_FLOOR_TH) {
+//         if(axis_val > p_axis_peak->value) {
+//             p_axis_peak->peak_detected_F = 1;
+//             p_axis_peak->value = axis_val;
+//             p_axis_peak->time = app_timer_cnt_get();
+//             p_axis_peak->angle = p_lsm303_data->accel.angle;
+//         }
+//     }else if(axis_val < AXIS_NOISE_FLOOR_TH - HYSTERYSIS){
+//         if(p_axis_peak->peak_detected_F == 1) {
+//             /* peak detected do procesing */
+//             //axis_peak_detect_process();
+//             axis_peak_detect_process_2(p_axis_peak);
+//         }
+//     }
+// }
+
+static void axis_peak_detect_2(int16_t cur_axis_val, int16_t* p_peak_axis_val) {
+    uint16_t axis_cur_val_abs = abs(cur_axis_val);
+    uint16_t axis_peak_val_abs = abs(*p_peak_axis_val);
+
+    if(axis_cur_val_abs > AXIS_NOISE_FLOOR_TH) {
+        if(axis_cur_val_abs > axis_peak_val_abs) {
+
+            *p_peak_axis_val = axis_cur_val_abs;
+            if(cur_axis_val < 0) {
+                *p_peak_axis_val *= -1;
+            }
         }
     }
 }
+
 
 #define MAG_X_TH    5000
 #define MAG_X_HYST  500
@@ -407,6 +422,10 @@ static void read_mag_cb(ret_code_t result, void * p_user_data) {
     /* peak detect */
     // axis_peak_detect(lsm303_data.mag.axis.bit.x, &lsm303_data.peak_mag_x);
     // axis_peak_detect(lsm303_data.mag.axis.bit.z, &lsm303_data.peak_mag_z);
+
+    axis_peak_detect_2(lsm303_data.mag.axis.bit.x, &lsm303_data.mag.axis_peak.bit.x);
+    axis_peak_detect_2(lsm303_data.mag.axis.bit.y, &lsm303_data.mag.axis_peak.bit.y);
+    axis_peak_detect_2(lsm303_data.mag.axis.bit.z, &lsm303_data.mag.axis_peak.bit.z);
 
     signal_condition_mag_x(&lsm303_data.mag);
     signal_condition_mag_z(&lsm303_data.mag);

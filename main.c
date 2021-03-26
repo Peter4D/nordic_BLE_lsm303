@@ -105,11 +105,11 @@ static uint8_t m_who_i_am = 0xFF;
 
 /* Buffer for samples read from accelerometer sensor. */
 
-APP_TIMER_DEF(app_tmr1_id);
+APP_TIMER_DEF(read_lsm303_tmr_id);
 APP_TIMER_DEF(app_tmr_btn_long_press_id);
 APP_TIMER_DEF(app_tmr_print_out_id);
 
-void app_tmr1_id_handler(void* p_context);
+void read_lsm303_tmr_handler(void* p_context);
 
 #define APP_LED_RED BSP_LED_0
 
@@ -238,7 +238,7 @@ static void utils_setup(void)
 }
 
 
-void app_tmr1_id_handler(void* p_context) {
+void read_lsm303_tmr_handler(void* p_context) {
     //static uint32_t heart_beat = 0;
     
     // Signal on LED that something is going on.
@@ -304,9 +304,9 @@ int main(void)
 
     //twi_config();
     
-    app_timer_create(&app_tmr1_id,
+    app_timer_create(&read_lsm303_tmr_id,
                         APP_TIMER_MODE_REPEATED,
-                        app_tmr1_id_handler);
+                        read_lsm303_tmr_handler);
 
     app_timer_create(&app_tmr_btn_long_press_id,
                         //APP_TIMER_MODE_REPEATED,
@@ -317,7 +317,7 @@ int main(void)
                         APP_TIMER_MODE_REPEATED,
                         app_tmr_print_out_handler);
     
-    APP_ERROR_CHECK(app_timer_start(app_tmr1_id, APP_TIMER_TICKS(10), NULL));
+    APP_ERROR_CHECK(app_timer_start(read_lsm303_tmr_id, APP_TIMER_TICKS(10), NULL));
     APP_ERROR_CHECK(app_timer_start(app_tmr_print_out_id, APP_TIMER_TICKS(100), NULL));
 
     twi_config();

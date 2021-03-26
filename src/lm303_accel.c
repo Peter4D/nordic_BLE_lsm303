@@ -290,6 +290,7 @@ static void lms303_accel_vibration_trig_setup(void)
         NRF_TWI_MNGR_WRITE(LSM303_ACCEL_ADDR, int_th_config, sizeof(int_th_config), 0),
         NRF_TWI_MNGR_WRITE(LSM303_ACCEL_ADDR, int_en_config, sizeof(int_en_config), 0),
     };
+    #define LSM303_ACCEL_VIB_TRIG_SETUP_TRANSFERS_SIZE  4
     /* Reading at this address clears the INT1_SRC_A (31h) -> if latched option is selected */
     //readRegister(INT1_SRC, I2C_ADDRESS);
 
@@ -303,6 +304,18 @@ static void lms303_accel_vibration_trig_setup(void)
     // readRegister(LSM303_REG_ACCEL_REFERENCE, I2C_ADDRESS);
     // readRegister(INT1_SRC, I2C_ADDRESS);
     // readRegister(LSM303_REG_ACCEL_REFERENCE, I2C_ADDRESS);
+
+    err_code = nrf_twi_mngr_perform(&m_nrf_twi_mngr, NULL, lsm303_accel_vib_trig_setup_transfers, \
+        LSM303_ACCEL_VIB_TRIG_SETUP_TRANSFERS_SIZE, NULL);
+
+    if(err_code != NRF_SUCCESS) {
+        /* sensor initialization fail */
+        NRF_LOG_RAW_INFO("\r\n accel vibration setup fail. \r\n");
+        NRF_LOG_FLUSH();
+        //bsp_board_led_invert(BSP_BOARD_LED_0);
+
+        APP_ERROR_CHECK(err_code);
+    }
 }
 
 
