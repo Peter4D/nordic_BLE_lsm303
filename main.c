@@ -226,7 +226,7 @@ static void utils_setup(void)
 
 
     err_code = bsp_init(BSP_INIT_LEDS | BSP_INIT_BUTTONS, bsp_evt_handler);
-    APP_ERROR_CHECK(err_code);
+    //APP_ERROR_CHECK(err_code);
 
     err_code = bsp_event_to_button_action_assign(BTN_ID_USER,
                                                  BSP_BUTTON_ACTION_PUSH,
@@ -322,7 +322,7 @@ int main(void)
 
     twi_config();
     
-    //lms303_accel_vibration_trig_setup();
+    lms303_accel_vibration_trig_setup();
     lsm303_accel_setup();
     lsm303_mag_setup();
 

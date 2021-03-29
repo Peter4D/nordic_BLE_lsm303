@@ -260,7 +260,8 @@ static void lms303_accel_vibration_trig_setup(void)
     /* 0b0010 1111 -> data_rate_10Hz | enable all axis;    0x57  */
     
     static uint8_t NRF_TWI_MNGR_BUFFER_LOC_IND ctrl_reg_config[] = {
-        (LSM303_REG_ACCEL_CTRL_1 | 0x80), 
+        //(LSM303_REG_ACCEL_CTRL_1 | 0x80),
+        (LSM303_REG_ACCEL_CTRL_1), 
         0x2F, /* 0b0010 1111 -> data_rate_10Hz | enable all axis; */
         0x09, /* 0b0000 1001 -> FDS: Filtered Data Selection | HPIS1 (High Pass filter for interrupt) */
         0x40, /* 0b0100 0000 -> AOI1 interrupt on INT1 pin. */

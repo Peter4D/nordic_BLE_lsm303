@@ -4,7 +4,7 @@
 #include "app_timer.h"
 
 #include <math.h>
-#define PI 3.141592654
+#define PI (float)3.141592654
 
 #ifndef DEBUG_ACCEL_PRINT_OUT_EN
 #define DEBUG_ACCEL_PRINT_OUT_EN 0
@@ -128,7 +128,7 @@ static void read_accel_cb(ret_code_t result, void * p_user_data) {
 
     /* calculate angle */
     lsm303_data.accel.rad = atan2f(lsm303_data.accel.axis.bit.z, lsm303_data.accel.axis.bit.x) + PI;
-    lsm303_data.accel.angle = lsm303_data.accel.rad * 180.0/PI;
+    lsm303_data.accel.angle = lsm303_data.accel.rad * (float)180.0/PI;
 
     #if (DEBUG_ACCEL_PRINT_OUT_EN == 1)
     lsm303_data.accel.rad_int = (int16_t)( lsm303_data.accel.rad * 100 + 0.5 ); 
@@ -173,7 +173,8 @@ void lms303_accel_vibration_trig_setup(void)
     /* 0b0010 1111 -> data_rate_10Hz | enable all axis;    0x57  */
     
     static uint8_t NRF_TWI_MNGR_BUFFER_LOC_IND ctrl_reg_config[] = {
-        (LSM303_REG_ACCEL_CTRL_1 | 0x80), 
+        //(LSM303_REG_ACCEL_CTRL_1 | 0x80), 
+        (LSM303_REG_ACCEL_CTRL_1), 
         0x2F, /* 0b0010 1111 -> data_rate_10Hz | enable all axis; */
         0x09, /* 0b0000 1001 -> FDS: Filtered Data Selection | HPIS1 (High Pass filter for interrupt) */
         0x40, /* 0b0100 0000 -> AOI1 interrupt on INT1 pin. */
