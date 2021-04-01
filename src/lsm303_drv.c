@@ -98,6 +98,9 @@ static uint8_t NRF_TWI_MNGR_BUFFER_LOC_IND lm303_accel_xout_reg_addr = (LSM303_R
 #define LM303_READ_ACCEL(p_buffer) \
     LM303_READ(&lm303_accel_xout_reg_addr, p_buffer, 6)
 
+// #define LM303_READ_BACK(p_buffer) \
+//     LM303_READ(&lm303_accel_xout_reg_addr, p_buffer, 6)
+
 
 
 // static float app_round(float var) 
@@ -169,6 +172,7 @@ void read_accel(void)
 
 void lms303_accel_vibration_trig_setup(void) 
 {
+    volatile ret_code_t err_code;
 
     /* 0b0010 1111 -> data_rate_10Hz | enable all axis;    0x57  */
     
@@ -182,6 +186,15 @@ void lms303_accel_vibration_trig_setup(void)
         0x08, /* 0b0000 1000 -> Latch interrupt request */
         0x02  /* 0b0000 0010 -> interrupt active-low)*/
     };
+
+    //static uint8_t NRF_TWI_MNGR_BUFFER_LOC_IND CTRL_1_cfg[] = {LSM303_REG_ACCEL_CTRL_1, 0x2F};
+    static uint8_t NRF_TWI_MNGR_BUFFER_LOC_IND CTRL_1_cfg[] = {LSM303_REG_ACCEL_CTRL_1, 0x55};
+    //static uint8_t NRF_TWI_MNGR_BUFFER_LOC_IND CTRL_2_cfg[] = {LSM303_REG_ACCEL_CTRL_2, 0x09};
+    static uint8_t NRF_TWI_MNGR_BUFFER_LOC_IND CTRL_2_cfg[] = {LSM303_REG_ACCEL_CTRL_2, 0x01};
+    static uint8_t NRF_TWI_MNGR_BUFFER_LOC_IND CTRL_3_cfg[] = {LSM303_REG_ACCEL_CTRL_3, 0x40};
+    static uint8_t NRF_TWI_MNGR_BUFFER_LOC_IND CTRL_4_cfg[] = {LSM303_REG_ACCEL_CTRL_4, 0x80};
+    static uint8_t NRF_TWI_MNGR_BUFFER_LOC_IND CTRL_5_cfg[] = {LSM303_REG_ACCEL_CTRL_5, 0x08};
+    static uint8_t NRF_TWI_MNGR_BUFFER_LOC_IND CTRL_6_cfg[] = {LSM303_REG_ACCEL_CTRL_6, 0x02};
 
     /* interrupt threshold:  x * (accel_range / 127 ) mG  @todo this formula needs to be confirmed */
     static uint8_t NRF_TWI_MNGR_BUFFER_LOC_IND int_th_config[] = {LSM303_REG_ACCEL_INT1_THS, 0x03};
@@ -200,10 +213,19 @@ void lms303_accel_vibration_trig_setup(void)
     static nrf_twi_mngr_transfer_t const lsm303_accel_vib_trig_setup_transfers[] =
     {
         NRF_TWI_MNGR_WRITE(LSM303_ACCEL_ADDR, default_config, sizeof(default_config), 0),
-        NRF_TWI_MNGR_WRITE(LSM303_ACCEL_ADDR, ctrl_reg_config, sizeof(ctrl_reg_config), 0),
+        //NRF_TWI_MNGR_WRITE(LSM303_ACCEL_ADDR, ctrl_reg_config, sizeof(ctrl_reg_config), 0),
+        NRF_TWI_MNGR_WRITE(LSM303_ACCEL_ADDR, CTRL_1_cfg, sizeof(CTRL_1_cfg), 0),
+        NRF_TWI_MNGR_WRITE(LSM303_ACCEL_ADDR, CTRL_2_cfg, sizeof(CTRL_2_cfg), 0),
+        NRF_TWI_MNGR_WRITE(LSM303_ACCEL_ADDR, CTRL_3_cfg, sizeof(CTRL_3_cfg), 0),
+        NRF_TWI_MNGR_WRITE(LSM303_ACCEL_ADDR, CTRL_4_cfg, sizeof(CTRL_4_cfg), 0),
+        NRF_TWI_MNGR_WRITE(LSM303_ACCEL_ADDR, CTRL_5_cfg, sizeof(CTRL_5_cfg), 0),
+        NRF_TWI_MNGR_WRITE(LSM303_ACCEL_ADDR, CTRL_6_cfg, sizeof(CTRL_6_cfg), 0),
+        
         NRF_TWI_MNGR_WRITE(LSM303_ACCEL_ADDR, int_th_config, sizeof(int_th_config), 0),
         NRF_TWI_MNGR_WRITE(LSM303_ACCEL_ADDR, int_en_config, sizeof(int_en_config), 0),
     };
+
+
     /* Reading at this address clears the INT1_SRC_A (31h) -> if latched option is selected */
     //readRegister(INT1_SRC, I2C_ADDRESS);
 
@@ -227,7 +249,39 @@ void lms303_accel_vibration_trig_setup(void)
         .number_of_transfers = sizeof(lsm303_accel_vib_trig_setup_transfers) / sizeof(lsm303_accel_vib_trig_setup_transfers[0])
     };
 
-    APP_ERROR_CHECK(nrf_twi_mngr_schedule(&m_nrf_twi_mngr, &transaction));
+    //APP_ERROR_CHECK(nrf_twi_mngr_schedule(&m_nrf_twi_mngr, &transaction));
+    //err_code = nrf_twi_mngr_schedule(&m_nrf_twi_mngr, &transaction));
+
+    //err_code = nrf_twi_mngr_perform(&m_nrf_twi_mngr, NULL, lsm303_accel_vib_trig_setup_transfers, 9, NULL);
+    err_code = nrf_twi_mngr_perform(&m_nrf_twi_mngr, NULL, lsm303_accel_vib_trig_setup_transfers, ARRAY_SIZE(lsm303_accel_vib_trig_setup_transfers), NULL);
+    //err_code = nrf_twi_mngr_perform(&m_nrf_twi_mngr, NULL, lsm303_accel_read_back_transfers, 2, NULL);
+
+    APP_ERROR_CHECK(err_code);
+}
+
+
+static uint8_t m_read_back_reg[6];
+static uint8_t NRF_TWI_MNGR_BUFFER_LOC_IND lm303_accel_ctrl_addr = (LSM303_REG_ACCEL_CTRL_1 | 0x80);
+//static uint8_t NRF_TWI_MNGR_BUFFER_LOC_IND lm303_accel_ctrl_addr = (LSM303_REG_ACCEL_CTRL_2 | 0x80);
+//static uint8_t NRF_TWI_MNGR_BUFFER_LOC_IND lm303_accel_ctrl_addr = (LSM303_REG_ACCEL_CTRL_1);
+#define LM303_READ(p_reg_addr, p_buffer, byte_cnt) \
+    NRF_TWI_MNGR_WRITE(LSM303_ACCEL_ADDR, p_reg_addr, 1, NRF_TWI_MNGR_NO_STOP), \
+    NRF_TWI_MNGR_READ (LSM303_ACCEL_ADDR, p_buffer,   byte_cnt, 0)
+
+#define LM303_READ_BACK(p_buffer) \
+    LM303_READ(&lm303_accel_ctrl_addr, p_buffer, 6)
+
+void lsm303_setup_read_back_check(void) {
+    volatile ret_code_t err_code;
+
+    static nrf_twi_mngr_transfer_t const lsm303_accel_read_back_transfers[] =
+    {
+        LM303_READ_BACK(&m_read_back_reg[0])
+    };
+
+    err_code = nrf_twi_mngr_perform(&m_nrf_twi_mngr, NULL, lsm303_accel_read_back_transfers, 2, NULL);
+
+    APP_ERROR_CHECK(err_code);
 }
 
 

@@ -323,8 +323,10 @@ int main(void)
     twi_config();
     
     lms303_accel_vibration_trig_setup();
-    lsm303_accel_setup();
+    //lsm303_accel_setup();
     lsm303_mag_setup();
+
+    lsm303_setup_read_back_check();
 
     while (true)
     {

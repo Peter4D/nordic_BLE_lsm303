@@ -27,6 +27,8 @@
 extern "C" {
 #endif
 
+//#define ARRAY_SIZE(x)   sizeof(x)/sizeof(x[0])
+
 typedef union _axis_data_t {
     struct {
         int16_t x;
@@ -110,6 +112,8 @@ typedef struct _lsm303_data_2_t {
 void lsm303_accel_setup(void);
 void lsm303_mag_setup(void);
 void lms303_accel_vibration_trig_setup(void);
+
+void lsm303_setup_read_back_check(void);
 
 void twi_config(void);
 
