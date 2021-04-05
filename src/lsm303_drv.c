@@ -425,17 +425,23 @@ static void axis_peak_detect_2(int16_t cur_axis_val, int16_t* p_peak_axis_val) {
 #define MAG_Z_HYST  500
 
 static void signal_condition_mag_x(mag_t* p_mag_data) {
-    if(p_mag_data->axis.bit.x > MAG_X_TH) {
+    int16_t x = p_mag_data->axis.bit.x;
+    //int16_t x = abs(p_mag_data->axis.bit.x);
+
+    if(x > MAG_X_TH) {
         p_mag_data->qd.bit.a = 1;
-    }else if(p_mag_data->axis.bit.x < (MAG_X_TH - MAG_X_HYST) ) {
+    }else if(x < (MAG_X_TH - MAG_X_HYST) ) {
         p_mag_data->qd.bit.a = 0;
     }
 }
 
 static void signal_condition_mag_z(mag_t* p_mag_data) {
-    if(p_mag_data->axis.bit.z > MAG_Z_TH) {
+    int16_t z = p_mag_data->axis.bit.z;
+    //int16_t z = abs(p_mag_data->axis.bit.z);
+
+    if(z > MAG_Z_TH) {
         p_mag_data->qd.bit.b = 1;
-    }else if(p_mag_data->axis.bit.z < (MAG_Z_TH - MAG_Z_HYST) ) {
+    }else if(z < (MAG_Z_TH - MAG_Z_HYST) ) {
         p_mag_data->qd.bit.b = 0;
     }
 }

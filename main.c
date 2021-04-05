@@ -82,6 +82,15 @@
 
 #include <math.h>
 
+#ifndef DEBUG_APP_SHOW_QD
+#define DEBUG_APP_SHOW_QD       0
+#endif
+
+#ifndef DEBUG_APP_SHOW_AXIS
+#define DEBUG_APP_SHOW_AXIS     1
+#endif
+
+
 /* TWI instance ID. */
 #define TWI_INSTANCE_ID     0
 
@@ -102,12 +111,19 @@
 
 static uint8_t m_who_i_am = 0xFF;
 
+typedef struct  _app_CB_t
+{
+    uint8_t key_side;
+}app_CB_t;
+
+static app_CB_t m_app_CB;
 
 /* Buffer for samples read from accelerometer sensor. */
 
 APP_TIMER_DEF(read_lsm303_tmr_id);
 APP_TIMER_DEF(app_tmr_btn_long_press_id);
 APP_TIMER_DEF(app_tmr_print_out_id);
+APP_TIMER_DEF(app_tmr_calib_id);
 
 void read_lsm303_tmr_handler(void* p_context);
 
@@ -173,7 +189,12 @@ static void gpio_init(void)
 static void app_tmr_btn_long_press_handler(void* p_context) {
 
     if(bsp_button_is_pressed(0) == 1) {
+        lsm303_data_2_t* p_lsm303_data = lsm303_data_p_get();
+
         NRF_LOG_INFO("btn long press\r\n");
+
+        p_lsm303_data->mag.qd_cnt = 0;
+
         nrfx_gpiote_out_toggle(PIN_OUT);
     }
 }
@@ -189,15 +210,50 @@ static void app_tmr_print_out_handler(void* p_context) {
     /* [angle],[mX],[my],[mZ]*/
     //NRF_LOG_INFO("angle/x/z | %3d,%4d,%4d\r",
     //NRF_LOG_RAW_INFO("angle/x/z/a/b/dir/cnt | %3d,%5d,%5d,%u,%u,%d,%d\r",
-    NRF_LOG_INFO("angle/a/b/dir/cnt | %3d,%u,%u,%d,%d\r",
+
+    #if( DEBUG_APP_SHOW_QD == 1)
+    
+    NRF_LOG_INFO("angle/a/b/dir/cnt/Y_peak | %3d,%u,%u,%d,%d,%d\r",
     p_lsm303_data->accel.angle, 
     // p_lsm303_data->mag.axis.bit.x,
     // p_lsm303_data->mag.axis.bit.z,
     p_lsm303_data->mag.qd.bit.a,
     p_lsm303_data->mag.qd.bit.b,
     p_lsm303_data->mag.qd_dir,
-    p_lsm303_data->mag.qd_cnt
+    p_lsm303_data->mag.qd_cnt,
+    p_lsm303_data->mag.axis_peak.bit.y
     );
+
+    #elif ( DEBUG_APP_SHOW_AXIS == 1)
+
+    NRF_LOG_INFO("angle/x/z/dir/cnt/y | %3d,%d,%d,%d,%d,%d\r",
+    p_lsm303_data->accel.angle, 
+    p_lsm303_data->mag.axis.bit.x,
+    p_lsm303_data->mag.axis.bit.z,
+    // p_lsm303_data->mag.qd.bit.a,
+    // p_lsm303_data->mag.qd.bit.b,
+    p_lsm303_data->mag.qd_dir,
+    p_lsm303_data->mag.qd_cnt,
+    //p_lsm303_data->mag.axis_peak.bit.y
+    p_lsm303_data->mag.axis.bit.y
+    );
+
+    #endif
+}
+
+static void app_tmr_calib_handler(void* p_context) {
+    lsm303_data_2_t* p_lsm303_data = lsm303_data_p_get();
+    int32_t qd_cnt = p_lsm303_data->mag.qd_cnt;
+    
+
+    if(abs(qd_cnt) > 4) {
+        /* key has turned more than full circle */
+        if(p_lsm303_data->mag.axis_peak.bit.y > 0) {
+            m_app_CB.key_side = 0;
+        }else {
+            m_app_CB.key_side = -1;
+        }
+    }
 }
 
 void bsp_evt_handler(bsp_event_t bsp_event) {
@@ -316,6 +372,10 @@ int main(void)
     app_timer_create(&app_tmr_print_out_id,
                         APP_TIMER_MODE_REPEATED,
                         app_tmr_print_out_handler);
+
+    app_timer_create(&app_tmr_calib_id,
+                        APP_TIMER_MODE_REPEATED,
+                        app_tmr_calib_handler);
     
     APP_ERROR_CHECK(app_timer_start(read_lsm303_tmr_id, APP_TIMER_TICKS(10), NULL));
     APP_ERROR_CHECK(app_timer_start(app_tmr_print_out_id, APP_TIMER_TICKS(100), NULL));
