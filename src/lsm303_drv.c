@@ -402,11 +402,26 @@ static void axis_peak_detect_process_2(axis_peak_detect_t* p_axis_peak) {
 //     }
 // }
 
+static uint8_t number_sign_get(int32_t number) {
+    if(number < 0) {
+        return 1;
+    }else{
+        return 0;
+    }
+}
+
 static void axis_peak_detect_2(int16_t cur_axis_val, int16_t* p_peak_axis_val) {
+    uint8_t peak_sign = 0;
+
     uint16_t axis_cur_val_abs = abs(cur_axis_val);
     uint16_t axis_peak_val_abs = abs(*p_peak_axis_val);
 
     if(axis_cur_val_abs > AXIS_NOISE_FLOOR_TH) {
+
+        if(number_sign_get(cur_axis_val) != number_sign_get(*p_peak_axis_val)) {
+            *p_peak_axis_val = 0;
+        }
+
         if(axis_cur_val_abs > axis_peak_val_abs) {
 
             *p_peak_axis_val = axis_cur_val_abs;

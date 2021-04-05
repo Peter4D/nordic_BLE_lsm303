@@ -83,11 +83,11 @@
 #include <math.h>
 
 #ifndef DEBUG_APP_SHOW_QD
-#define DEBUG_APP_SHOW_QD       0
+#define DEBUG_APP_SHOW_QD       1
 #endif
 
 #ifndef DEBUG_APP_SHOW_AXIS
-#define DEBUG_APP_SHOW_AXIS     1
+#define DEBUG_APP_SHOW_AXIS     0
 #endif
 
 
@@ -113,7 +113,7 @@ static uint8_t m_who_i_am = 0xFF;
 
 typedef struct  _app_CB_t
 {
-    uint8_t key_side;
+    int8_t key_side;
 }app_CB_t;
 
 static app_CB_t m_app_CB;
