@@ -22,12 +22,13 @@
 #include "nrf_log_ctrl.h"
 #include "nrf_log_default_backends.h"
 
+#include "lm303_accel.h"
+
 
 #ifdef __cplusplus
 extern "C" {
 #endif
 
-//#define ARRAY_SIZE(x)   sizeof(x)/sizeof(x[0])
 
 typedef union _axis_data_t {
     struct {
@@ -122,6 +123,8 @@ void read_accel(void);
 void read_mag(void);
 
 lsm303_data_2_t* lsm303_data_p_get(void);
+
+void lsm303_read_reg(uint8_t reg_addr, uint8_t* p_data, void (*read_end_cb)(ret_code_t result, void * p_user_data));
 
 #ifdef __cplusplus
 }

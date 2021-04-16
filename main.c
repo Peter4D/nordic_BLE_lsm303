@@ -83,7 +83,7 @@
 #include <math.h>
 
 #ifndef DEBUG_APP_SHOW_QD
-#define DEBUG_APP_SHOW_QD       1
+#define DEBUG_APP_SHOW_QD       0
 #endif
 
 #ifndef DEBUG_APP_SHOW_AXIS
@@ -256,6 +256,10 @@ static void app_tmr_calib_handler(void* p_context) {
     }
 }
 
+static void lsm303_read_end_callback(ret_code_t result, void * p_user_data) {
+
+}
+
 void bsp_evt_handler(bsp_event_t bsp_event) {
 
     switch(bsp_event) 
@@ -270,6 +274,14 @@ void bsp_evt_handler(bsp_event_t bsp_event) {
 
             APP_ERROR_CHECK(app_timer_start(app_tmr_btn_long_press_id, APP_TIMER_TICKS(3000), NULL));
 
+            break;
+        }
+        case BSP_EVENT_KEY_1:
+        {
+            static uint8_t reg_data[1];
+            NRF_LOG_INFO("lsm303_INT\r\n");
+            
+            //lsm303_read_reg(LSM303_REG_ACCEL_INT1_SOURCE, reg_data, lsm303_read_end_callback);
             break;
         }
     }

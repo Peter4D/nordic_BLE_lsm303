@@ -1,20 +1,49 @@
 {
+    "env": {
+        "nrfSDK": "C:/Users/peter.medvesek/Documents/PeterMedvek_Gorenje_RD/ostali_projekti/BLE/Nordic/nRF5_SDK_17.0.2_d674dde"
+    },
     "configurations": [
         {
             "name": "nordic_arm",
             "includePath": [
                 "${workspaceFolder}/**",
                 "${config:nordic_sdk}/components/boards/**",
-                "C:/Users/peter.medvesek/Documents/PeterMedvek_Gorenje_RD/ostali_projekti/BLE/Nordic/nRF5_SDK_17.0.2_d674dde/components/boards/**"
+                
+                "${nrfSDK}/components/**",
+                "${nrfSDK}/components",
+                "${nrfSDK}/components/libraries/experimental_memobj",
+                "${nrfSDK}/components/libraries/experimental_section_vars",
+                "${nrfSDK}/modules/nrfx/mdk",
+                "${nrfSDK}/modules/nrfx/hal",
+                "${nrfSDK}/components/libraries/balloc",
+                "${nrfSDK}/components/libraries/experimental_log",
+                "${nrfSDK}/components/libraries/experimental_log/src",
+                "${nrfSDK}/components/libraries/delay",
+                "${nrfSDK}/integration/nrfx",
+                "${nrfSDK}/components/libraries/bsp",
+                "${nrfSDK}/components/drivers_nrf/nrf_soc_nosd",
+                "${nrfSDK}/components/libraries/strerror",
+                "${nrfSDK}/components/boards",
+                "${nrfSDK}/components/toolchain/cmsis/include",
+                "${nrfSDK}/modules/nrfx",
+                "${nrfSDK}/components/libraries/util",
+                "${nrfSDK}/components/libraries/fifo",
+                "${nrfSDK}/components/libraries/uart",
+                "${nrfSDK}/integration/nrfx/legacy",
+                "${nrfSDK}/components/libraries/delay",
+                "${nrfSDK}/modules/nrfx/drivers/include",
+                "${workspaceFolder}/sparkfun/blank/config",
+                "${workspaceFolder}/sparkfun/blank"
             ],
             "defines": [
                 "_DEBUG",
                 "UNICODE",
                 "_UNICODE"
             ],
+            "compilerPath": "${env:ZEPHYR_TOOLCHAIN_VARIANT}",
+            "cStandard": "c99",
             "cppStandard": "c++17",
-            "intelliSenseMode": "gcc-arm",
-            "cStandard": "c99"
+            "intelliSenseMode": "clang-x64"
         }
     ],
     "version": 4

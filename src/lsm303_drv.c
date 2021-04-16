@@ -1,5 +1,4 @@
 #include "lsm303_drv.h"
-#include "lm303_accel.h"
 #include "lm303_mag.h"
 #include "app_timer.h"
 
@@ -168,6 +167,40 @@ void read_accel(void)
     APP_ERROR_CHECK(nrf_twi_mngr_schedule(&m_nrf_twi_mngr, &transaction));
 
 }
+
+void lsm303_read_reg(uint8_t reg_addr, uint8_t* p_data, void (*read_end_cb)(ret_code_t result, void * p_user_data)) {
+    
+    // ASSERT(p_data != NULL);
+    // ASSERT(read_end_cb != NULL);
+
+    // static nrf_twi_mngr_transfer_t const transfers[] =
+    // {
+    //     //LM303_READ_ACCEL(p_data)
+    //     LM303_READ(&reg_addr, p_buffer, 6)
+    // };
+    // static nrf_twi_mngr_transaction_t NRF_TWI_MNGR_BUFFER_LOC_IND transaction =
+    // {
+    //     .callback            = read_accel_cb,
+    //     .p_user_data         = p_data,
+    //     .p_transfers         = transfers,
+    //     .number_of_transfers = sizeof(transfers) / sizeof(transfers[0])
+    // };
+
+    // APP_ERROR_CHECK(nrf_twi_mngr_schedule(&m_nrf_twi_mngr, &transaction));
+}
+
+// static uint8_t read_back_reg[1];
+// static uint8_t NRF_TWI_MNGR_BUFFER_LOC_IND lm303_accel_int_src = (LSM303_REG_ACCEL_INT1_SOURCE);
+
+// static nrf_twi_mngr_transfer_t const lsm303_accel_read_back_transfers[] =
+// {
+    
+//     NRF_TWI_MNGR_WRITE(LSM303_ACCEL_ADDR, &lm303_accel_int_src, 1, NRF_TWI_MNGR_NO_STOP), \
+//     NRF_TWI_MNGR_READ (LSM303_ACCEL_ADDR, read_back_reg, 1, 0)
+// };
+
+
+// err_code = nrf_twi_mngr_perform(&m_nrf_twi_mngr, NULL, lsm303_accel_read_back_transfers, 2, NULL);
 
 
 void lms303_accel_vibration_trig_setup(void) 
