@@ -100,13 +100,15 @@
 
 // </h> 
 //==========================================================
-// <h> nRF_Log 
+
+
+// <h> nRF_Log
 
 //==========================================================
 // <e> NRF_LOG_BACKEND_RTT_ENABLED - nrf_log_backend_rtt - Log RTT backend
 //==========================================================
 #ifndef NRF_LOG_BACKEND_RTT_ENABLED
-#define NRF_LOG_BACKEND_RTT_ENABLED 0
+#define NRF_LOG_BACKEND_RTT_ENABLED 1
 #endif
 // <o> NRF_LOG_BACKEND_RTT_TEMP_BUFFER_SIZE - Size of buffer for partially processed strings. 
 // <i> Size of the buffer is a trade-off between RAM usage and processing.
@@ -139,7 +141,7 @@
 // <e> NRF_LOG_BACKEND_UART_ENABLED - nrf_log_backend_uart - Log UART backend
 //==========================================================
 #ifndef NRF_LOG_BACKEND_UART_ENABLED
-#define NRF_LOG_BACKEND_UART_ENABLED 1
+#define NRF_LOG_BACKEND_UART_ENABLED 0
 #endif
 // <o> NRF_LOG_BACKEND_UART_TX_PIN - UART TX pin 
 #ifndef NRF_LOG_BACKEND_UART_TX_PIN
@@ -181,215 +183,6 @@
 
 // </e>
 
-// <e> NRFX_TWI_ENABLED - nrfx_twi - TWI peripheral driver
-//==========================================================
-#ifndef NRFX_TWI_ENABLED
-#define NRFX_TWI_ENABLED 1
-#endif
-// <q> NRFX_TWI0_ENABLED  - Enable TWI0 instance
- 
-
-#ifndef NRFX_TWI0_ENABLED
-#define NRFX_TWI0_ENABLED 1
-#endif
-
-// <q> NRFX_TWI1_ENABLED  - Enable TWI1 instance
- 
-
-#ifndef NRFX_TWI1_ENABLED
-#define NRFX_TWI1_ENABLED 0
-#endif
-
-// <o> NRFX_TWI_DEFAULT_CONFIG_FREQUENCY  - Frequency
- 
-// <26738688=> 100k 
-// <67108864=> 250k 
-// <104857600=> 400k 
-
-#ifndef NRFX_TWI_DEFAULT_CONFIG_FREQUENCY
-#define NRFX_TWI_DEFAULT_CONFIG_FREQUENCY 26738688
-#endif
-
-// <q> NRFX_TWI_DEFAULT_CONFIG_HOLD_BUS_UNINIT  - Enables bus holding after uninit
- 
-
-#ifndef NRFX_TWI_DEFAULT_CONFIG_HOLD_BUS_UNINIT
-#define NRFX_TWI_DEFAULT_CONFIG_HOLD_BUS_UNINIT 0
-#endif
-
-// <o> NRFX_TWI_DEFAULT_CONFIG_IRQ_PRIORITY  - Interrupt priority
- 
-// <0=> 0 (highest) 
-// <1=> 1 
-// <2=> 2 
-// <3=> 3 
-// <4=> 4 
-// <5=> 5 
-// <6=> 6 
-// <7=> 7 
-
-#ifndef NRFX_TWI_DEFAULT_CONFIG_IRQ_PRIORITY
-#define NRFX_TWI_DEFAULT_CONFIG_IRQ_PRIORITY 6
-#endif
-
-// <e> NRFX_TWI_CONFIG_LOG_ENABLED - Enables logging in the module.
-//==========================================================
-#ifndef NRFX_TWI_CONFIG_LOG_ENABLED
-#define NRFX_TWI_CONFIG_LOG_ENABLED 0
-#endif
-// <o> NRFX_TWI_CONFIG_LOG_LEVEL  - Default Severity level
- 
-// <0=> Off 
-// <1=> Error 
-// <2=> Warning 
-// <3=> Info 
-// <4=> Debug 
-
-#ifndef NRFX_TWI_CONFIG_LOG_LEVEL
-#define NRFX_TWI_CONFIG_LOG_LEVEL 3
-#endif
-
-// <o> NRFX_TWI_CONFIG_INFO_COLOR  - ANSI escape code prefix.
- 
-// <0=> Default 
-// <1=> Black 
-// <2=> Red 
-// <3=> Green 
-// <4=> Yellow 
-// <5=> Blue 
-// <6=> Magenta 
-// <7=> Cyan 
-// <8=> White 
-
-#ifndef NRFX_TWI_CONFIG_INFO_COLOR
-#define NRFX_TWI_CONFIG_INFO_COLOR 0
-#endif
-
-// <o> NRFX_TWI_CONFIG_DEBUG_COLOR  - ANSI escape code prefix.
- 
-// <0=> Default 
-// <1=> Black 
-// <2=> Red 
-// <3=> Green 
-// <4=> Yellow 
-// <5=> Blue 
-// <6=> Magenta 
-// <7=> Cyan 
-// <8=> White 
-
-#ifndef NRFX_TWI_CONFIG_DEBUG_COLOR
-#define NRFX_TWI_CONFIG_DEBUG_COLOR 0
-#endif
-
-// </e>
-
-// </e>
-
-
-//==========================================================
-// <e> NRF_BALLOC_ENABLED - nrf_balloc - Block allocator module
-//==========================================================
-#ifndef NRF_BALLOC_ENABLED
-#define NRF_BALLOC_ENABLED 1
-#endif
-// <e> NRF_BALLOC_CONFIG_DEBUG_ENABLED - Enables debug mode in the module.
-//==========================================================
-#ifndef NRF_BALLOC_CONFIG_DEBUG_ENABLED
-#define NRF_BALLOC_CONFIG_DEBUG_ENABLED 0
-#endif
-// <o> NRF_BALLOC_CONFIG_HEAD_GUARD_WORDS - Number of words used as head guard.  <0-255> 
-
-
-#ifndef NRF_BALLOC_CONFIG_HEAD_GUARD_WORDS
-#define NRF_BALLOC_CONFIG_HEAD_GUARD_WORDS 1
-#endif
-
-// <o> NRF_BALLOC_CONFIG_TAIL_GUARD_WORDS - Number of words used as tail guard.  <0-255> 
-
-
-#ifndef NRF_BALLOC_CONFIG_TAIL_GUARD_WORDS
-#define NRF_BALLOC_CONFIG_TAIL_GUARD_WORDS 1
-#endif
-
-// <q> NRF_BALLOC_CONFIG_BASIC_CHECKS_ENABLED  - Enables basic checks in this module.
- 
-
-#ifndef NRF_BALLOC_CONFIG_BASIC_CHECKS_ENABLED
-#define NRF_BALLOC_CONFIG_BASIC_CHECKS_ENABLED 0
-#endif
-
-// <q> NRF_BALLOC_CONFIG_DOUBLE_FREE_CHECK_ENABLED  - Enables double memory free check in this module.
- 
-
-#ifndef NRF_BALLOC_CONFIG_DOUBLE_FREE_CHECK_ENABLED
-#define NRF_BALLOC_CONFIG_DOUBLE_FREE_CHECK_ENABLED 0
-#endif
-
-// <q> NRF_BALLOC_CONFIG_DATA_TRASHING_CHECK_ENABLED  - Enables free memory corruption check in this module.
- 
-
-#ifndef NRF_BALLOC_CONFIG_DATA_TRASHING_CHECK_ENABLED
-#define NRF_BALLOC_CONFIG_DATA_TRASHING_CHECK_ENABLED 0
-#endif
-
-// <q> NRF_BALLOC_CLI_CMDS  - Enable CLI commands specific to the module
- 
-
-#ifndef NRF_BALLOC_CLI_CMDS
-#define NRF_BALLOC_CLI_CMDS 0
-#endif
-
-// </e>
-
-// </e>
-
-// <q> NRF_MEMOBJ_ENABLED  - nrf_memobj - Linked memory allocator module
- 
-
-#ifndef NRF_MEMOBJ_ENABLED
-#define NRF_MEMOBJ_ENABLED 1
-#endif
-
-// <q> NRF_STRERROR_ENABLED  - nrf_strerror - Library for converting error code to string.
- 
-
-#ifndef NRF_STRERROR_ENABLED
-#define NRF_STRERROR_ENABLED 1
-#endif
-
-// <h> nrf_fprintf - fprintf function.
-
-//==========================================================
-// <q> NRF_FPRINTF_ENABLED  - Enable/disable fprintf module.
- 
-
-#ifndef NRF_FPRINTF_ENABLED
-#define NRF_FPRINTF_ENABLED 1
-#endif
-
-// <q> NRF_FPRINTF_FLAG_AUTOMATIC_CR_ON_LF_ENABLED  - For each printed LF, function will add CR.
- 
-
-#ifndef NRF_FPRINTF_FLAG_AUTOMATIC_CR_ON_LF_ENABLED
-#define NRF_FPRINTF_FLAG_AUTOMATIC_CR_ON_LF_ENABLED 1
-#endif
-
-// <q> NRF_FPRINTF_DOUBLE_ENABLED  - Enable IEEE-754 double precision formatting.
- 
-
-#ifndef NRF_FPRINTF_DOUBLE_ENABLED
-#define NRF_FPRINTF_DOUBLE_ENABLED 0
-#endif
-
-// </h> 
-//==========================================================
-
-// </h> 
-//==========================================================
-
-// <h> nRF_Log 
-
-//==========================================================
 // <e> NRF_LOG_ENABLED - nrf_log - Logger
 //==========================================================
 #ifndef NRF_LOG_ENABLED
@@ -474,7 +267,7 @@
 // <i> Log data is buffered and can be processed in idle.
 
 #ifndef NRF_LOG_DEFERRED
-#define NRF_LOG_DEFERRED 0
+#define NRF_LOG_DEFERRED 1
 #endif
 
 // <q> NRF_LOG_FILTERS_ENABLED  - Enable dynamic filtering of logs.
@@ -3353,6 +3146,99 @@
 // </h> nRF_Libraries
 
 // <h> nRF_Drivers 
+
+// <e> UART_ENABLED - nrf_drv_uart - UART/UARTE peripheral driver - legacy layer
+//==========================================================
+#ifndef UART_ENABLED
+#define UART_ENABLED 1
+#endif
+// <o> UART_DEFAULT_CONFIG_HWFC  - Hardware Flow Control
+ 
+// <0=> Disabled 
+// <1=> Enabled 
+
+#ifndef UART_DEFAULT_CONFIG_HWFC
+#define UART_DEFAULT_CONFIG_HWFC 0
+#endif
+
+// <o> UART_DEFAULT_CONFIG_PARITY  - Parity
+ 
+// <0=> Excluded 
+// <14=> Included 
+
+#ifndef UART_DEFAULT_CONFIG_PARITY
+#define UART_DEFAULT_CONFIG_PARITY 0
+#endif
+
+// <o> UART_DEFAULT_CONFIG_BAUDRATE  - Default Baudrate
+ 
+// <323584=> 1200 baud 
+// <643072=> 2400 baud 
+// <1290240=> 4800 baud 
+// <2576384=> 9600 baud 
+// <3862528=> 14400 baud 
+// <5152768=> 19200 baud 
+// <7716864=> 28800 baud 
+// <10289152=> 38400 baud 
+// <15400960=> 57600 baud 
+// <20615168=> 76800 baud 
+// <30801920=> 115200 baud 
+// <61865984=> 230400 baud 
+// <67108864=> 250000 baud 
+// <121634816=> 460800 baud 
+// <251658240=> 921600 baud 
+// <268435456=> 1000000 baud 
+
+#ifndef UART_DEFAULT_CONFIG_BAUDRATE
+#define UART_DEFAULT_CONFIG_BAUDRATE 30801920
+#endif
+
+// <o> UART_DEFAULT_CONFIG_IRQ_PRIORITY  - Interrupt priority
+ 
+
+// <i> Priorities 0,2 (nRF51) and 0,1,4,5 (nRF52) are reserved for SoftDevice
+// <0=> 0 (highest) 
+// <1=> 1 
+// <2=> 2 
+// <3=> 3 
+// <4=> 4 
+// <5=> 5 
+// <6=> 6 
+// <7=> 7 
+
+#ifndef UART_DEFAULT_CONFIG_IRQ_PRIORITY
+#define UART_DEFAULT_CONFIG_IRQ_PRIORITY 6
+#endif
+
+// <q> UART_EASY_DMA_SUPPORT  - Driver supporting EasyDMA
+ 
+
+#ifndef UART_EASY_DMA_SUPPORT
+#define UART_EASY_DMA_SUPPORT 1
+#endif
+
+// <q> UART_LEGACY_SUPPORT  - Driver supporting Legacy mode
+ 
+
+#ifndef UART_LEGACY_SUPPORT
+#define UART_LEGACY_SUPPORT 1
+#endif
+
+// <e> UART0_ENABLED - Enable UART0 instance
+//==========================================================
+#ifndef UART0_ENABLED
+#define UART0_ENABLED 1
+#endif
+// <q> UART0_CONFIG_USE_EASY_DMA  - Default setting for using EasyDMA
+ 
+
+#ifndef UART0_CONFIG_USE_EASY_DMA
+#define UART0_CONFIG_USE_EASY_DMA 1
+#endif
+
+// </e>
+
+// </e>
 
 //==========================================================
 // <e> GPIOTE_ENABLED - nrf_drv_gpiote - GPIOTE peripheral driver - legacy layer
