@@ -183,6 +183,7 @@
 
 // </e>
 
+
 // <e> NRF_LOG_ENABLED - nrf_log - Logger
 //==========================================================
 #ifndef NRF_LOG_ENABLED
@@ -548,6 +549,7 @@
 //==========================================================
 
 // <h> nrf_log in nRF_Drivers 
+
 
 //==========================================================
 // <e> CLOCK_CONFIG_LOG_ENABLED - Enables logging in the module.
@@ -3147,6 +3149,212 @@
 
 // <h> nRF_Drivers 
 
+// <e> NRFX_TWI_ENABLED - nrfx_twi - TWI peripheral driver
+//==========================================================
+#ifndef NRFX_TWI_ENABLED
+#define NRFX_TWI_ENABLED 1
+#endif
+// <q> NRFX_TWI0_ENABLED  - Enable TWI0 instance
+ 
+
+#ifndef NRFX_TWI0_ENABLED
+#define NRFX_TWI0_ENABLED 1
+#endif
+
+// <q> NRFX_TWI1_ENABLED  - Enable TWI1 instance
+ 
+
+#ifndef NRFX_TWI1_ENABLED
+#define NRFX_TWI1_ENABLED 0
+#endif
+
+// <o> NRFX_TWI_DEFAULT_CONFIG_FREQUENCY  - Frequency
+ 
+// <26738688=> 100k 
+// <67108864=> 250k 
+// <104857600=> 400k 
+
+#ifndef NRFX_TWI_DEFAULT_CONFIG_FREQUENCY
+#define NRFX_TWI_DEFAULT_CONFIG_FREQUENCY 26738688
+#endif
+
+// <q> NRFX_TWI_DEFAULT_CONFIG_HOLD_BUS_UNINIT  - Enables bus holding after uninit
+ 
+
+#ifndef NRFX_TWI_DEFAULT_CONFIG_HOLD_BUS_UNINIT
+#define NRFX_TWI_DEFAULT_CONFIG_HOLD_BUS_UNINIT 0
+#endif
+
+// <o> NRFX_TWI_DEFAULT_CONFIG_IRQ_PRIORITY  - Interrupt priority
+ 
+// <0=> 0 (highest) 
+// <1=> 1 
+// <2=> 2 
+// <3=> 3 
+// <4=> 4 
+// <5=> 5 
+// <6=> 6 
+// <7=> 7 
+
+#ifndef NRFX_TWI_DEFAULT_CONFIG_IRQ_PRIORITY
+#define NRFX_TWI_DEFAULT_CONFIG_IRQ_PRIORITY 6
+#endif
+
+// <e> NRFX_TWI_CONFIG_LOG_ENABLED - Enables logging in the module.
+//==========================================================
+#ifndef NRFX_TWI_CONFIG_LOG_ENABLED
+#define NRFX_TWI_CONFIG_LOG_ENABLED 0
+#endif
+// <o> NRFX_TWI_CONFIG_LOG_LEVEL  - Default Severity level
+ 
+// <0=> Off 
+// <1=> Error 
+// <2=> Warning 
+// <3=> Info 
+// <4=> Debug 
+
+#ifndef NRFX_TWI_CONFIG_LOG_LEVEL
+#define NRFX_TWI_CONFIG_LOG_LEVEL 3
+#endif
+
+// <o> NRFX_TWI_CONFIG_INFO_COLOR  - ANSI escape code prefix.
+ 
+// <0=> Default 
+// <1=> Black 
+// <2=> Red 
+// <3=> Green 
+// <4=> Yellow 
+// <5=> Blue 
+// <6=> Magenta 
+// <7=> Cyan 
+// <8=> White 
+
+#ifndef NRFX_TWI_CONFIG_INFO_COLOR
+#define NRFX_TWI_CONFIG_INFO_COLOR 0
+#endif
+
+// <o> NRFX_TWI_CONFIG_DEBUG_COLOR  - ANSI escape code prefix.
+ 
+// <0=> Default 
+// <1=> Black 
+// <2=> Red 
+// <3=> Green 
+// <4=> Yellow 
+// <5=> Blue 
+// <6=> Magenta 
+// <7=> Cyan 
+// <8=> White 
+
+#ifndef NRFX_TWI_CONFIG_DEBUG_COLOR
+#define NRFX_TWI_CONFIG_DEBUG_COLOR 0
+#endif
+
+// </e>
+
+// </e>
+
+
+//==========================================================
+// <e> NRF_BALLOC_ENABLED - nrf_balloc - Block allocator module
+//==========================================================
+#ifndef NRF_BALLOC_ENABLED
+#define NRF_BALLOC_ENABLED 1
+#endif
+// <e> NRF_BALLOC_CONFIG_DEBUG_ENABLED - Enables debug mode in the module.
+//==========================================================
+#ifndef NRF_BALLOC_CONFIG_DEBUG_ENABLED
+#define NRF_BALLOC_CONFIG_DEBUG_ENABLED 0
+#endif
+// <o> NRF_BALLOC_CONFIG_HEAD_GUARD_WORDS - Number of words used as head guard.  <0-255> 
+
+
+#ifndef NRF_BALLOC_CONFIG_HEAD_GUARD_WORDS
+#define NRF_BALLOC_CONFIG_HEAD_GUARD_WORDS 1
+#endif
+
+// <o> NRF_BALLOC_CONFIG_TAIL_GUARD_WORDS - Number of words used as tail guard.  <0-255> 
+
+
+#ifndef NRF_BALLOC_CONFIG_TAIL_GUARD_WORDS
+#define NRF_BALLOC_CONFIG_TAIL_GUARD_WORDS 1
+#endif
+
+// <q> NRF_BALLOC_CONFIG_BASIC_CHECKS_ENABLED  - Enables basic checks in this module.
+ 
+
+#ifndef NRF_BALLOC_CONFIG_BASIC_CHECKS_ENABLED
+#define NRF_BALLOC_CONFIG_BASIC_CHECKS_ENABLED 0
+#endif
+
+// <q> NRF_BALLOC_CONFIG_DOUBLE_FREE_CHECK_ENABLED  - Enables double memory free check in this module.
+ 
+
+#ifndef NRF_BALLOC_CONFIG_DOUBLE_FREE_CHECK_ENABLED
+#define NRF_BALLOC_CONFIG_DOUBLE_FREE_CHECK_ENABLED 0
+#endif
+
+// <q> NRF_BALLOC_CONFIG_DATA_TRASHING_CHECK_ENABLED  - Enables free memory corruption check in this module.
+ 
+
+#ifndef NRF_BALLOC_CONFIG_DATA_TRASHING_CHECK_ENABLED
+#define NRF_BALLOC_CONFIG_DATA_TRASHING_CHECK_ENABLED 0
+#endif
+
+// <q> NRF_BALLOC_CLI_CMDS  - Enable CLI commands specific to the module
+ 
+
+#ifndef NRF_BALLOC_CLI_CMDS
+#define NRF_BALLOC_CLI_CMDS 0
+#endif
+
+// </e>
+
+// </e>
+
+// <q> NRF_MEMOBJ_ENABLED  - nrf_memobj - Linked memory allocator module
+ 
+
+#ifndef NRF_MEMOBJ_ENABLED
+#define NRF_MEMOBJ_ENABLED 1
+#endif
+
+// <q> NRF_STRERROR_ENABLED  - nrf_strerror - Library for converting error code to string.
+ 
+
+#ifndef NRF_STRERROR_ENABLED
+#define NRF_STRERROR_ENABLED 1
+#endif
+
+// <h> nrf_fprintf - fprintf function.
+
+//==========================================================
+// <q> NRF_FPRINTF_ENABLED  - Enable/disable fprintf module.
+ 
+
+#ifndef NRF_FPRINTF_ENABLED
+#define NRF_FPRINTF_ENABLED 1
+#endif
+
+// <q> NRF_FPRINTF_FLAG_AUTOMATIC_CR_ON_LF_ENABLED  - For each printed LF, function will add CR.
+ 
+
+#ifndef NRF_FPRINTF_FLAG_AUTOMATIC_CR_ON_LF_ENABLED
+#define NRF_FPRINTF_FLAG_AUTOMATIC_CR_ON_LF_ENABLED 1
+#endif
+
+// <q> NRF_FPRINTF_DOUBLE_ENABLED  - Enable IEEE-754 double precision formatting.
+ 
+
+#ifndef NRF_FPRINTF_DOUBLE_ENABLED
+#define NRF_FPRINTF_DOUBLE_ENABLED 0
+#endif
+
+// </h> 
+//==========================================================
+
+// </h> 
+//==========================================================
+
 // <e> UART_ENABLED - nrf_drv_uart - UART/UARTE peripheral driver - legacy layer
 //==========================================================
 #ifndef UART_ENABLED
@@ -3227,7 +3435,7 @@
 // <e> UART0_ENABLED - Enable UART0 instance
 //==========================================================
 #ifndef UART0_ENABLED
-#define UART0_ENABLED 1
+#define UART0_ENABLED 0
 #endif
 // <q> UART0_CONFIG_USE_EASY_DMA  - Default setting for using EasyDMA
  
@@ -3348,7 +3556,6 @@
 
 // </e>
 
-// </h> 
 //==========================================================
 
 // <e> APP_TIMER_ENABLED - app_timer - Application timer functionality

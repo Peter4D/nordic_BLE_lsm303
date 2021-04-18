@@ -83,7 +83,7 @@
 #include <math.h>
 
 #ifndef DEBUG_APP_SHOW_QD
-#define DEBUG_APP_SHOW_QD       0
+#define DEBUG_APP_SHOW_QD       1
 #endif
 
 #ifndef DEBUG_APP_SHOW_AXIS
