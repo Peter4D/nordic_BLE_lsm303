@@ -36,6 +36,10 @@ NRF_TWI_MNGR_DEF(m_nrf_twi_mngr, MAX_PENDING_TRANSACTIONS, TWI_INSTANCE_ID);
 //     .mag_dir = 0 
 // };
 
+// uint8_t lsm303_accel_reg_addr_lut[] = {
+
+// }
+
 static lsm303_data_2_t lsm303_data = {
     .peak_mag_x = AXIS_PEAK_DETECT_INIT("x"),
     .peak_mag_z = AXIS_PEAK_DETECT_INIT("z")
@@ -101,7 +105,6 @@ static uint8_t NRF_TWI_MNGR_BUFFER_LOC_IND lm303_accel_xout_reg_addr = (LSM303_R
 //     LM303_READ(&lm303_accel_xout_reg_addr, p_buffer, 6)
 
 
-
 // static float app_round(float var) 
 // { 
 //     float value = (int)(var * 100 + 0.5); 
@@ -110,7 +113,6 @@ static uint8_t NRF_TWI_MNGR_BUFFER_LOC_IND lm303_accel_xout_reg_addr = (LSM303_R
 
 static void read_accel_cb(ret_code_t result, void * p_user_data) {
     int8_t* p_axis_data = (int8_t*)p_user_data;
-    //int32_t angle_rad = 0;
     
     if (result != NRF_SUCCESS)
     {
@@ -119,7 +121,6 @@ static void read_accel_cb(ret_code_t result, void * p_user_data) {
     }
 
     for(uint8_t i = 0; i < 6; i++) {
-        //accel_data.bytes[i] = p_axis_data[i];
         lsm303_data.accel.axis.bytes[i] = p_axis_data[i];
     }
 
@@ -168,25 +169,49 @@ void read_accel(void)
 
 }
 
-void lsm303_read_reg(uint8_t reg_addr, uint8_t* p_data, void (*read_end_cb)(ret_code_t result, void * p_user_data)) {
+void lsm303_read_reg(uint8_t* const p_reg_addr, uint8_t* p_data, size_t size,
+                    void (*read_end_cb)(ret_code_t result, void * p_user_data)) 
+{
     
-    // ASSERT(p_data != NULL);
-    // ASSERT(read_end_cb != NULL);
+    ASSERT(p_data != NULL);
+    ASSERT(read_end_cb != NULL);
+    static nrf_twi_mngr_transfer_t i2c_transfer_w;
+    static nrf_twi_mngr_transfer_t i2c_transfer_r;
 
-    // static nrf_twi_mngr_transfer_t const transfers[] =
+    i2c_transfer_w.operation = NRF_TWI_MNGR_WRITE_OP(LSM303_ACCEL_ADDR);
+    i2c_transfer_w.p_data = p_reg_addr;
+    i2c_transfer_w.length = 1;
+    i2c_transfer_w.flags = NRF_TWI_MNGR_NO_STOP;
+
+    i2c_transfer_r.operation = NRF_TWI_MNGR_READ_OP(LSM303_ACCEL_ADDR);
+    i2c_transfer_r.p_data = p_data;
+    i2c_transfer_r.length = size;
+    i2c_transfer_r.flags = 0;
+
+    static nrf_twi_mngr_transfer_t transfers[2];
+
+    // static nrf_twi_mngr_transfer_t transfers[] =
     // {
-    //     //LM303_READ_ACCEL(p_data)
-    //     LM303_READ(&reg_addr, p_buffer, 6)
-    // };
-    // static nrf_twi_mngr_transaction_t NRF_TWI_MNGR_BUFFER_LOC_IND transaction =
-    // {
-    //     .callback            = read_accel_cb,
-    //     .p_user_data         = p_data,
-    //     .p_transfers         = transfers,
-    //     .number_of_transfers = sizeof(transfers) / sizeof(transfers[0])
+    //     //LM303_READ_ACCEL(&m_accel_out_reg[0])
+    //     //LM303_READ(p_reg_addr, p_data, 6)
     // };
 
-    // APP_ERROR_CHECK(nrf_twi_mngr_schedule(&m_nrf_twi_mngr, &transaction));
+    transfers[0] = i2c_transfer_w;
+    transfers[1] = i2c_transfer_r;
+
+    static nrf_twi_mngr_transaction_t NRF_TWI_MNGR_BUFFER_LOC_IND transaction =
+    {
+        //.callback            = read_accel_cb,
+        //.p_user_data         = p_data,
+        //.p_user_data         = NULL,
+        .p_transfers         = transfers,
+        .number_of_transfers = sizeof(transfers) / sizeof(transfers[0])
+    };
+
+    transaction.p_user_data = (void*)p_data;
+    transaction.callback = read_end_cb;
+
+    APP_ERROR_CHECK(nrf_twi_mngr_schedule(&m_nrf_twi_mngr, &transaction));
 }
 
 // static uint8_t read_back_reg[1];

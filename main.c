@@ -199,6 +199,10 @@ static void app_tmr_btn_long_press_handler(void* p_context) {
     }
 }
 
+static void test_i2c_read_callback(ret_code_t result, void * p_user_data) { 
+    NRF_LOG_INFO("who i am read %u", ((uint8_t*)p_user_data)[0]);
+}
+
 static void app_tmr_print_out_handler(void* p_context) {
     
     lsm303_data_2_t* p_lsm303_data = lsm303_data_p_get();
@@ -239,6 +243,9 @@ static void app_tmr_print_out_handler(void* p_context) {
     );
 
     #endif
+
+    static uint8_t who_i_am_reg_addr = LSM303_REG_ACCEL_WHO_AM_I;
+    lsm303_read_reg(&who_i_am_reg_addr, &m_who_i_am, 1, test_i2c_read_callback);
 }
 
 static void app_tmr_calib_handler(void* p_context) {
@@ -279,9 +286,10 @@ void bsp_evt_handler(bsp_event_t bsp_event) {
         case BSP_EVENT_KEY_1:
         {
             static uint8_t reg_data[1];
+            static uint8_t addr_reg = LSM303_REG_ACCEL_INT1_SOURCE;
             NRF_LOG_INFO("lsm303_INT\r\n");
             
-            //lsm303_read_reg(LSM303_REG_ACCEL_INT1_SOURCE, reg_data, lsm303_read_end_callback);
+            lsm303_read_reg(&addr_reg, reg_data, 1, lsm303_read_end_callback);
             break;
         }
     }

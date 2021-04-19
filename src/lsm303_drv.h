@@ -124,7 +124,9 @@ void read_mag(void);
 
 lsm303_data_2_t* lsm303_data_p_get(void);
 
-void lsm303_read_reg(uint8_t reg_addr, uint8_t* p_data, void (*read_end_cb)(ret_code_t result, void * p_user_data));
+void lsm303_read_reg(uint8_t* const p_reg_addr, uint8_t* p_data, size_t size,
+                    void (*read_end_cb)(ret_code_t result, void * p_user_data)
+                    );
 
 #ifdef __cplusplus
 }
