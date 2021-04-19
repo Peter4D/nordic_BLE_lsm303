@@ -83,7 +83,7 @@
 #include <math.h>
 
 #ifndef DEBUG_APP_SHOW_QD
-#define DEBUG_APP_SHOW_QD       1
+#define DEBUG_APP_SHOW_QD       0
 #endif
 
 #ifndef DEBUG_APP_SHOW_AXIS
@@ -244,8 +244,8 @@ static void app_tmr_print_out_handler(void* p_context) {
 
     #endif
 
-    static uint8_t who_i_am_reg_addr = LSM303_REG_ACCEL_WHO_AM_I;
-    lsm303_read_reg(&who_i_am_reg_addr, &m_who_i_am, 1, test_i2c_read_callback);
+    // static uint8_t who_i_am_reg_addr = LSM303_REG_ACCEL_WHO_AM_I;
+    // lsm303_read_reg(&who_i_am_reg_addr, &m_who_i_am, 1, test_i2c_read_callback);
 }
 
 static void app_tmr_calib_handler(void* p_context) {
@@ -264,10 +264,13 @@ static void app_tmr_calib_handler(void* p_context) {
 }
 
 static void lsm303_read_end_callback(ret_code_t result, void * p_user_data) {
-
+    NRF_LOG_INFO("int_reg %u", ((uint8_t*)p_user_data)[0]);
 }
 
 void bsp_evt_handler(bsp_event_t bsp_event) {
+
+    static uint8_t reg_data[1];
+    static uint8_t addr_reg = LSM303_REG_ACCEL_INT1_SOURCE;
 
     switch(bsp_event) 
     {
@@ -281,15 +284,16 @@ void bsp_evt_handler(bsp_event_t bsp_event) {
 
             APP_ERROR_CHECK(app_timer_start(app_tmr_btn_long_press_id, APP_TIMER_TICKS(3000), NULL));
 
+            lsm303_read_reg(&addr_reg, &reg_data[0], 1, lsm303_read_end_callback);
+
             break;
         }
         case BSP_EVENT_KEY_1:
         {
-            static uint8_t reg_data[1];
-            static uint8_t addr_reg = LSM303_REG_ACCEL_INT1_SOURCE;
-            NRF_LOG_INFO("lsm303_INT\r\n");
+            static uint32_t int_cnt = 0;
+            NRF_LOG_INFO("lsm303_INT %u\r\n", ++int_cnt);
             
-            lsm303_read_reg(&addr_reg, reg_data, 1, lsm303_read_end_callback);
+            lsm303_read_reg(&addr_reg, &reg_data[0], 1, lsm303_read_end_callback);
             break;
         }
     }
