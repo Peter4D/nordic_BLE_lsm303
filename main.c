@@ -284,6 +284,7 @@ void bsp_evt_handler(bsp_event_t bsp_event) {
 
             APP_ERROR_CHECK(app_timer_start(app_tmr_btn_long_press_id, APP_TIMER_TICKS(3000), NULL));
 
+            //lms303_accel_int_en();
             lsm303_read_reg(&addr_reg, &reg_data[0], 1, lsm303_read_end_callback);
 
             break;
@@ -292,7 +293,9 @@ void bsp_evt_handler(bsp_event_t bsp_event) {
         {
             static uint32_t int_cnt = 0;
             NRF_LOG_INFO("lsm303_INT %u\r\n", ++int_cnt);
-            
+
+
+            //lms303_accel_int_disable();
             lsm303_read_reg(&addr_reg, &reg_data[0], 1, lsm303_read_end_callback);
             break;
         }

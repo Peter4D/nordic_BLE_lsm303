@@ -313,15 +313,44 @@ void lms303_accel_vibration_trig_setup(void)
     //err_code = nrf_twi_mngr_perform(&m_nrf_twi_mngr, NULL, lsm303_accel_vib_trig_setup_transfers, 9, NULL);
     err_code = nrf_twi_mngr_perform(&m_nrf_twi_mngr, NULL, lsm303_accel_vib_trig_setup_transfers, ARRAY_SIZE(lsm303_accel_vib_trig_setup_transfers), NULL);
     //err_code = nrf_twi_mngr_perform(&m_nrf_twi_mngr, NULL, lsm303_accel_read_back_transfers, 2, NULL);
+    APP_ERROR_CHECK(err_code);
 
+    lms303_accel_int_en();
+}
+
+void lms303_accel_int_en(void) {
+    ret_code_t err_code;
+
+    //static uint8_t NRF_TWI_MNGR_BUFFER_LOC_IND int_en[] = { LSM303_REG_ACCEL_INT1_CFG, 0x2A};
+    static uint8_t NRF_TWI_MNGR_BUFFER_LOC_IND int_en[] = { LSM303_REG_ACCEL_INT1_CFG, 0x08};
+
+    static nrf_twi_mngr_transfer_t const lsm303_accel_int_en[] =
+    {
+        NRF_TWI_MNGR_WRITE(LSM303_ACCEL_ADDR, int_en, sizeof(int_en), 0),
+    };
+
+    err_code = nrf_twi_mngr_perform(&m_nrf_twi_mngr, NULL, lsm303_accel_int_en, ARRAY_SIZE(lsm303_accel_int_en), NULL);
+    APP_ERROR_CHECK(err_code);
+
+}
+
+void lms303_accel_int_disable(void) {
+    ret_code_t err_code;
+
+    static uint8_t NRF_TWI_MNGR_BUFFER_LOC_IND int_disable[] = { LSM303_REG_ACCEL_INT1_CFG, 0x00};
+
+    static nrf_twi_mngr_transfer_t const lsm303_accel_int_disable[] =
+    {
+        NRF_TWI_MNGR_WRITE(LSM303_ACCEL_ADDR, int_disable, sizeof(int_disable), 0),
+    };
+
+    err_code = nrf_twi_mngr_perform(&m_nrf_twi_mngr, NULL, lsm303_accel_int_disable, ARRAY_SIZE(lsm303_accel_int_disable), NULL);
     APP_ERROR_CHECK(err_code);
 }
 
-
 static uint8_t m_read_back_reg[6];
 static uint8_t NRF_TWI_MNGR_BUFFER_LOC_IND lm303_accel_ctrl_addr = (LSM303_REG_ACCEL_CTRL_1 | 0x80);
-//static uint8_t NRF_TWI_MNGR_BUFFER_LOC_IND lm303_accel_ctrl_addr = (LSM303_REG_ACCEL_CTRL_2 | 0x80);
-//static uint8_t NRF_TWI_MNGR_BUFFER_LOC_IND lm303_accel_ctrl_addr = (LSM303_REG_ACCEL_CTRL_1);
+
 #define LM303_READ(p_reg_addr, p_buffer, byte_cnt) \
     NRF_TWI_MNGR_WRITE(LSM303_ACCEL_ADDR, p_reg_addr, 1, NRF_TWI_MNGR_NO_STOP), \
     NRF_TWI_MNGR_READ (LSM303_ACCEL_ADDR, p_buffer,   byte_cnt, 0)
