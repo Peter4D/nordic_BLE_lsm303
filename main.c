@@ -82,12 +82,14 @@
 
 #include <math.h>
 
+/* angle/a/b/dir/cnt/Y_peak  */
 #ifndef DEBUG_APP_SHOW_QD
 #define DEBUG_APP_SHOW_QD       0
 #endif
 
+/* show angle/x/z/dir/cnt/y */
 #ifndef DEBUG_APP_SHOW_AXIS
-#define DEBUG_APP_SHOW_AXIS     0
+#define DEBUG_APP_SHOW_AXIS     1
 #endif
 
 
@@ -173,7 +175,6 @@ static void gpio_init(void)
     err_code = nrfx_gpiote_out_init(PIN_OUT, &out_config);
     APP_ERROR_CHECK(err_code);
 
-    //nrfx_gpiote_in_config_t in_config = GPIOTE_CONFIG_IN_SENSE_TOGGLE(true);
 
     //nrfx_gpiote_in_config_t in_config = NRFX_GPIOTE_RAW_CONFIG_IN_SENSE_HITOLO(true);
     nrfx_gpiote_in_config_t in_config = NRFX_GPIOTE_RAW_CONFIG_IN_SENSE_HITOLO(false);
@@ -199,6 +200,7 @@ static void app_tmr_btn_long_press_handler(void* p_context) {
     }
 }
 
+/* test of lsm303 sensor response */
 static void test_i2c_read_callback(ret_code_t result, void * p_user_data) { 
     NRF_LOG_INFO("who i am read %u", ((uint8_t*)p_user_data)[0]);
 }
@@ -206,15 +208,7 @@ static void test_i2c_read_callback(ret_code_t result, void * p_user_data) {
 static void app_tmr_print_out_handler(void* p_context) {
     
     lsm303_data_2_t* p_lsm303_data = lsm303_data_p_get();
-    //static uint32_t last_tick = 0;
-    // uint32_t ticks = app_timer_cnt_get();
-    // uint32_t delta = app_timer_cnt_diff_compute(ticks, last_tick);
-    // last_tick = ticks;
-
-    /* [angle],[mX],[my],[mZ]*/
-    //NRF_LOG_INFO("angle/x/z | %3d,%4d,%4d\r",
-    //NRF_LOG_RAW_INFO("angle/x/z/a/b/dir/cnt | %3d,%5d,%5d,%u,%u,%d,%d\r",
-
+  
     #if( DEBUG_APP_SHOW_QD == 1)
     
     NRF_LOG_INFO("angle/a/b/dir/cnt/Y_peak | %3d,%u,%u,%d,%d,%d\r",
@@ -361,31 +355,17 @@ static void lfclk_request(void)
  */
 int main(void)
 {
-    ret_code_t err_code;
-
+    
     APP_ERROR_CHECK(NRF_LOG_INIT(NULL));
     NRF_LOG_DEFAULT_BACKENDS_INIT();
 
     NRF_LOG_INFO("\r\nTWI sensor example started nRF52805. [%s] [%s]", __DATE__, __TIME__);
-    //NRF_LOG_FLUSH();
-    
 
-    /* Configure board. */
-    //bsp_board_init(BSP_INIT_LEDS | BSP_INIT_BUTTONS);
 
-    //twi_init();
-    //lsm303_setup();
     utils_setup();
     
     lfclk_request();
-    //APP_ERROR_CHECK(app_timer_init());
-    //gpio_init();
-
-
-    // err_code = nrf_pwr_mgmt_init();
-    // APP_ERROR_CHECK(err_code);
-
-    //twi_config();
+    
     
     app_timer_create(&read_lsm303_tmr_id,
                         APP_TIMER_MODE_REPEATED,

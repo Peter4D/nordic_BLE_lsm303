@@ -24,21 +24,6 @@ nrfx_twi_t m_twi = NRFX_TWI_INSTANCE(TWI_INSTANCE_ID);
 NRF_TWI_MNGR_DEF(m_nrf_twi_mngr, MAX_PENDING_TRANSACTIONS, TWI_INSTANCE_ID);
 
 
-// static lsm303_data_t lsm303_data = {
-//     .accel = 0,
-//     .accel_rad = 0.0,
-//     .accel_rad_int = 0,
-//     .accel_angle = 0,
-
-//     .mag = 0,
-//     .peak_mag_x = AXIS_PEAK_DETECT_INIT("x"),
-//     .peak_mag_z = AXIS_PEAK_DETECT_INIT("z"),
-//     .mag_dir = 0 
-// };
-
-// uint8_t lsm303_accel_reg_addr_lut[] = {
-
-// }
 
 static lsm303_data_2_t lsm303_data = {
     .peak_mag_x = AXIS_PEAK_DETECT_INIT("x"),
@@ -64,7 +49,6 @@ void twi_config(void)
 
 
 // Set Active mode.
-//static uint8_t NRF_TWI_MNGR_BUFFER_LOC_IND default_config[] = {LSM303_REG_ACCEL_CTRL_1, 0x57};
 /* enable only x and z axis for accelerometer */
 static uint8_t NRF_TWI_MNGR_BUFFER_LOC_IND default_config[] = {LSM303_REG_ACCEL_CTRL_1, 0x55};
 
@@ -100,9 +84,6 @@ static uint8_t NRF_TWI_MNGR_BUFFER_LOC_IND lm303_accel_xout_reg_addr = (LSM303_R
 
 #define LM303_READ_ACCEL(p_buffer) \
     LM303_READ(&lm303_accel_xout_reg_addr, p_buffer, 6)
-
-// #define LM303_READ_BACK(p_buffer) \
-//     LM303_READ(&lm303_accel_xout_reg_addr, p_buffer, 6)
 
 
 // static float app_round(float var) 
@@ -175,6 +156,7 @@ void lsm303_read_reg(uint8_t* const p_reg_addr, uint8_t* p_data, size_t size,
     
     ASSERT(p_data != NULL);
     ASSERT(read_end_cb != NULL);
+
     static nrf_twi_mngr_transfer_t i2c_transfer_w;
     static nrf_twi_mngr_transfer_t i2c_transfer_r;
 
@@ -190,11 +172,6 @@ void lsm303_read_reg(uint8_t* const p_reg_addr, uint8_t* p_data, size_t size,
 
     static nrf_twi_mngr_transfer_t transfers[2];
 
-    // static nrf_twi_mngr_transfer_t transfers[] =
-    // {
-    //     //LM303_READ_ACCEL(&m_accel_out_reg[0])
-    //     //LM303_READ(p_reg_addr, p_data, 6)
-    // };
 
     transfers[0] = i2c_transfer_w;
     transfers[1] = i2c_transfer_r;
@@ -214,36 +191,11 @@ void lsm303_read_reg(uint8_t* const p_reg_addr, uint8_t* p_data, size_t size,
     APP_ERROR_CHECK(nrf_twi_mngr_schedule(&m_nrf_twi_mngr, &transaction));
 }
 
-// static uint8_t read_back_reg[1];
-// static uint8_t NRF_TWI_MNGR_BUFFER_LOC_IND lm303_accel_int_src = (LSM303_REG_ACCEL_INT1_SOURCE);
-
-// static nrf_twi_mngr_transfer_t const lsm303_accel_read_back_transfers[] =
-// {
-    
-//     NRF_TWI_MNGR_WRITE(LSM303_ACCEL_ADDR, &lm303_accel_int_src, 1, NRF_TWI_MNGR_NO_STOP), \
-//     NRF_TWI_MNGR_READ (LSM303_ACCEL_ADDR, read_back_reg, 1, 0)
-// };
-
-
-// err_code = nrf_twi_mngr_perform(&m_nrf_twi_mngr, NULL, lsm303_accel_read_back_transfers, 2, NULL);
 
 
 void lms303_accel_vibration_trig_setup(void) 
 {
-    volatile ret_code_t err_code;
-
-    /* 0b0010 1111 -> data_rate_10Hz | enable all axis;    0x57  */
-    
-    static uint8_t NRF_TWI_MNGR_BUFFER_LOC_IND ctrl_reg_config[] = {
-        //(LSM303_REG_ACCEL_CTRL_1 | 0x80), 
-        (LSM303_REG_ACCEL_CTRL_1), 
-        0x2F, /* 0b0010 1111 -> data_rate_10Hz | enable all axis; */
-        0x09, /* 0b0000 1001 -> FDS: Filtered Data Selection | HPIS1 (High Pass filter for interrupt) */
-        0x40, /* 0b0100 0000 -> AOI1 interrupt on INT1 pin. */
-        0x80, /* 0b1000 0000 -> output registers not updated until MSB and LSB have been read) */
-        0x08, /* 0b0000 1000 -> Latch interrupt request */
-        0x02  /* 0b0000 0010 -> interrupt active-low)*/
-    };
+    ret_code_t err_code;
 
     //static uint8_t NRF_TWI_MNGR_BUFFER_LOC_IND CTRL_1_cfg[] = {LSM303_REG_ACCEL_CTRL_1, 0x2F};
     static uint8_t NRF_TWI_MNGR_BUFFER_LOC_IND CTRL_1_cfg[] = {LSM303_REG_ACCEL_CTRL_1, 0x55};
@@ -271,7 +223,6 @@ void lms303_accel_vibration_trig_setup(void)
     static nrf_twi_mngr_transfer_t const lsm303_accel_vib_trig_setup_transfers[] =
     {
         NRF_TWI_MNGR_WRITE(LSM303_ACCEL_ADDR, default_config, sizeof(default_config), 0),
-        //NRF_TWI_MNGR_WRITE(LSM303_ACCEL_ADDR, ctrl_reg_config, sizeof(ctrl_reg_config), 0),
         NRF_TWI_MNGR_WRITE(LSM303_ACCEL_ADDR, CTRL_1_cfg, sizeof(CTRL_1_cfg), 0),
         NRF_TWI_MNGR_WRITE(LSM303_ACCEL_ADDR, CTRL_2_cfg, sizeof(CTRL_2_cfg), 0),
         NRF_TWI_MNGR_WRITE(LSM303_ACCEL_ADDR, CTRL_3_cfg, sizeof(CTRL_3_cfg), 0),
@@ -284,21 +235,7 @@ void lms303_accel_vibration_trig_setup(void)
     };
 
 
-    /* Reading at this address clears the INT1_SRC_A (31h) -> if latched option is selected */
-    //readRegister(INT1_SRC, I2C_ADDRESS);
 
-    /* REFERENCE/DATACAPTURE_A (26h): Reference value for interrupt generation. 
-    @note what is purpose of this */
-    // readRegister(LSM303_REG_ACCEL_REFERENCE, I2C_ADDRESS);
-
-    // //x,y,z
-    // /* @note what is purpose of this  */
-
-    // readRegister(LSM303_REG_ACCEL_REFERENCE, I2C_ADDRESS);
-    // readRegister(INT1_SRC, I2C_ADDRESS);
-    // readRegister(LSM303_REG_ACCEL_REFERENCE, I2C_ADDRESS);
-
-   
     static nrf_twi_mngr_transaction_t NRF_TWI_MNGR_BUFFER_LOC_IND transaction =
     {
         .callback            = NULL,
@@ -498,7 +435,6 @@ static uint8_t number_sign_get(int32_t number) {
 }
 
 static void axis_peak_detect_2(int16_t cur_axis_val, int16_t* p_peak_axis_val) {
-    uint8_t peak_sign = 0;
 
     uint16_t axis_cur_val_abs = abs(cur_axis_val);
     uint16_t axis_peak_val_abs = abs(*p_peak_axis_val);
