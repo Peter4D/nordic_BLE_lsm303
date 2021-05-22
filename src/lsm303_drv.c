@@ -1,5 +1,4 @@
 #include "lsm303_drv.h"
-#include "lm303_mag.h"
 #include "app_timer.h"
 
 #include <math.h>
@@ -24,6 +23,15 @@ nrfx_twi_t m_twi = NRFX_TWI_INSTANCE(TWI_INSTANCE_ID);
 NRF_TWI_MNGR_DEF(m_nrf_twi_mngr, MAX_PENDING_TRANSACTIONS, TWI_INSTANCE_ID);
 
 
+#define LSM303_ACCEL_INIT_TRANSFER_COUNT 1
+// Set Active mode.
+/* enable only x and z axis for accelerometer */
+static uint8_t NRF_TWI_MNGR_BUFFER_LOC_IND default_config[] = {LSM303_REG_ACCEL_CTRL_1, 0x55};
+
+static nrf_twi_mngr_transfer_t const lsm303_accel_init_transfers[LSM303_ACCEL_INIT_TRANSFER_COUNT] =
+{
+    NRF_TWI_MNGR_WRITE(LSM303_ACCEL_ADDR, default_config, sizeof(default_config), 0)
+};
 
 static lsm303_data_2_t lsm303_data = {
     .peak_mag_x = AXIS_PEAK_DETECT_INIT("x"),
@@ -48,16 +56,8 @@ void twi_config(void)
 
 
 
-// Set Active mode.
-/* enable only x and z axis for accelerometer */
-static uint8_t NRF_TWI_MNGR_BUFFER_LOC_IND default_config[] = {LSM303_REG_ACCEL_CTRL_1, 0x55};
-
-nrf_twi_mngr_transfer_t const lsm303_accel_init_transfers[LSM303_ACCEL_INIT_TRANSFER_COUNT] =
-{
-    NRF_TWI_MNGR_WRITE(LSM303_ACCEL_ADDR, default_config, sizeof(default_config), 0)
-};
-
 void lsm303_accel_setup(void) {
+    
     volatile ret_code_t err_code;
 
     
@@ -172,15 +172,11 @@ void lsm303_read_reg(uint8_t* const p_reg_addr, uint8_t* p_data, size_t size,
 
     static nrf_twi_mngr_transfer_t transfers[2];
 
-
     transfers[0] = i2c_transfer_w;
     transfers[1] = i2c_transfer_r;
 
     static nrf_twi_mngr_transaction_t NRF_TWI_MNGR_BUFFER_LOC_IND transaction =
     {
-        //.callback            = read_accel_cb,
-        //.p_user_data         = p_data,
-        //.p_user_data         = NULL,
         .p_transfers         = transfers,
         .number_of_transfers = sizeof(transfers) / sizeof(transfers[0])
     };
@@ -204,10 +200,12 @@ void lms303_accel_vibration_trig_setup(void)
     static uint8_t NRF_TWI_MNGR_BUFFER_LOC_IND CTRL_3_cfg[] = {LSM303_REG_ACCEL_CTRL_3, 0x40};
     static uint8_t NRF_TWI_MNGR_BUFFER_LOC_IND CTRL_4_cfg[] = {LSM303_REG_ACCEL_CTRL_4, 0x80};
     static uint8_t NRF_TWI_MNGR_BUFFER_LOC_IND CTRL_5_cfg[] = {LSM303_REG_ACCEL_CTRL_5, 0x08};
+    //static uint8_t NRF_TWI_MNGR_BUFFER_LOC_IND CTRL_5_cfg[] = {LSM303_REG_ACCEL_CTRL_5, 0x88};
     static uint8_t NRF_TWI_MNGR_BUFFER_LOC_IND CTRL_6_cfg[] = {LSM303_REG_ACCEL_CTRL_6, 0x02};
 
     /* interrupt threshold:  x * (accel_range / 127 ) mG  @todo this formula needs to be confirmed */
-    static uint8_t NRF_TWI_MNGR_BUFFER_LOC_IND int_th_config[] = {LSM303_REG_ACCEL_INT1_THS, 0x03};
+    //static uint8_t NRF_TWI_MNGR_BUFFER_LOC_IND int_th_config[] = {LSM303_REG_ACCEL_INT1_THS, 0x03};
+    static uint8_t NRF_TWI_MNGR_BUFFER_LOC_IND int_th_config[] = {LSM303_REG_ACCEL_INT1_THS, 0x37};
     
     /* set interrupt duration 40 ms*/
     //static uint8_t NRF_TWI_MNGR_BUFFER_LOC_IND int_dur_config[] = {LSM303_REG_ACCEL_INT1_DURATION, 0x00};
@@ -218,10 +216,12 @@ void lms303_accel_vibration_trig_setup(void)
     b5: Enable interrupt generation on Z low event or on direction recognition.
     b3: Enable interrupt generation on Y high event or on direction recognition.
     b1: Enable interrupt generation on X high event or on direction recognition.*/
-    static uint8_t NRF_TWI_MNGR_BUFFER_LOC_IND int_en_config[] = { LSM303_REG_ACCEL_INT1_CFG, 0x2A};
+    //static uint8_t NRF_TWI_MNGR_BUFFER_LOC_IND int_en_config[] = { LSM303_REG_ACCEL_INT1_CFG, 0x2A};
+    static uint8_t NRF_TWI_MNGR_BUFFER_LOC_IND int_en_config[] = { LSM303_REG_ACCEL_INT1_CFG, 0x20};
 
     static nrf_twi_mngr_transfer_t const lsm303_accel_vib_trig_setup_transfers[] =
     {
+        //NRF_TWI_MNGR_WRITE(LSM303_ACCEL_ADDR, CTRL_5_cfg, sizeof(CTRL_5_cfg), 0),
         NRF_TWI_MNGR_WRITE(LSM303_ACCEL_ADDR, default_config, sizeof(default_config), 0),
         NRF_TWI_MNGR_WRITE(LSM303_ACCEL_ADDR, CTRL_1_cfg, sizeof(CTRL_1_cfg), 0),
         NRF_TWI_MNGR_WRITE(LSM303_ACCEL_ADDR, CTRL_2_cfg, sizeof(CTRL_2_cfg), 0),
@@ -233,7 +233,6 @@ void lms303_accel_vibration_trig_setup(void)
         NRF_TWI_MNGR_WRITE(LSM303_ACCEL_ADDR, int_th_config, sizeof(int_th_config), 0),
         NRF_TWI_MNGR_WRITE(LSM303_ACCEL_ADDR, int_en_config, sizeof(int_en_config), 0),
     };
-
 
 
     static nrf_twi_mngr_transaction_t NRF_TWI_MNGR_BUFFER_LOC_IND transaction =

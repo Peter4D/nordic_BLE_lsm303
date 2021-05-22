@@ -82,6 +82,16 @@
 
 #include <math.h>
 
+// #define container_of(ptr, type, member) ({                      \
+//         const typeof( ((type *)0)->member ) *__mptr = (ptr);    \
+//         (type *)( (char *)__mptr - offsetof(type,member) );})
+
+
+#define goffsetof(TYPE, MEMBER) ((size_t) &((TYPE *)0)->MEMBER)
+ // Obtain a pointer to the entire structure variable according to the "pointer (ptr) of the domain member variable (member)" in the "structure (type) variable"
+//#define gcontainer_of(ptr, type, member)   ({  (type *)( (char *)ptr - goffsetof(type,member) );})
+#define gcontainer_of(ptr, type, member)     (type *)( (char *)ptr - goffsetof(type,member) );
+
 /* angle/a/b/dir/cnt/Y_peak  */
 #ifndef DEBUG_APP_SHOW_QD
 #define DEBUG_APP_SHOW_QD       0
@@ -89,7 +99,7 @@
 
 /* show angle/x/z/dir/cnt/y */
 #ifndef DEBUG_APP_SHOW_AXIS
-#define DEBUG_APP_SHOW_AXIS     1
+#define DEBUG_APP_SHOW_AXIS     0
 #endif
 
 
@@ -100,8 +110,9 @@
 
 /* Common addresses definition for temperature sensor. */
 //#define LSM303_ACCEL_ADDR          (0x90U >> 1)
-#define LSM303_ACCEL_ADDR    (0x32 >> 1)
-#define LSM303_MAG_ADDR      (0x3C >> 1)
+
+//#define LSM303_ACCEL_ADDR    (0x32 >> 1)
+//#define LSM303_MAG_ADDR      (0x3C >> 1)
 
 #define LM75B_REG_TEMP      0x00U
 #define LM75B_REG_CONF      0x01U
@@ -153,6 +164,50 @@ void read_lsm303_tmr_handler(void* p_context);
 #ifndef APP_LED_RED
 #define APP_LED_RED BSP_BOARD_LED_0
 #endif
+
+
+typedef struct _lsm303_reg_dsc_t {
+    uint8_t addr;
+    uint8_t data;
+    char* p_name;
+}lsm303_reg_dsc_t;
+
+// typedef struct _lsm303_reg_data_t {
+//     lsm303_reg_dsc_t who_i_am;
+//     lsm303_reg_dsc_t int1_src;
+// }lsm303_reg_data_t;
+
+typedef union _lsm303_reg_data_t {
+    struct {
+        lsm303_reg_dsc_t who_i_am;
+        lsm303_reg_dsc_t int1_src;
+    }reg;
+    lsm303_reg_dsc_t reg_array[2];
+}lsm303_reg_data_t;
+
+// static lsm303_reg_data_t lsm_reg_data = {
+//     .who_i_am = {
+//         .addr = LSM303_REG_ACCEL_WHO_AM_I,
+//         .data = 0xFF,
+//     },
+//     .int1_src = {
+//         .addr = LSM303_REG_ACCEL_INT1_SOURCE,
+//         .data = 0xFF,
+//     }
+// };
+
+static lsm303_reg_data_t lsm_reg_data = {
+    .reg.who_i_am = {
+        .addr = LSM303_REG_ACCEL_WHO_AM_I,
+        .data = 0xFF,
+        .p_name = "who_i_am"
+    },
+    .reg.int1_src = {
+        .addr = LSM303_REG_ACCEL_INT1_SOURCE,
+        .data = 0xFF,
+        .p_name = "int1_src"
+    }
+};
 
 
 void in_pin_handler(nrf_drv_gpiote_pin_t pin, nrf_gpiote_polarity_t action)
@@ -258,13 +313,24 @@ static void app_tmr_calib_handler(void* p_context) {
 }
 
 static void lsm303_read_end_callback(ret_code_t result, void * p_user_data) {
-    NRF_LOG_INFO("int_reg %u", ((uint8_t*)p_user_data)[0]);
+
+    struct _lsm303_reg_dsc_t* p_my_container = {0};
+    //typeof(p_my_container) typeof_container;
+
+    // uint8_t test_var;
+    // typeof(test_var) test_var2;
+
+    p_my_container = gcontainer_of(p_user_data, struct _lsm303_reg_dsc_t, data);
+    
+    NRF_LOG_INFO("int_reg %u, %s", ((uint8_t*)p_user_data)[0], p_my_container->p_name);
 }
 
-void bsp_evt_handler(bsp_event_t bsp_event) {
 
-    static uint8_t reg_data[1];
-    static uint8_t addr_reg = LSM303_REG_ACCEL_INT1_SOURCE;
+static uint8_t reg_data[1];
+static uint8_t addr_reg = LSM303_REG_ACCEL_INT1_SOURCE;
+
+
+void bsp_evt_handler(bsp_event_t bsp_event) {
 
     switch(bsp_event) 
     {
@@ -279,7 +345,11 @@ void bsp_evt_handler(bsp_event_t bsp_event) {
             APP_ERROR_CHECK(app_timer_start(app_tmr_btn_long_press_id, APP_TIMER_TICKS(3000), NULL));
 
             //lms303_accel_int_en();
-            lsm303_read_reg(&addr_reg, &reg_data[0], 1, lsm303_read_end_callback);
+            //lsm303_read_reg(&addr_reg, &reg_data[0], 1, lsm303_read_end_callback);
+            //lsm303_read_reg(&lsm_reg_data.int1_src.addr, &lsm_reg_data.int1_src.data, 1, lsm303_read_end_callback);
+            //lsm303_read_reg(&lsm_reg_data.who_i_am.addr, &lsm_reg_data.who_i_am.data, 1, lsm303_read_end_callback);
+            //lsm303_read_reg(&lsm_reg_data.reg.who_i_am.addr, &lsm_reg_data.reg.who_i_am.data, 1, lsm303_read_end_callback);
+            lsm303_read_reg(&lsm_reg_data.reg_array[1].addr, &lsm_reg_data.reg_array[1].data, 1, lsm303_read_end_callback);
 
             break;
         }
@@ -390,6 +460,8 @@ int main(void)
     twi_config();
     
     lms303_accel_vibration_trig_setup();
+    //lsm303_read_reg(&lsm_reg_data.int1_src.addr, &lsm_reg_data.int1_src.data, 1, lsm303_read_end_callback);
+    lsm303_read_reg(&lsm_reg_data.reg.who_i_am.addr, &lsm_reg_data.reg.who_i_am.data, 1, lsm303_read_end_callback);
     //lsm303_accel_setup();
     lsm303_mag_setup();
 

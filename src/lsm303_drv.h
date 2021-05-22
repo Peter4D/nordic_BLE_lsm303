@@ -22,7 +22,9 @@
 #include "nrf_log_ctrl.h"
 #include "nrf_log_default_backends.h"
 
-#include "lm303_accel.h"
+#include "lm303_mag_reg.h"
+#include "lm303_accel_reg.h"
+
 
 
 #ifdef __cplusplus

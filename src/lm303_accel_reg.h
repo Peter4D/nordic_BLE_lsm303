@@ -61,7 +61,6 @@ typedef enum {
     LSM303_REG_ACCEL_TIME_WINDOW = 0x3D
 }lsm303_accel_reg_t;
 
-#define LSM303_ACCEL_INIT_TRANSFER_COUNT 1
 
 #define MMA7660_ADDR        (0x32 >> 1)
 #define LSM303_ACCEL_ADDR    (0x32 >> 1)
