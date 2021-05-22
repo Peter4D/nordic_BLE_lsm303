@@ -178,11 +178,20 @@ typedef struct _lsm303_reg_dsc_t {
 // }lsm303_reg_data_t;
 
 typedef union _lsm303_reg_data_t {
-    struct {
+    struct _reg{
         lsm303_reg_dsc_t who_i_am;
         lsm303_reg_dsc_t int1_src;
+
+        lsm303_reg_dsc_t ctrl_1;
+        lsm303_reg_dsc_t ctrl_2;
+        lsm303_reg_dsc_t ctrl_3;
+        lsm303_reg_dsc_t ctrl_4;
+        lsm303_reg_dsc_t ctrl_5;
+        lsm303_reg_dsc_t ctrl_6;
+
+        lsm303_reg_dsc_t accel_int1_ths;
     }reg;
-    lsm303_reg_dsc_t reg_array[2];
+    lsm303_reg_dsc_t reg_array[9];
 }lsm303_reg_data_t;
 
 // static lsm303_reg_data_t lsm_reg_data = {
@@ -206,6 +215,41 @@ static lsm303_reg_data_t lsm_reg_data = {
         .addr = LSM303_REG_ACCEL_INT1_SOURCE,
         .data = 0xFF,
         .p_name = "int1_src"
+    },
+    .reg.ctrl_1 = {
+        .addr = LSM303_REG_ACCEL_CTRL_1,
+        .data = 0xFF,
+        .p_name = "ctrl_1"
+    },
+    .reg.ctrl_2 = {
+        .addr = LSM303_REG_ACCEL_CTRL_2,
+        .data = 0xFF,
+        .p_name = "ctrl_2"
+    },
+    .reg.ctrl_3 = {
+        .addr = LSM303_REG_ACCEL_CTRL_3,
+        .data = 0xFF,
+        .p_name = "ctrl_3"
+    },
+    .reg.ctrl_4 = {
+        .addr = LSM303_REG_ACCEL_CTRL_4,
+        .data = 0xFF,
+        .p_name = "ctrl_4"
+    },
+    .reg.ctrl_5 = {
+        .addr = LSM303_REG_ACCEL_CTRL_5,
+        .data = 0xFF,
+        .p_name = "ctrl_5"
+    },
+    .reg.ctrl_6 = {
+        .addr = LSM303_REG_ACCEL_CTRL_6,
+        .data = 0xFF,
+        .p_name = "ctrl_6"
+    },
+    .reg.accel_int1_ths = {
+        .addr = LSM303_REG_ACCEL_INT1_THS,
+        .data = 0xFF,
+        .p_name = "accel_int1_ths"
     }
 };
 
@@ -322,7 +366,7 @@ static void lsm303_read_end_callback(ret_code_t result, void * p_user_data) {
 
     p_my_container = gcontainer_of(p_user_data, struct _lsm303_reg_dsc_t, data);
     
-    NRF_LOG_INFO("int_reg %u, %s", ((uint8_t*)p_user_data)[0], p_my_container->p_name);
+    NRF_LOG_INFO("reg: %s, val: %u",  p_my_container->p_name, ((uint8_t*)p_user_data)[0]);
 }
 
 
@@ -338,18 +382,23 @@ void bsp_evt_handler(bsp_event_t bsp_event) {
         {
             lsm303_data_2_t* p_lsm303_data = lsm303_data_p_get();
         
-            NRF_LOG_INFO("btn short press\r\n");
+            NRF_LOG_INFO("btn short press");
             p_lsm303_data->mag.qd_cnt = 0;
-
 
             APP_ERROR_CHECK(app_timer_start(app_tmr_btn_long_press_id, APP_TIMER_TICKS(3000), NULL));
 
+            static uint8_t reg_i = 0;
+            
+            lsm303_read_reg(&lsm_reg_data.reg_array[reg_i].addr, &lsm_reg_data.reg_array[reg_i].data, 1, lsm303_read_end_callback);
+            if(reg_i < ARRAY_SIZE(lsm_reg_data.reg_array) - 1 ) {
+                reg_i++;
+            }else {
+                reg_i = 0;
+            }
+
             //lms303_accel_int_en();
-            //lsm303_read_reg(&addr_reg, &reg_data[0], 1, lsm303_read_end_callback);
-            //lsm303_read_reg(&lsm_reg_data.int1_src.addr, &lsm_reg_data.int1_src.data, 1, lsm303_read_end_callback);
-            //lsm303_read_reg(&lsm_reg_data.who_i_am.addr, &lsm_reg_data.who_i_am.data, 1, lsm303_read_end_callback);
             //lsm303_read_reg(&lsm_reg_data.reg.who_i_am.addr, &lsm_reg_data.reg.who_i_am.data, 1, lsm303_read_end_callback);
-            lsm303_read_reg(&lsm_reg_data.reg_array[1].addr, &lsm_reg_data.reg_array[1].data, 1, lsm303_read_end_callback);
+            
 
             break;
         }
