@@ -388,7 +388,6 @@ void bsp_evt_handler(bsp_event_t bsp_event) {
             APP_ERROR_CHECK(app_timer_start(app_tmr_btn_long_press_id, APP_TIMER_TICKS(3000), NULL));
 
             static uint8_t reg_i = 0;
-            
             lsm303_read_reg(&lsm_reg_data.reg_array[reg_i].addr, &lsm_reg_data.reg_array[reg_i].data, 1, lsm303_read_end_callback);
             if(reg_i < ARRAY_SIZE(lsm_reg_data.reg_array) - 1 ) {
                 reg_i++;
@@ -398,7 +397,6 @@ void bsp_evt_handler(bsp_event_t bsp_event) {
 
             //lms303_accel_int_en();
             //lsm303_read_reg(&lsm_reg_data.reg.who_i_am.addr, &lsm_reg_data.reg.who_i_am.data, 1, lsm303_read_end_callback);
-            
 
             break;
         }
@@ -409,7 +407,8 @@ void bsp_evt_handler(bsp_event_t bsp_event) {
 
 
             //lms303_accel_int_disable();
-            lsm303_read_reg(&addr_reg, &reg_data[0], 1, lsm303_read_end_callback);
+            //lsm303_read_reg(&addr_reg, &reg_data[0], 1, lsm303_read_end_callback);
+            lsm303_read_reg(&lsm_reg_data.reg.int1_src.addr, &lsm_reg_data.reg.int1_src.data, 1, lsm303_read_end_callback);
             break;
         }
     }
@@ -503,8 +502,6 @@ int main(void)
                         APP_TIMER_MODE_REPEATED,
                         app_tmr_calib_handler);
     
-    APP_ERROR_CHECK(app_timer_start(read_lsm303_tmr_id, APP_TIMER_TICKS(10), NULL));
-    APP_ERROR_CHECK(app_timer_start(app_tmr_print_out_id, APP_TIMER_TICKS(100), NULL));
 
     twi_config();
     
@@ -515,6 +512,9 @@ int main(void)
     lsm303_mag_setup();
 
     lsm303_setup_read_back_check();
+
+    APP_ERROR_CHECK(app_timer_start(read_lsm303_tmr_id, APP_TIMER_TICKS(10), NULL));
+    APP_ERROR_CHECK(app_timer_start(app_tmr_print_out_id, APP_TIMER_TICKS(100), NULL));
 
     while (true)
     {

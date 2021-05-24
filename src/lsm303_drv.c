@@ -251,7 +251,7 @@ void lms303_accel_vibration_trig_setup(void)
     //err_code = nrf_twi_mngr_perform(&m_nrf_twi_mngr, NULL, lsm303_accel_read_back_transfers, 2, NULL);
     APP_ERROR_CHECK(err_code);
 
-    lms303_accel_int_en();
+    //lms303_accel_int_en();
 }
 
 void lms303_accel_int_en(void) {
