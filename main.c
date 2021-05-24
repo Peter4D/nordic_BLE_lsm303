@@ -387,13 +387,15 @@ void bsp_evt_handler(bsp_event_t bsp_event) {
 
             APP_ERROR_CHECK(app_timer_start(app_tmr_btn_long_press_id, APP_TIMER_TICKS(3000), NULL));
 
-            static uint8_t reg_i = 0;
-            lsm303_read_reg(&lsm_reg_data.reg_array[reg_i].addr, &lsm_reg_data.reg_array[reg_i].data, 1, lsm303_read_end_callback);
-            if(reg_i < ARRAY_SIZE(lsm_reg_data.reg_array) - 1 ) {
-                reg_i++;
-            }else {
-                reg_i = 0;
-            }
+            // static uint8_t reg_i = 0;
+            // lsm303_read_reg(&lsm_reg_data.reg_array[reg_i].addr, &lsm_reg_data.reg_array[reg_i].data, 1, lsm303_read_end_callback);
+            // if(reg_i < ARRAY_SIZE(lsm_reg_data.reg_array) - 1 ) {
+            //     reg_i++;
+            // }else {
+            //     reg_i = 0;
+            // }
+
+            lsm303_read_reg(&lsm_reg_data.reg.int1_src.addr, &lsm_reg_data.reg.int1_src.data, 1, lsm303_read_end_callback);
 
             //lms303_accel_int_en();
             //lsm303_read_reg(&lsm_reg_data.reg.who_i_am.addr, &lsm_reg_data.reg.who_i_am.data, 1, lsm303_read_end_callback);
