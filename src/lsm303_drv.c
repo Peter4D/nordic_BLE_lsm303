@@ -14,6 +14,56 @@
 
 
 
+lsm303_reg_data_t lsm_reg_data = {
+    .reg.who_i_am = {
+        .addr = LSM303_REG_ACCEL_WHO_AM_I,
+        .data = 0xFF,
+        .p_name = "who_i_am"
+    },
+    .reg.int1_src = {
+        .addr = LSM303_REG_ACCEL_INT1_SOURCE,
+        .data = 0xFF,
+        .p_name = "int1_src"
+    },
+    .reg.ctrl_1 = {
+        .addr = LSM303_REG_ACCEL_CTRL_1,
+        .data = 0xFF,
+        .p_name = "ctrl_1"
+    },
+    .reg.ctrl_2 = {
+        .addr = LSM303_REG_ACCEL_CTRL_2,
+        .data = 0xFF,
+        .p_name = "ctrl_2"
+    },
+    .reg.ctrl_3 = {
+        .addr = LSM303_REG_ACCEL_CTRL_3,
+        .data = 0xFF,
+        .p_name = "ctrl_3"
+    },
+    .reg.ctrl_4 = {
+        .addr = LSM303_REG_ACCEL_CTRL_4,
+        .data = 0xFF,
+        .p_name = "ctrl_4"
+    },
+    .reg.ctrl_5 = {
+        .addr = LSM303_REG_ACCEL_CTRL_5,
+        .data = 0xFF,
+        .p_name = "ctrl_5"
+    },
+    .reg.ctrl_6 = {
+        .addr = LSM303_REG_ACCEL_CTRL_6,
+        .data = 0xFF,
+        .p_name = "ctrl_6"
+    },
+    .reg.accel_int1_ths = {
+        .addr = LSM303_REG_ACCEL_INT1_THS,
+        .data = 0xFF,
+        .p_name = "accel_int1_ths"
+    }
+};
+
+
+
 /* TWI instance. */
 nrfx_twi_t m_twi = NRFX_TWI_INSTANCE(TWI_INSTANCE_ID);
 
@@ -21,17 +71,6 @@ nrfx_twi_t m_twi = NRFX_TWI_INSTANCE(TWI_INSTANCE_ID);
 #define MAX_PENDING_TRANSACTIONS    10
 
 NRF_TWI_MNGR_DEF(m_nrf_twi_mngr, MAX_PENDING_TRANSACTIONS, TWI_INSTANCE_ID);
-
-
-#define LSM303_ACCEL_INIT_TRANSFER_COUNT 1
-// Set Active mode.
-/* enable only x and z axis for accelerometer */
-static uint8_t NRF_TWI_MNGR_BUFFER_LOC_IND default_config[] = {LSM303_REG_ACCEL_CTRL_1, 0x55};
-
-static nrf_twi_mngr_transfer_t const lsm303_accel_init_transfers[LSM303_ACCEL_INIT_TRANSFER_COUNT] =
-{
-    NRF_TWI_MNGR_WRITE(LSM303_ACCEL_ADDR, default_config, sizeof(default_config), 0)
-};
 
 static lsm303_data_2_t lsm303_data = {
     .peak_mag_x = AXIS_PEAK_DETECT_INIT("x"),
@@ -56,11 +95,20 @@ void twi_config(void)
 
 
 
+#define LSM303_ACCEL_INIT_TRANSFER_COUNT 1
+// Set Active mode.
+/* enable only x and z axis for accelerometer */
+static uint8_t NRF_TWI_MNGR_BUFFER_LOC_IND default_config[] = {LSM303_REG_ACCEL_CTRL_1, 0x55};
+
+static nrf_twi_mngr_transfer_t const lsm303_accel_init_transfers[LSM303_ACCEL_INIT_TRANSFER_COUNT] =
+{
+    NRF_TWI_MNGR_WRITE(LSM303_ACCEL_ADDR, default_config, sizeof(default_config), 0)
+};
+
 void lsm303_accel_setup(void) {
     
     volatile ret_code_t err_code;
 
-    
     err_code = nrf_twi_mngr_perform(&m_nrf_twi_mngr, NULL, lsm303_accel_init_transfers, \
         LSM303_ACCEL_INIT_TRANSFER_COUNT, NULL);
 
@@ -193,31 +241,55 @@ void lms303_accel_vibration_trig_setup(void)
 {
     ret_code_t err_code;
 
-    //static uint8_t NRF_TWI_MNGR_BUFFER_LOC_IND CTRL_1_cfg[] = {LSM303_REG_ACCEL_CTRL_1, 0x2F};
-    static uint8_t NRF_TWI_MNGR_BUFFER_LOC_IND CTRL_1_cfg[] = {LSM303_REG_ACCEL_CTRL_1, 0x55};
-    //static uint8_t NRF_TWI_MNGR_BUFFER_LOC_IND CTRL_2_cfg[] = {LSM303_REG_ACCEL_CTRL_2, 0x09};
-    static uint8_t NRF_TWI_MNGR_BUFFER_LOC_IND CTRL_2_cfg[] = {LSM303_REG_ACCEL_CTRL_2, 0x01};
-    static uint8_t NRF_TWI_MNGR_BUFFER_LOC_IND CTRL_3_cfg[] = {LSM303_REG_ACCEL_CTRL_3, 0x40};
-    static uint8_t NRF_TWI_MNGR_BUFFER_LOC_IND CTRL_4_cfg[] = {LSM303_REG_ACCEL_CTRL_4, 0x80};
-    static uint8_t NRF_TWI_MNGR_BUFFER_LOC_IND CTRL_5_cfg[] = {LSM303_REG_ACCEL_CTRL_5, 0x08};
-    //static uint8_t NRF_TWI_MNGR_BUFFER_LOC_IND CTRL_5_cfg[] = {LSM303_REG_ACCEL_CTRL_5, 0x88};
-    static uint8_t NRF_TWI_MNGR_BUFFER_LOC_IND CTRL_6_cfg[] = {LSM303_REG_ACCEL_CTRL_6, 0x02};
+    static const lsm303_accel_reg_ctrl_1_t ctrl_1_val = {
+        .bit.ODR    = 5,
+        .bit.x_en   = 1,
+        .bit.z_en   = 1,
+    };
+
+    static const lsm303_accel_reg_ctrl_2_t ctrl_2_val = {
+        .bit.HPIS_1 = 1
+    };
+
+    static const lsm303_accel_reg_ctrl_3_t ctrl_3_val = {
+        .bit.I1_AOI_1 = 1
+    };
+
+    static const lsm303_accel_reg_ctrl_4_t ctrl_4_val = {
+        .bit.BDU = 1
+    };
+
+    static const lsm303_accel_reg_ctrl_5_t ctrl_5_val = {
+        .bit.LIR_INT1 = 1
+    };
+
+    static const lsm303_accel_reg_ctrl_6_t ctrl_6_val = {
+        .bit.H_LACTIVE = 1
+    };
+
+    static const lsm303_accel_reg_int_cfg_t int_en_val = {
+        .bit.Z_HIE = 1
+    };
+
+    static uint8_t NRF_TWI_MNGR_BUFFER_LOC_IND CTRL_1_cfg[2]; 
+    static uint8_t NRF_TWI_MNGR_BUFFER_LOC_IND CTRL_2_cfg[2]; 
+    static uint8_t NRF_TWI_MNGR_BUFFER_LOC_IND CTRL_3_cfg[2]; 
+    static uint8_t NRF_TWI_MNGR_BUFFER_LOC_IND CTRL_4_cfg[2]; 
+    static uint8_t NRF_TWI_MNGR_BUFFER_LOC_IND CTRL_5_cfg[2]; 
+    static uint8_t NRF_TWI_MNGR_BUFFER_LOC_IND CTRL_6_cfg[2]; 
+    static uint8_t NRF_TWI_MNGR_BUFFER_LOC_IND int_en_config[2]; 
+
+    CTRL_1_cfg[0]     = LSM303_REG_ACCEL_CTRL_1;   CTRL_1_cfg[1]    = ctrl_1_val.reg;
+    CTRL_2_cfg[0]     = LSM303_REG_ACCEL_CTRL_2;   CTRL_2_cfg[1]    = ctrl_2_val.reg;
+    CTRL_3_cfg[0]     = LSM303_REG_ACCEL_CTRL_3;   CTRL_3_cfg[1]    = ctrl_3_val.reg;
+    CTRL_4_cfg[0]     = LSM303_REG_ACCEL_CTRL_4;   CTRL_4_cfg[1]    = ctrl_4_val.reg;
+    CTRL_5_cfg[0]     = LSM303_REG_ACCEL_CTRL_5;   CTRL_5_cfg[1]    = ctrl_5_val.reg;
+    CTRL_6_cfg[0]     = LSM303_REG_ACCEL_CTRL_6;   CTRL_6_cfg[1]    = ctrl_6_val.reg;
+    int_en_config[0]  = LSM303_REG_ACCEL_INT1_CFG; int_en_config[1] = int_en_val.reg;
 
     /* interrupt threshold:  x * (accel_range / 127 ) mG  @todo this formula needs to be confirmed */
     //static uint8_t NRF_TWI_MNGR_BUFFER_LOC_IND int_th_config[] = {LSM303_REG_ACCEL_INT1_THS, 0x03};
     static uint8_t NRF_TWI_MNGR_BUFFER_LOC_IND int_th_config[] = {LSM303_REG_ACCEL_INT1_THS, 0x37};
-    
-    /* set interrupt duration 40 ms*/
-    //static uint8_t NRF_TWI_MNGR_BUFFER_LOC_IND int_dur_config[] = {LSM303_REG_ACCEL_INT1_DURATION, 0x00};
-
-
-
-    /* 0b0010 1010 ->
-    b5: Enable interrupt generation on Z low event or on direction recognition.
-    b3: Enable interrupt generation on Y high event or on direction recognition.
-    b1: Enable interrupt generation on X high event or on direction recognition.*/
-    //static uint8_t NRF_TWI_MNGR_BUFFER_LOC_IND int_en_config[] = { LSM303_REG_ACCEL_INT1_CFG, 0x2A};
-    static uint8_t NRF_TWI_MNGR_BUFFER_LOC_IND int_en_config[] = { LSM303_REG_ACCEL_INT1_CFG, 0x20};
 
     static nrf_twi_mngr_transfer_t const lsm303_accel_vib_trig_setup_transfers[] =
     {
@@ -303,8 +375,13 @@ void lsm303_setup_read_back_check(void) {
     };
 
     err_code = nrf_twi_mngr_perform(&m_nrf_twi_mngr, NULL, lsm303_accel_read_back_transfers, 2, NULL);
-
     APP_ERROR_CHECK(err_code);
+
+    lsm303_reg_dsc_t* p_cfg_regs = &lsm_reg_data.reg.ctrl_1;
+    for(uint8_t i = 0; i < 6; ++i) {
+        p_cfg_regs[i].data = m_read_back_reg[i];
+        NRF_LOG_INFO("reg: %s, val: %u",  p_cfg_regs[i].p_name, p_cfg_regs[i].data);
+    }
 }
 
 

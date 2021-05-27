@@ -166,94 +166,6 @@ void read_lsm303_tmr_handler(void* p_context);
 #endif
 
 
-typedef struct _lsm303_reg_dsc_t {
-    uint8_t addr;
-    uint8_t data;
-    char* p_name;
-}lsm303_reg_dsc_t;
-
-// typedef struct _lsm303_reg_data_t {
-//     lsm303_reg_dsc_t who_i_am;
-//     lsm303_reg_dsc_t int1_src;
-// }lsm303_reg_data_t;
-
-typedef union _lsm303_reg_data_t {
-    struct _reg{
-        lsm303_reg_dsc_t who_i_am;
-        lsm303_reg_dsc_t int1_src;
-
-        lsm303_reg_dsc_t ctrl_1;
-        lsm303_reg_dsc_t ctrl_2;
-        lsm303_reg_dsc_t ctrl_3;
-        lsm303_reg_dsc_t ctrl_4;
-        lsm303_reg_dsc_t ctrl_5;
-        lsm303_reg_dsc_t ctrl_6;
-
-        lsm303_reg_dsc_t accel_int1_ths;
-    }reg;
-    lsm303_reg_dsc_t reg_array[9];
-}lsm303_reg_data_t;
-
-// static lsm303_reg_data_t lsm_reg_data = {
-//     .who_i_am = {
-//         .addr = LSM303_REG_ACCEL_WHO_AM_I,
-//         .data = 0xFF,
-//     },
-//     .int1_src = {
-//         .addr = LSM303_REG_ACCEL_INT1_SOURCE,
-//         .data = 0xFF,
-//     }
-// };
-
-static lsm303_reg_data_t lsm_reg_data = {
-    .reg.who_i_am = {
-        .addr = LSM303_REG_ACCEL_WHO_AM_I,
-        .data = 0xFF,
-        .p_name = "who_i_am"
-    },
-    .reg.int1_src = {
-        .addr = LSM303_REG_ACCEL_INT1_SOURCE,
-        .data = 0xFF,
-        .p_name = "int1_src"
-    },
-    .reg.ctrl_1 = {
-        .addr = LSM303_REG_ACCEL_CTRL_1,
-        .data = 0xFF,
-        .p_name = "ctrl_1"
-    },
-    .reg.ctrl_2 = {
-        .addr = LSM303_REG_ACCEL_CTRL_2,
-        .data = 0xFF,
-        .p_name = "ctrl_2"
-    },
-    .reg.ctrl_3 = {
-        .addr = LSM303_REG_ACCEL_CTRL_3,
-        .data = 0xFF,
-        .p_name = "ctrl_3"
-    },
-    .reg.ctrl_4 = {
-        .addr = LSM303_REG_ACCEL_CTRL_4,
-        .data = 0xFF,
-        .p_name = "ctrl_4"
-    },
-    .reg.ctrl_5 = {
-        .addr = LSM303_REG_ACCEL_CTRL_5,
-        .data = 0xFF,
-        .p_name = "ctrl_5"
-    },
-    .reg.ctrl_6 = {
-        .addr = LSM303_REG_ACCEL_CTRL_6,
-        .data = 0xFF,
-        .p_name = "ctrl_6"
-    },
-    .reg.accel_int1_ths = {
-        .addr = LSM303_REG_ACCEL_INT1_THS,
-        .data = 0xFF,
-        .p_name = "accel_int1_ths"
-    }
-};
-
-
 void in_pin_handler(nrf_drv_gpiote_pin_t pin, nrf_gpiote_polarity_t action)
 {
     nrfx_gpiote_out_toggle(PIN_OUT);
@@ -359,10 +271,6 @@ static void app_tmr_calib_handler(void* p_context) {
 static void lsm303_read_end_callback(ret_code_t result, void * p_user_data) {
 
     struct _lsm303_reg_dsc_t* p_my_container = {0};
-    //typeof(p_my_container) typeof_container;
-
-    // uint8_t test_var;
-    // typeof(test_var) test_var2;
 
     p_my_container = gcontainer_of(p_user_data, struct _lsm303_reg_dsc_t, data);
     
@@ -414,7 +322,7 @@ void bsp_evt_handler(bsp_event_t bsp_event) {
             break;
         }
     }
-}
+}   
 
 static void utils_setup(void)
 {
@@ -508,8 +416,9 @@ int main(void)
     twi_config();
     
     lms303_accel_vibration_trig_setup();
-    //lsm303_read_reg(&lsm_reg_data.int1_src.addr, &lsm_reg_data.int1_src.data, 1, lsm303_read_end_callback);
+    
     lsm303_read_reg(&lsm_reg_data.reg.who_i_am.addr, &lsm_reg_data.reg.who_i_am.data, 1, lsm303_read_end_callback);
+
     //lsm303_accel_setup();
     lsm303_mag_setup();
 

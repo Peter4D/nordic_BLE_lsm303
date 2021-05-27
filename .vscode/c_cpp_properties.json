@@ -38,12 +38,13 @@
             "defines": [
                 "_DEBUG",
                 "UNICODE",
-                "_UNICODE"
+                "_UNICODE",
+                "NRF52805_XXAA"
             ],
             "compilerPath": "${env:ZEPHYR_TOOLCHAIN_VARIANT}",
             "cStandard": "c99",
             "cppStandard": "c++17",
-            "intelliSenseMode": "clang-x64"
+            "intelliSenseMode": "gcc-arm"
         }
     ],
     "version": 4

@@ -31,6 +31,30 @@
 extern "C" {
 #endif
 
+typedef struct _lsm303_reg_dsc_t {
+    uint8_t addr;
+    uint8_t data;
+    char* p_name;
+}lsm303_reg_dsc_t;
+
+
+typedef union _lsm303_reg_data_t {
+    struct _reg{
+        lsm303_reg_dsc_t who_i_am;
+        lsm303_reg_dsc_t int1_src;
+
+        lsm303_reg_dsc_t ctrl_1;
+        lsm303_reg_dsc_t ctrl_2;
+        lsm303_reg_dsc_t ctrl_3;
+        lsm303_reg_dsc_t ctrl_4;
+        lsm303_reg_dsc_t ctrl_5;
+        lsm303_reg_dsc_t ctrl_6;
+
+        lsm303_reg_dsc_t accel_int1_ths;
+    }reg;
+    lsm303_reg_dsc_t reg_array[9];
+}lsm303_reg_data_t;
+
 
 typedef union _axis_data_t {
     struct {
@@ -111,6 +135,9 @@ typedef struct _lsm303_data_2_t {
     axis_peak_detect_t peak_mag_z;
     uint8_t mag_dir;
 }lsm303_data_2_t;
+
+
+extern lsm303_reg_data_t lsm_reg_data;
 
 void lsm303_accel_setup(void);
 void lsm303_mag_setup(void);
