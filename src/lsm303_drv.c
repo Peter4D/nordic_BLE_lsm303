@@ -245,6 +245,7 @@ void lms303_accel_vibration_trig_setup(void)
         .bit.ODR    = 5,
         .bit.x_en   = 1,
         .bit.z_en   = 1,
+        .bit.y_en   = 1,
     };
 
     static const lsm303_accel_reg_ctrl_2_t ctrl_2_val = {
@@ -252,7 +253,8 @@ void lms303_accel_vibration_trig_setup(void)
     };
 
     static const lsm303_accel_reg_ctrl_3_t ctrl_3_val = {
-        .bit.I1_AOI_1 = 1
+        .bit.I1_AOI_1 = 1, /** enable interrupt generation on INT_PIN_1 */
+        .bit.I1_AOI_2 = 0  /** @note this has no effect */
     };
 
     static const lsm303_accel_reg_ctrl_4_t ctrl_4_val = {
@@ -268,7 +270,9 @@ void lms303_accel_vibration_trig_setup(void)
     };
 
     static const lsm303_accel_reg_int_cfg_t int_en_val = {
-        .bit.Z_HIE = 1
+        .bit.Y_HIE = 1,
+        .bit.Y_LIE = 0, /** @note This caused constant interrupts triggering */
+        .bit.Z_HIE = 0
     };
 
     static uint8_t NRF_TWI_MNGR_BUFFER_LOC_IND CTRL_1_cfg[2]; 
@@ -289,7 +293,7 @@ void lms303_accel_vibration_trig_setup(void)
 
     /* interrupt threshold:  x * (accel_range / 127 ) mG  @todo this formula needs to be confirmed */
     //static uint8_t NRF_TWI_MNGR_BUFFER_LOC_IND int_th_config[] = {LSM303_REG_ACCEL_INT1_THS, 0x03};
-    static uint8_t NRF_TWI_MNGR_BUFFER_LOC_IND int_th_config[] = {LSM303_REG_ACCEL_INT1_THS, 0x37};
+    static uint8_t NRF_TWI_MNGR_BUFFER_LOC_IND int_th_config[] = {LSM303_REG_ACCEL_INT1_THS, 96};
 
     static nrf_twi_mngr_transfer_t const lsm303_accel_vib_trig_setup_transfers[] =
     {

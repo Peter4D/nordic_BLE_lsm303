@@ -94,12 +94,16 @@
 
 /* angle/a/b/dir/cnt/Y_peak  */
 #ifndef DEBUG_APP_SHOW_QD
-#define DEBUG_APP_SHOW_QD       0
+#define DEBUG_APP_SHOW_QD 0
 #endif
 
 /* show angle/x/z/dir/cnt/y */
 #ifndef DEBUG_APP_SHOW_AXIS
-#define DEBUG_APP_SHOW_AXIS     0
+#define DEBUG_APP_SHOW_AXIS 0
+#endif
+
+#ifndef DEBUG_APP_SHOW_ACCEL_AXIS
+#define DEBUG_APP_SHOW_ACCEL_AXIS 0
 #endif
 
 
@@ -247,6 +251,14 @@ static void app_tmr_print_out_handler(void* p_context) {
     p_lsm303_data->mag.axis.bit.y
     );
 
+    #elif ( DEBUG_APP_SHOW_ACCEL_AXIS == 1)
+
+    NRF_LOG_INFO("A:x/y/z | %d, %d, %d\r",
+    p_lsm303_data->accel.axis.bit.x, 
+    p_lsm303_data->accel.axis.bit.y, 
+    p_lsm303_data->accel.axis.bit.z
+    );
+
     #endif
 
     // static uint8_t who_i_am_reg_addr = LSM303_REG_ACCEL_WHO_AM_I;
@@ -306,8 +318,7 @@ void bsp_evt_handler(bsp_event_t bsp_event) {
             lsm303_read_reg(&lsm_reg_data.reg.int1_src.addr, &lsm_reg_data.reg.int1_src.data, 1, lsm303_read_end_callback);
 
             //lms303_accel_int_en();
-            //lsm303_read_reg(&lsm_reg_data.reg.who_i_am.addr, &lsm_reg_data.reg.who_i_am.data, 1, lsm303_read_end_callback);
-
+        
             break;
         }
         case BSP_EVENT_KEY_1:
