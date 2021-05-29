@@ -145,6 +145,7 @@ APP_TIMER_DEF(app_tmr_calib_id);
 void read_lsm303_tmr_handler(void* p_context);
 
 #define APP_LED_RED BSP_LED_0
+#define APP_GREEN_RED BSP_LED_1
 
 #ifdef BSP_BUTTON_0
     #define PIN_IN BSP_BUTTON_0
@@ -161,9 +162,6 @@ void read_lsm303_tmr_handler(void* p_context);
     #error "Please indicate output pin"
 #endif
 
-#ifndef PIN_OUT
-    #error "Please indicate output pin"
-#endif
 
 #ifndef APP_LED_RED
 #define APP_LED_RED BSP_BOARD_LED_0
@@ -211,7 +209,8 @@ static void app_tmr_btn_long_press_handler(void* p_context) {
 
         p_lsm303_data->mag.qd_cnt = 0;
 
-        nrfx_gpiote_out_toggle(PIN_OUT);
+        //nrfx_gpiote_out_toggle(PIN_OUT);
+        //bsp_board_led_invert(BSP_BOARD_LED_0);
     }
 }
 
@@ -326,9 +325,9 @@ void bsp_evt_handler(bsp_event_t bsp_event) {
             static uint32_t int_cnt = 0;
             NRF_LOG_INFO("lsm303_INT %u\r\n", ++int_cnt);
 
+            bsp_board_led_invert(BSP_BOARD_LED_0);
 
             //lms303_accel_int_disable();
-            //lsm303_read_reg(&addr_reg, &reg_data[0], 1, lsm303_read_end_callback);
             lsm303_read_reg(&lsm_reg_data.reg.int1_src.addr, &lsm_reg_data.reg.int1_src.data, 1, lsm303_read_end_callback);
             break;
         }
