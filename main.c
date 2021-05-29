@@ -354,7 +354,6 @@ static void utils_setup(void)
 
 
 void read_lsm303_tmr_handler(void* p_context) {
-    //static uint32_t heart_beat = 0;
     
     // Signal on LED that something is going on.
     bsp_board_led_invert(BSP_BOARD_LED_1);
@@ -424,9 +423,10 @@ int main(void)
     
 
     twi_config();
+
+    nrf_delay_us(3000);
     
     lms303_accel_vibration_trig_setup();
-    
     lsm303_read_reg(&lsm_reg_data.reg.who_i_am.addr, &lsm_reg_data.reg.who_i_am.data, 1, lsm303_read_end_callback);
 
     //lsm303_accel_setup();

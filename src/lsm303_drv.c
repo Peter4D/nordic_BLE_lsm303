@@ -236,7 +236,6 @@ void lsm303_read_reg(uint8_t* const p_reg_addr, uint8_t* p_data, size_t size,
 }
 
 
-
 void lms303_accel_vibration_trig_setup(void) 
 {
     ret_code_t err_code;
@@ -292,7 +291,6 @@ void lms303_accel_vibration_trig_setup(void)
     int_en_config[0]  = LSM303_REG_ACCEL_INT1_CFG; int_en_config[1] = int_en_val.reg;
 
     /* interrupt threshold:  x * (accel_range / 127 ) mG  @todo this formula needs to be confirmed */
-    //static uint8_t NRF_TWI_MNGR_BUFFER_LOC_IND int_th_config[] = {LSM303_REG_ACCEL_INT1_THS, 0x03};
     static uint8_t NRF_TWI_MNGR_BUFFER_LOC_IND int_th_config[] = {LSM303_REG_ACCEL_INT1_THS, 96};
 
     static nrf_twi_mngr_transfer_t const lsm303_accel_vib_trig_setup_transfers[] =
@@ -319,15 +317,10 @@ void lms303_accel_vibration_trig_setup(void)
         .number_of_transfers = sizeof(lsm303_accel_vib_trig_setup_transfers) / sizeof(lsm303_accel_vib_trig_setup_transfers[0])
     };
 
-    //APP_ERROR_CHECK(nrf_twi_mngr_schedule(&m_nrf_twi_mngr, &transaction));
-    //err_code = nrf_twi_mngr_schedule(&m_nrf_twi_mngr, &transaction));
-
-    //err_code = nrf_twi_mngr_perform(&m_nrf_twi_mngr, NULL, lsm303_accel_vib_trig_setup_transfers, 9, NULL);
     err_code = nrf_twi_mngr_perform(&m_nrf_twi_mngr, NULL, lsm303_accel_vib_trig_setup_transfers, ARRAY_SIZE(lsm303_accel_vib_trig_setup_transfers), NULL);
-    //err_code = nrf_twi_mngr_perform(&m_nrf_twi_mngr, NULL, lsm303_accel_read_back_transfers, 2, NULL);
+    //err_code = nrf_twi_mngr_schedule(&m_nrf_twi_mngr, &transaction));
     APP_ERROR_CHECK(err_code);
 
-    //lms303_accel_int_en();
 }
 
 void lms303_accel_int_en(void) {
