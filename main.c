@@ -79,7 +79,7 @@
 // #include "lm303_accel.h"
 // #include "lm303_mag.h"
 #include "lsm303_drv.h"
-
+#include "flash_storage.h"
 #include <math.h>
 
 // #define container_of(ptr, type, member) ({                      \
@@ -111,9 +111,28 @@
 #define TWI_INSTANCE_ID     0
 
 /* UI */
-#define BTN_PIN             5
-#define BTN_POLL_MS         100
-#define LONG_BTN_TIMEOUT_MS 3000
+#define BTN_PIN                   5
+#define BTN_POLL_MS               100
+#define LONG_BTN_TIMEOUT_MS       5000
+#define LED_SHORT_BLINK_TIME_MS   100
+#define LED_LONG_BLINK_TIME_MS    1000
+#define LED_1                     4
+#define LED_2                     20
+#define LED_GREEN                 LED_1
+#define LED_RED                   LED_2
+
+/* Arbitary calibration constants */
+#define CALIBRATION_TIMEOUT_MS    10000 /* Timeout after enabling calibration and no action was taken */
+
+typedef enum{
+  GREEN_OFF = 1 << 0,
+  RED_OFF   = 1 << 1,
+  BOTH_OFF  = GREEN_OFF | RED_OFF,
+} led_timeout_handle_t;
+
+#define led_off nrf_gpio_pin_clear
+#define led_on nrf_gpio_pin_set
+#define led_toggle nrf_gpio_pin_toggle
 
 #define ACCEL_INT_PIN       14
 
@@ -138,14 +157,23 @@ typedef struct  _app_CB_t
     int8_t key_side;
 }app_CB_t;
 
+typedef struct{
+  uint8_t calibrated  :1;
+  uint8_t calibrating :1;
+  uint8_t locked      :1;
+} application_state_t;
+
 static app_CB_t m_app_CB;
+
+static application_state_t app_state;
 
 /* Buffer for samples read from accelerometer sensor. */
 
 APP_TIMER_DEF(read_lsm303_tmr_id);
 APP_TIMER_DEF(app_tmr_btn_long_press_id);
 APP_TIMER_DEF(app_tmr_print_out_id);
-APP_TIMER_DEF(app_tmr_calib_id);
+APP_TIMER_DEF(app_tmr_led_blink_id);
+APP_TIMER_DEF(app_tmr_calibration_id);
 
 void read_lsm303_tmr_handler(void* p_context);
 
@@ -215,7 +243,7 @@ static void app_tmr_print_out_handler(void* p_context) {
     // lsm303_read_reg(&who_i_am_reg_addr, &m_who_i_am, 1, test_i2c_read_callback);
 }
 
-static void app_tmr_calib_handler(void* p_context) {
+static bool calib_handler(void* p_context) {
     lsm303_data_2_t* p_lsm303_data = lsm303_data_p_get();
     int32_t qd_cnt = p_lsm303_data->mag.qd_cnt;
     
@@ -227,7 +255,9 @@ static void app_tmr_calib_handler(void* p_context) {
         }else {
             m_app_CB.key_side = -1;
         }
+        return true;
     }
+    return false;
 }
 
 static void lsm303_read_end_callback(ret_code_t result, void * p_user_data) {
@@ -243,16 +273,72 @@ static void lsm303_read_end_callback(ret_code_t result, void * p_user_data) {
 static uint8_t reg_data[1];
 static uint8_t addr_reg = LSM303_REG_ACCEL_INT1_SOURCE;
 
+static void calibration_timeout_handler(void* calibration_ctx_s)
+{
+    app_state.calibrating = false;
+    NRF_LOG_INFO("Calibration timeout");
+}
+
+static void led_timeout_handler(void *led_state_s)
+{
+    led_timeout_handle_t led_state = (led_timeout_handle_t)led_state_s;
+    if(led_state & GREEN_OFF){
+      led_off(LED_GREEN);
+    }
+    if(led_state & RED_OFF){
+      led_off(LED_RED);
+    } 
+}
+
 static void button_short_press(void)
 {
-    lsm303_data_2_t* p_lsm303_data = lsm303_data_p_get();
-    p_lsm303_data->mag.qd_cnt = 0;
     NRF_LOG_INFO("Short press");
+    read_accel(); /* @note When SD will be running, this might not work as currently these are synchronous read requests */
+    read_mag();
+
+    // Per spec, if key is in "reset" state then both leds blink
+    uint32_t off_action;
+    if(app_state.calibrated){
+      led_on(LED_GREEN);
+      led_on(LED_RED);
+      off_action = BOTH_OFF;
+    }
+    else if(app_state.locked){
+      led_on(LED_GREEN);
+      off_action = GREEN_OFF;
+      // Signal if door is locked or not
+    }
+    else{
+      led_on(LED_RED);
+      off_action = RED_OFF;
+    }
+    app_timer_start(app_tmr_led_blink_id,APP_TIMER_TICKS(LED_SHORT_BLINK_TIME_MS),(void*)off_action);
+}
+
+static void calibration_start(void)
+{
+    lsm303_accel_reg_int_cfg_t cfg = {.reg = ENABLE_ALL_AXIS_INT};
+    lms303_accel_int_en(cfg);
+    NRF_LOG_INFO("Calibration start");
+    read_accel(); /* @note When SD will be running, this might not work as currently these are synchronous read requests */
+    read_mag();
+    
+    app_state.calibrating = true;
+    ret_code_t ret = app_timer_start(app_tmr_calibration_id,APP_TIMER_TICKS(CALIBRATION_TIMEOUT_MS),NULL);
+    APP_ERROR_CHECK(ret);
 }
 
 static void button_long_press(void)
 {
-    NRF_LOG_INFO("Long press");
+    if(!app_state.calibrating)
+    {
+      calibration_start();
+      led_on(LED_GREEN);
+      app_timer_start(app_tmr_led_blink_id,APP_TIMER_TICKS(LED_SHORT_BLINK_TIME_MS),(void*)GREEN_OFF);
+    }
+    else{
+      NRF_LOG_INFO("Already calibrating");
+    }
 }
 
 static void button_timeout_handler(void* unused)
@@ -283,18 +369,38 @@ static void button_handler(uint8_t pin_no, uint8_t button_action) {
     }
 }
 
-void bsp_evt_handler(bsp_event_t bsp_event) {}
+static void bsp_evt_handler(bsp_event_t bsp_event) {}
+
+static uint8_t int_counters[8];
+static uint8_t compare_counters[8];
 
 static void accel_src_handle(lsm303_accel_reg_int_src_t src)
 {
-    ASSERT(src.bit.I_A == 1);
-    static uint32_t int_cnt = 0;
-    NRF_LOG_INFO("accel_src_handle %u",int_cnt++);
+    ASSERT(src.bit.I_A);
+    static int cnt;
     if(src.bit.Y_H){
-      read_accel();
+      read_accel(); /* @note When SD will be running, this might not work as currently these are synchronous read requests */
       read_mag();
+      NRF_LOG_INFO("Int cnt %d, int val %u",cnt++,src.reg);
       app_tmr_print_out_handler(NULL);
+      NRF_LOG_FLUSH();
     }
+    else if(src.bit.Y_L){
+      NRF_LOG_INFO("Y_L");
+    }
+    else if(src.bit.Z_H){
+      NRF_LOG_INFO("Z_H");
+    }
+    else if(src.bit.Z_L){
+      NRF_LOG_INFO("Z_L");
+    }
+    else if(src.bit.X_H){
+      NRF_LOG_INFO("X_H");
+    }
+    else if(src.bit.X_L){
+      NRF_LOG_INFO("X_L");
+    }
+
 }
 
 static void accel_int_read_cb(ret_code_t result, void * p_user_data)
@@ -302,6 +408,7 @@ static void accel_int_read_cb(ret_code_t result, void * p_user_data)
     if(result == NRF_SUCCESS)
     {
       struct _lsm303_reg_dsc_t* reg = gcontainer_of(p_user_data, struct _lsm303_reg_dsc_t, data);
+      ASSERT(reg->addr == LSM303_REG_ACCEL_CLICK_SRC);
       accel_src_handle((lsm303_accel_reg_int_src_t)reg->data);
     }
     else
@@ -312,9 +419,9 @@ static void accel_int_read_cb(ret_code_t result, void * p_user_data)
 
 static void accel_int_handler(nrf_drv_gpiote_pin_t pin, nrf_gpiote_polarity_t action)
 {
-  (void)pin;
-  (void)action;
-  lsm303_read_reg(&lsm_reg_data.reg.int1_src.addr, &lsm_reg_data.reg.int1_src.data, 1, accel_int_read_cb);
+    (void)pin;
+    (void)action;
+    lsm303_read_reg(&lsm_reg_data.reg.int1_src.addr, &lsm_reg_data.reg.int1_src.data, 1, accel_int_read_cb);
 }
 
 static void setup_accel_pin_int(void)
@@ -343,6 +450,9 @@ static void ui_init(void)
 
     err_code = app_button_enable();
     APP_ERROR_CHECK(err_code);
+
+    nrf_gpio_cfg_output(LED_GREEN);
+    nrf_gpio_cfg_output(LED_RED);
 }
 
 static void utils_setup(void)
@@ -351,11 +461,6 @@ static void utils_setup(void)
     APP_ERROR_CHECK(err_code);
     ui_init();
 
-    err_code = bsp_init(BSP_INIT_LEDS,bsp_evt_handler); // Use BSP only for leds, remove later as it takes way too much code
-    APP_ERROR_CHECK(err_code);
-
-    setup_accel_pin_int();
-
     err_code = nrf_pwr_mgmt_init();
     APP_ERROR_CHECK(err_code);
 }
@@ -363,11 +468,9 @@ static void utils_setup(void)
 
 void read_lsm303_tmr_handler(void* p_context) {
     
-    // Signal on LED that something is going on.
-    bsp_board_led_invert(BSP_BOARD_LED_1);
-    
     read_accel();
     read_mag();
+    lsm303_data_2_t* p_lsm303_data = lsm303_data_p_get();
 
     NRF_LOG_FLUSH();
 }
@@ -391,21 +494,39 @@ static void lfclk_request(void)
     nrfx_clock_lfclk_start();
 }
 
+static void flash_storage_read_cb(void* data,int len)
+{
+    
+}
 
+
+APP_TIMER_DEF(reread_timer); // This is kinda hacky for now, because I don't want to change how read_accel works
+
+static bool timer_running = false;
+void read_lsm303(void *unused)
+{
+  read_accel();
+  read_mag();
+  timer_running = false;
+}
 /**
  * @brief Function for main application entry.
  */
 int main(void)
 {
+    STATIC_ASSERT_MSG(sizeof(app_state) <= 4,"Size too big");
     
+    int32_t reset_reason = NRF_POWER->RESETREAS;
+
     APP_ERROR_CHECK(NRF_LOG_INIT(NULL));
     NRF_LOG_DEFAULT_BACKENDS_INIT();
 
     utils_setup();
     
     lfclk_request();
-    
-    
+
+    flash_storage_init(flash_storage_read_cb);
+
     app_timer_create(&read_lsm303_tmr_id,
                         APP_TIMER_MODE_REPEATED,
                         read_lsm303_tmr_handler);
@@ -414,31 +535,66 @@ int main(void)
                         APP_TIMER_MODE_REPEATED,
                         app_tmr_print_out_handler);
 
-    app_timer_create(&app_tmr_calib_id,
-                        APP_TIMER_MODE_REPEATED,
-                        app_tmr_calib_handler);
-    
+    app_timer_create(&app_tmr_led_blink_id,
+                        APP_TIMER_MODE_SINGLE_SHOT,
+                        led_timeout_handler);
+
+    app_timer_create(&app_tmr_calibration_id,
+                        APP_TIMER_MODE_SINGLE_SHOT,
+                        calibration_timeout_handler);
 
     twi_config();
 
-    nrf_delay_us(3000);
+    nrf_delay_us(6000); // Datasheet says 5ms of boot time, stay safe
     
+    setup_accel_pin_int();
     lms303_accel_vibration_trig_setup();
     lsm303_read_reg(&lsm_reg_data.reg.who_i_am.addr, &lsm_reg_data.reg.who_i_am.data, 1, lsm303_read_end_callback);
 
-    //lsm303_accel_setup();
     lsm303_mag_setup();
 
     lsm303_setup_read_back_check();
+    
+    app_timer_start(read_lsm303_tmr_id,APP_TIMER_TICKS(100),NULL);
+    app_timer_start(app_tmr_print_out_id,APP_TIMER_TICKS(100),NULL);
 
-    //APP_ERROR_CHECK(app_timer_start(read_lsm303_tmr_id, APP_TIMER_TICKS(10), NULL));
-    //APP_ERROR_CHECK(app_timer_start(app_tmr_print_out_id, APP_TIMER_TICKS(100), NULL));
-
+ 
+    app_timer_create(&reread_timer,
+                    APP_TIMER_MODE_SINGLE_SHOT,
+                    read_lsm303);
+    
     while (true)
     {
-        //__WFE();
         NRF_LOG_FLUSH();
         nrf_pwr_mgmt_run();
+        if(app_state.calibrating)
+        {
+          bool calib_result;
+          lsm303_data_2_t initial_data;
+          lsm303_data_2_t* p_lsm303_data = lsm303_data_p_get();
+          memcpy(&initial_data,p_lsm303_data,sizeof(initial_data));
+          app_tmr_print_out_handler(NULL);
+          app_timer_start(reread_timer,APP_TIMER_TICKS(10),NULL);
+          timer_running = true;
+          while(app_state.calibrating && !(calib_result = calib_handler(NULL)))
+          {
+            if(!timer_running){
+              app_timer_start(reread_timer,APP_TIMER_TICKS(10),NULL);
+              timer_running = true;
+            }
+            if(NRF_LOG_PROCESS() == false){
+              nrf_pwr_mgmt_run();
+            }
+          }
+          if(calib_result){
+            NRF_LOG_INFO("Key turned full circle");
+          }
+         
+          NRF_LOG_INFO("calibrating %d calib_result %d",app_state.calibrating,calib_result);
+          app_timer_stop(app_tmr_calibration_id);
+          app_state.calibrating = false;
+          timer_running = false;
+        }
     }
 }
 

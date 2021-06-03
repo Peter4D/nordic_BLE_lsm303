@@ -143,7 +143,7 @@ void lsm303_accel_setup(void);
 void lsm303_mag_setup(void);
 void lms303_accel_vibration_trig_setup(void);
 
-void lms303_accel_int_en(void);
+void lms303_accel_int_en(lsm303_accel_reg_int_cfg_t int_cfg);
 void lms303_accel_int_disable(void);
 
 void lsm303_setup_read_back_check(void);

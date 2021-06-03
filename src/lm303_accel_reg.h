@@ -89,6 +89,8 @@ typedef union _lsm303_accel_reg_int_cfg_t {
     uint8_t reg;
 }lsm303_accel_reg_int_cfg_t;
 
+#define ENABLE_ALL_AXIS_INT (0x3F)
+
 typedef union _lsm303_accel_reg_ctrl_1_t {
     struct {
         uint8_t x_en     :1; // X axis enable

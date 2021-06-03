@@ -50,10 +50,7 @@ extern "C" {
 // LEDs definitions for Smart key
 #define LEDS_NUMBER    2
 
-#define LED_1          4
-#define LED_2          20
-#define LED_GREEN       LED_1
-#define LED_RED         LED_2
+
 
 
 #define LEDS_ACTIVE_STATE 1

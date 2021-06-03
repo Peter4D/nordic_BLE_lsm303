@@ -85,7 +85,7 @@ void twi_config(void)
        .scl                = ARDUINO_SCL_PIN,
        .sda                = ARDUINO_SDA_PIN,
        .frequency          = NRF_DRV_TWI_FREQ_100K,
-       .interrupt_priority = APP_IRQ_PRIORITY_LOWEST,
+       .interrupt_priority = NRFX_TWI_DEFAULT_CONFIG_IRQ_PRIORITY,
        .clear_bus_init     = false
     };
 
@@ -269,8 +269,8 @@ void lms303_accel_vibration_trig_setup(void)
     };
 
     static const lsm303_accel_reg_int_cfg_t int_en_val = {
-        .bit.Y_HIE = 1,
-        .bit.X_LIE = 0, /** @note This caused constant interrupts triggering */
+        .bit.Y_HIE = 0,
+        .bit.Y_LIE = 0, /** @note This caused constant interrupts triggering */
         .bit.Z_LIE = 0,
     };
 
@@ -291,7 +291,7 @@ void lms303_accel_vibration_trig_setup(void)
     int_en_config[0]  = LSM303_REG_ACCEL_INT1_CFG; int_en_config[1] = int_en_val.reg;
 
     /* interrupt threshold:  x * (accel_range / 127 ) mG  @todo this formula needs to be confirmed */
-    static uint8_t NRF_TWI_MNGR_BUFFER_LOC_IND int_th_config[] = {LSM303_REG_ACCEL_INT1_THS, 0x37};
+    static uint8_t NRF_TWI_MNGR_BUFFER_LOC_IND int_th_config[] = {LSM303_REG_ACCEL_INT1_THS, 84};
 
     static nrf_twi_mngr_transfer_t const lsm303_accel_vib_trig_setup_transfers[] =
     {
@@ -323,18 +323,21 @@ void lms303_accel_vibration_trig_setup(void)
 
 }
 
-void lms303_accel_int_en(void) {
+#include "nrf_pwr_mgmt.h" // Temporary test hack
+
+void lms303_accel_int_en(lsm303_accel_reg_int_cfg_t int_cfg) {
     ret_code_t err_code;
 
-    //static uint8_t NRF_TWI_MNGR_BUFFER_LOC_IND int_en[] = { LSM303_REG_ACCEL_INT1_CFG, 0x2A};
-    static uint8_t NRF_TWI_MNGR_BUFFER_LOC_IND int_en[] = { LSM303_REG_ACCEL_INT1_CFG, 0x08};
+    static uint8_t NRF_TWI_MNGR_BUFFER_LOC_IND int_en[] = { LSM303_REG_ACCEL_INT1_CFG, 0};
+    int_en[1] = int_cfg.reg;
+
 
     static nrf_twi_mngr_transfer_t const lsm303_accel_int_en[] =
     {
         NRF_TWI_MNGR_WRITE(LSM303_ACCEL_ADDR, int_en, sizeof(int_en), 0),
     };
 
-    err_code = nrf_twi_mngr_perform(&m_nrf_twi_mngr, NULL, lsm303_accel_int_en, ARRAY_SIZE(lsm303_accel_int_en), NULL);
+    err_code = nrf_twi_mngr_perform(&m_nrf_twi_mngr, NULL, lsm303_accel_int_en, ARRAY_SIZE(lsm303_accel_int_en), nrf_pwr_mgmt_run);
     APP_ERROR_CHECK(err_code);
 
 }
