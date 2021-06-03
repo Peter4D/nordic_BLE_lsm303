@@ -558,6 +558,11 @@
               <FileType>1</FileType>
               <FilePath>..\..\..\..\..\..\components\libraries\button\app_button.c</FilePath>
             </File>
+            <File>
+              <FileName>app_gpiote.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>..\..\..\..\..\..\components\libraries\gpiote\app_gpiote.c</FilePath>
+            </File>
           </Files>
         </Group>
         <Group>
@@ -981,7 +986,7 @@
               <MiscControls>--reduce_paths</MiscControls>
               <Define>BOARD_SMART_KEY CONFIG_GPIO_AS_PINRESET FLOAT_ABI_SOFT  NRF52805_XXAA NRFX_COREDEP_DELAY_US_LOOP_CYCLES=7  __HEAP_SIZE=2048 __STACK_SIZE=2048 DEBUG</Define>
               <Undefine></Undefine>
-              <IncludePath>..\..\..\config;..\..\..\..\..\..\components;..\..\..\..\..\..\components\boards;..\..\..\..\..\..\components\drivers_nrf\nrf_soc_nosd;..\..\..\..\..\..\components\libraries\atomic;..\..\..\..\..\..\components\libraries\balloc;..\..\..\..\..\..\components\libraries\bsp;..\..\..\..\..\..\components\libraries\delay;..\..\..\..\..\..\components\libraries\experimental_section_vars;..\..\..\..\..\..\components\libraries\log;..\..\..\..\..\..\components\libraries\log\src;..\..\..\..\..\..\components\libraries\memobj;..\..\..\..\..\..\components\libraries\ringbuf;..\..\..\..\..\..\components\libraries\strerror;..\..\..\..\..\..\components\libraries\util;..\..\..;..\..\..\..\..\..\external\fprintf;..\..\..\..\..\..\external\segger_rtt;..\..\..\..\..\..\integration\nrfx;..\..\..\..\..\..\modules\nrfx;..\..\..\..\..\..\modules\nrfx\drivers\include;..\..\..\..\..\..\modules\nrfx\hal;..\config;..\..\..\..\..\..\components\libraries\timer;..\..\..\..\..\..\components\libraries\button;..\..\..\..\..\..\components\libraries\bsp;..\..\..\..\..\..\modules\nrfx\drivers;..\..\..\..\..\..\integration\nrfx\legacy;..\..\..\src;..\..\..\..\..\..\components\libraries\twi_mngr;..\..\..\..\..\..\components\libraries\queue;..\..\..\..\..\..\components\libraries\mutex;..\..\..\..\..\..\components\libraries\pwr_mgmt</IncludePath>
+              <IncludePath>..\..\..\config;..\..\..\..\..\..\components;..\..\..\..\..\..\components\boards;..\..\..\..\..\..\components\drivers_nrf\nrf_soc_nosd;..\..\..\..\..\..\components\libraries\atomic;..\..\..\..\..\..\components\libraries\balloc;..\..\..\..\..\..\components\libraries\bsp;..\..\..\..\..\..\components\libraries\delay;..\..\..\..\..\..\components\libraries\experimental_section_vars;..\..\..\..\..\..\components\libraries\log;..\..\..\..\..\..\components\libraries\log\src;..\..\..\..\..\..\components\libraries\memobj;..\..\..\..\..\..\components\libraries\ringbuf;..\..\..\..\..\..\components\libraries\strerror;..\..\..\..\..\..\components\libraries\util;..\..\..;..\..\..\..\..\..\external\fprintf;..\..\..\..\..\..\external\segger_rtt;..\..\..\..\..\..\integration\nrfx;..\..\..\..\..\..\modules\nrfx;..\..\..\..\..\..\modules\nrfx\drivers\include;..\..\..\..\..\..\modules\nrfx\hal;..\config;..\..\..\..\..\..\components\libraries\timer;..\..\..\..\..\..\components\libraries\button;..\..\..\..\..\..\components\libraries\bsp;..\..\..\..\..\..\modules\nrfx\drivers;..\..\..\..\..\..\integration\nrfx\legacy;..\..\..\src;..\..\..\..\..\..\components\libraries\twi_mngr;..\..\..\..\..\..\components\libraries\queue;..\..\..\..\..\..\components\libraries\mutex;..\..\..\..\..\..\components\libraries\pwr_mgmt;..\..\..\..\..\..\components\libraries\gpiote</IncludePath>
             </VariousControls>
           </Cads>
           <Aads>
@@ -1199,6 +1204,11 @@
               <FileName>app_button.c</FileName>
               <FileType>1</FileType>
               <FilePath>..\..\..\..\..\..\components\libraries\button\app_button.c</FilePath>
+            </File>
+            <File>
+              <FileName>app_gpiote.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>..\..\..\..\..\..\components\libraries\gpiote\app_gpiote.c</FilePath>
             </File>
           </Files>
         </Group>

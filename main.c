@@ -65,12 +65,12 @@
 #include "nrf_drv_gpiote.h"
 
 
-
 #include "nrf_log.h"
 #include "nrf_log_ctrl.h"
 #include "nrf_log_default_backends.h"
 
 #include "app_timer.h"
+#include "app_gpiote.h"
 
 #include "nrf_drv_clock.h"
 #include "nrfx_clock.h"
@@ -111,12 +111,6 @@
 #define TWI_INSTANCE_ID     0
 
 #define BTN_ID_USER         0
-
-/* Common addresses definition for temperature sensor. */
-//#define LSM303_ACCEL_ADDR          (0x90U >> 1)
-
-//#define LSM303_ACCEL_ADDR    (0x32 >> 1)
-//#define LSM303_MAG_ADDR      (0x3C >> 1)
 
 #define LM75B_REG_TEMP      0x00U
 #define LM75B_REG_CONF      0x01U
@@ -400,6 +394,8 @@ int main(void)
 
 
     utils_setup();
+
+    //APP_GPIOTE_INIT(1);
     
     lfclk_request();
     
@@ -423,7 +419,7 @@ int main(void)
     
 
     twi_config();
-
+    /** wait for lsm303 to boot-up */
     nrf_delay_us(3000);
     
     lms303_accel_vibration_trig_setup();
