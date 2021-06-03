@@ -98,7 +98,7 @@ void twi_config(void)
 #define LSM303_ACCEL_INIT_TRANSFER_COUNT 1
 // Set Active mode.
 /* enable only x and z axis for accelerometer */
-static uint8_t NRF_TWI_MNGR_BUFFER_LOC_IND default_config[] = {LSM303_REG_ACCEL_CTRL_1, 0x55};
+static uint8_t NRF_TWI_MNGR_BUFFER_LOC_IND default_config[] = {LSM303_REG_ACCEL_CTRL_1, 0x55,LSM303_REG_ACCEL_CTRL_5,0x80};
 
 static nrf_twi_mngr_transfer_t const lsm303_accel_init_transfers[LSM303_ACCEL_INIT_TRANSFER_COUNT] =
 {
@@ -184,7 +184,7 @@ void read_accel(void)
     //  will be referred after this function returns]
     static nrf_twi_mngr_transfer_t const transfers[] =
     {
-        LM303_READ_ACCEL(&m_accel_out_reg[0])
+        LM303_READ_ACCEL(m_accel_out_reg)
     };
     static nrf_twi_mngr_transaction_t NRF_TWI_MNGR_BUFFER_LOC_IND transaction =
     {
@@ -270,8 +270,8 @@ void lms303_accel_vibration_trig_setup(void)
 
     static const lsm303_accel_reg_int_cfg_t int_en_val = {
         .bit.Y_HIE = 1,
-        .bit.Y_LIE = 0, /** @note This caused constant interrupts triggering */
-        .bit.Z_HIE = 0
+        .bit.X_LIE = 0, /** @note This caused constant interrupts triggering */
+        .bit.Z_LIE = 0,
     };
 
     static uint8_t NRF_TWI_MNGR_BUFFER_LOC_IND CTRL_1_cfg[2]; 
@@ -291,7 +291,7 @@ void lms303_accel_vibration_trig_setup(void)
     int_en_config[0]  = LSM303_REG_ACCEL_INT1_CFG; int_en_config[1] = int_en_val.reg;
 
     /* interrupt threshold:  x * (accel_range / 127 ) mG  @todo this formula needs to be confirmed */
-    static uint8_t NRF_TWI_MNGR_BUFFER_LOC_IND int_th_config[] = {LSM303_REG_ACCEL_INT1_THS, 96};
+    static uint8_t NRF_TWI_MNGR_BUFFER_LOC_IND int_th_config[] = {LSM303_REG_ACCEL_INT1_THS, 0x37};
 
     static nrf_twi_mngr_transfer_t const lsm303_accel_vib_trig_setup_transfers[] =
     {

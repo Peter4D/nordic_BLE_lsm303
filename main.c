@@ -99,7 +99,7 @@
 
 /* show angle/x/z/dir/cnt/y */
 #ifndef DEBUG_APP_SHOW_AXIS
-#define DEBUG_APP_SHOW_AXIS 0
+#define DEBUG_APP_SHOW_AXIS 1
 #endif
 
 #ifndef DEBUG_APP_SHOW_ACCEL_AXIS
@@ -110,7 +110,12 @@
 /* TWI instance ID. */
 #define TWI_INSTANCE_ID     0
 
-#define BTN_ID_USER         0
+/* UI */
+#define BTN_PIN             5
+#define BTN_POLL_MS         100
+#define LONG_BTN_TIMEOUT_MS 3000
+
+#define ACCEL_INT_PIN       14
 
 #define LM75B_REG_TEMP      0x00U
 #define LM75B_REG_CONF      0x01U
@@ -141,13 +146,6 @@ void read_lsm303_tmr_handler(void* p_context);
 #define APP_LED_RED BSP_LED_0
 #define APP_GREEN_RED BSP_LED_1
 
-#ifdef BSP_BUTTON_0
-    #define PIN_IN BSP_BUTTON_0
-#endif
-#ifndef PIN_IN
-    #error "Please indicate input pin"
-#endif
-
 #ifdef APP_LED_RED
     #define PIN_OUT APP_LED_RED
 #endif
@@ -161,53 +159,6 @@ void read_lsm303_tmr_handler(void* p_context);
 #define APP_LED_RED BSP_BOARD_LED_0
 #endif
 
-
-void in_pin_handler(nrf_drv_gpiote_pin_t pin, nrf_gpiote_polarity_t action)
-{
-    nrfx_gpiote_out_toggle(PIN_OUT);
-}
-/**
- * @brief Function for configuring: PIN_IN pin for input, PIN_OUT pin for output,
- * and configures GPIOTE to give an interrupt on pin change.
- */
-static void gpio_init(void)
-{
-    ret_code_t err_code;
-
-    err_code = nrfx_gpiote_init();
-    APP_ERROR_CHECK(err_code);
-
-    nrfx_gpiote_out_config_t out_config = GPIOTE_CONFIG_OUT_SIMPLE(false);
-
-    err_code = nrfx_gpiote_out_init(PIN_OUT, &out_config);
-    APP_ERROR_CHECK(err_code);
-
-
-    //nrfx_gpiote_in_config_t in_config = NRFX_GPIOTE_RAW_CONFIG_IN_SENSE_HITOLO(true);
-    nrfx_gpiote_in_config_t in_config = NRFX_GPIOTE_RAW_CONFIG_IN_SENSE_HITOLO(false);
-    in_config.pull = NRF_GPIO_PIN_PULLUP;
-
-    err_code = nrfx_gpiote_in_init(PIN_IN, &in_config, in_pin_handler);
-    APP_ERROR_CHECK(err_code);
-
-    nrfx_gpiote_in_event_enable(PIN_IN, true);
-}
-
-
-static void app_tmr_btn_long_press_handler(void* p_context) {
-
-    if(bsp_button_is_pressed(0) == 1) {
-        lsm303_data_2_t* p_lsm303_data = lsm303_data_p_get();
-
-        NRF_LOG_INFO("btn long press\r\n");
-
-        p_lsm303_data->mag.qd_cnt = 0;
-
-        //nrfx_gpiote_out_toggle(PIN_OUT);
-        //bsp_board_led_invert(BSP_BOARD_LED_0);
-    }
-}
-
 /* test of lsm303 sensor response */
 static void test_i2c_read_callback(ret_code_t result, void * p_user_data) { 
     NRF_LOG_INFO("who i am read %u", ((uint8_t*)p_user_data)[0]);
@@ -219,7 +170,7 @@ static void app_tmr_print_out_handler(void* p_context) {
   
     #if( DEBUG_APP_SHOW_QD == 1)
     
-    NRF_LOG_INFO("angle/a/b/dir/cnt/Y_peak | %3d,%u,%u,%d,%d,%d\r",
+    NRF_LOG_INFO("angle/a/b/dir/cnt/Y_peak | %3d,%u,%u,%d,%d,%d",
     p_lsm303_data->accel.angle, 
     // p_lsm303_data->mag.axis.bit.x,
     // p_lsm303_data->mag.axis.bit.z,
@@ -232,7 +183,7 @@ static void app_tmr_print_out_handler(void* p_context) {
 
     #elif ( DEBUG_APP_SHOW_AXIS == 1)
 
-    NRF_LOG_INFO("angle/x/z/dir/cnt/y | %3d,%d,%d,%d,%d,%d\r",
+    NRF_LOG_INFO("angle/x/z/dir/cnt/y | %3d,%d,%d,%d,%d,%d",
     p_lsm303_data->accel.angle, 
     p_lsm303_data->mag.axis.bit.x,
     p_lsm303_data->mag.axis.bit.z,
@@ -246,7 +197,7 @@ static void app_tmr_print_out_handler(void* p_context) {
 
     #elif ( DEBUG_APP_SHOW_ACCEL_AXIS == 1)
 
-    NRF_LOG_INFO("A:x/y/z | %d, %d, %d\r",
+    NRF_LOG_INFO("A:x/y/z | %d, %d, %d",
     p_lsm303_data->accel.axis.bit.x, 
     p_lsm303_data->accel.axis.bit.y, 
     p_lsm303_data->accel.axis.bit.z
@@ -286,61 +237,118 @@ static void lsm303_read_end_callback(ret_code_t result, void * p_user_data) {
 static uint8_t reg_data[1];
 static uint8_t addr_reg = LSM303_REG_ACCEL_INT1_SOURCE;
 
+static void button_short_press(void)
+{
+    lsm303_data_2_t* p_lsm303_data = lsm303_data_p_get();
+    p_lsm303_data->mag.qd_cnt = 0;
+    NRF_LOG_INFO("Short press");
+}
 
-void bsp_evt_handler(bsp_event_t bsp_event) {
+static void button_long_press(void)
+{
+    NRF_LOG_INFO("Long press");
+}
 
-    switch(bsp_event) 
+static void button_timeout_handler(void* unused)
+{
+  (void)unused;
+  static uint8_t btn_hold_cnt = 0;
+  if(app_button_is_pushed(0)) {
+      if(++btn_hold_cnt >= LONG_BTN_TIMEOUT_MS/BTN_POLL_MS){
+        btn_hold_cnt = 0;
+        button_long_press();
+      }
+      else{
+        app_timer_start(app_tmr_btn_long_press_id,APP_TIMER_TICKS(BTN_POLL_MS),NULL);
+      }
+  }
+  else
+  {
+      btn_hold_cnt = 0;
+      button_short_press();
+  }
+}
+
+static void button_handler(uint8_t pin_no, uint8_t button_action) {
+    (void)pin_no;
+    if (button_action == APP_BUTTON_PUSH)
     {
-        case BSP_EVENT_KEY_0:
-        {
-            lsm303_data_2_t* p_lsm303_data = lsm303_data_p_get();
-        
-            NRF_LOG_INFO("btn short press");
-            p_lsm303_data->mag.qd_cnt = 0;
-
-            APP_ERROR_CHECK(app_timer_start(app_tmr_btn_long_press_id, APP_TIMER_TICKS(3000), NULL));
-
-            // static uint8_t reg_i = 0;
-            // lsm303_read_reg(&lsm_reg_data.reg_array[reg_i].addr, &lsm_reg_data.reg_array[reg_i].data, 1, lsm303_read_end_callback);
-            // if(reg_i < ARRAY_SIZE(lsm_reg_data.reg_array) - 1 ) {
-            //     reg_i++;
-            // }else {
-            //     reg_i = 0;
-            // }
-
-            lsm303_read_reg(&lsm_reg_data.reg.int1_src.addr, &lsm_reg_data.reg.int1_src.data, 1, lsm303_read_end_callback);
-
-            //lms303_accel_int_en();
-        
-            break;
-        }
-        case BSP_EVENT_KEY_1:
-        {
-            static uint32_t int_cnt = 0;
-            NRF_LOG_INFO("lsm303_INT %u\r\n", ++int_cnt);
-
-            bsp_board_led_invert(BSP_BOARD_LED_0);
-
-            //lms303_accel_int_disable();
-            lsm303_read_reg(&lsm_reg_data.reg.int1_src.addr, &lsm_reg_data.reg.int1_src.data, 1, lsm303_read_end_callback);
-            break;
-        }
+        app_timer_start(app_tmr_btn_long_press_id, APP_TIMER_TICKS(BTN_POLL_MS),NULL); 
     }
-}   
+}
+
+void bsp_evt_handler(bsp_event_t bsp_event) {}
+
+static void accel_src_handle(lsm303_accel_reg_int_src_t src)
+{
+    ASSERT(src.bit.I_A == 1);
+    static uint32_t int_cnt = 0;
+    NRF_LOG_INFO("accel_src_handle %u",int_cnt++);
+    if(src.bit.Y_H){
+      read_accel();
+      read_mag();
+      app_tmr_print_out_handler(NULL);
+    }
+}
+
+static void accel_int_read_cb(ret_code_t result, void * p_user_data)
+{
+    if(result == NRF_SUCCESS)
+    {
+      struct _lsm303_reg_dsc_t* reg = gcontainer_of(p_user_data, struct _lsm303_reg_dsc_t, data);
+      accel_src_handle((lsm303_accel_reg_int_src_t)reg->data);
+    }
+    else
+    {
+      NRF_LOG_ERROR("Error in %s %08X",__FUNCTION__,result);
+    }
+}
+
+static void accel_int_handler(nrf_drv_gpiote_pin_t pin, nrf_gpiote_polarity_t action)
+{
+  (void)pin;
+  (void)action;
+  lsm303_read_reg(&lsm_reg_data.reg.int1_src.addr, &lsm_reg_data.reg.int1_src.data, 1, accel_int_read_cb);
+}
+
+static void setup_accel_pin_int(void)
+{
+    nrf_drv_gpiote_in_config_t config = GPIOTE_CONFIG_IN_SENSE_TOGGLE(true);
+    config.pull = NRF_GPIO_PIN_PULLUP;
+    uint32_t err_code = nrf_drv_gpiote_in_init(ACCEL_INT_PIN, &config, accel_int_handler);
+    APP_ERROR_CHECK(err_code);
+    nrf_drv_gpiote_in_event_enable(ACCEL_INT_PIN, true);
+}
+
+static void ui_init(void)
+{
+    static const app_button_cfg_t btn_cfg = {
+      .pull_cfg = NRF_GPIO_PIN_PULLUP,
+      .button_handler = button_handler,
+      .active_state = 0,
+      .pin_no = BTN_PIN,
+    }; // Must be static
+    app_timer_create(&app_tmr_btn_long_press_id,
+                      APP_TIMER_MODE_SINGLE_SHOT,
+                      button_timeout_handler);
+
+    uint32_t err_code = app_button_init(&btn_cfg,1,BTN_POLL_MS);
+    APP_ERROR_CHECK(err_code);
+
+    err_code = app_button_enable();
+    APP_ERROR_CHECK(err_code);
+}
 
 static void utils_setup(void)
 {
     ret_code_t err_code = app_timer_init();
     APP_ERROR_CHECK(err_code);
+    ui_init();
 
-
-    err_code = bsp_init(BSP_INIT_LEDS | BSP_INIT_BUTTONS, bsp_evt_handler);
-    //APP_ERROR_CHECK(err_code);
-
-    err_code = bsp_event_to_button_action_assign(BTN_ID_USER,
-                                                 BSP_BUTTON_ACTION_PUSH,
-                                                 BSP_EVENT_KEY_0);
+    err_code = bsp_init(BSP_INIT_LEDS,bsp_evt_handler); // Use BSP only for leds, remove later as it takes way too much code
     APP_ERROR_CHECK(err_code);
+
+    setup_accel_pin_int();
 
     err_code = nrf_pwr_mgmt_init();
     APP_ERROR_CHECK(err_code);
@@ -358,10 +366,7 @@ void read_lsm303_tmr_handler(void* p_context) {
     NRF_LOG_FLUSH();
 }
 
-
-void clock_event_handler(nrfx_clock_evt_type_t event)
-{
-}
+void clock_event_handler(nrfx_clock_evt_type_t event){}
 
 /**@brief Function starting the internal LFCLK oscillator.
  *
@@ -390,9 +395,6 @@ int main(void)
     APP_ERROR_CHECK(NRF_LOG_INIT(NULL));
     NRF_LOG_DEFAULT_BACKENDS_INIT();
 
-    NRF_LOG_INFO("\r\nTWI sensor example started nRF52805. [%s] [%s]", __DATE__, __TIME__);
-
-
     utils_setup();
 
     //APP_GPIOTE_INIT(1);
@@ -403,11 +405,6 @@ int main(void)
     app_timer_create(&read_lsm303_tmr_id,
                         APP_TIMER_MODE_REPEATED,
                         read_lsm303_tmr_handler);
-
-    app_timer_create(&app_tmr_btn_long_press_id,
-                        //APP_TIMER_MODE_REPEATED,
-                        APP_TIMER_MODE_SINGLE_SHOT,
-                        app_tmr_btn_long_press_handler);
     
     app_timer_create(&app_tmr_print_out_id,
                         APP_TIMER_MODE_REPEATED,
@@ -430,8 +427,8 @@ int main(void)
 
     lsm303_setup_read_back_check();
 
-    APP_ERROR_CHECK(app_timer_start(read_lsm303_tmr_id, APP_TIMER_TICKS(10), NULL));
-    APP_ERROR_CHECK(app_timer_start(app_tmr_print_out_id, APP_TIMER_TICKS(100), NULL));
+    //APP_ERROR_CHECK(app_timer_start(read_lsm303_tmr_id, APP_TIMER_TICKS(10), NULL));
+    //APP_ERROR_CHECK(app_timer_start(app_tmr_print_out_id, APP_TIMER_TICKS(100), NULL));
 
     while (true)
     {
