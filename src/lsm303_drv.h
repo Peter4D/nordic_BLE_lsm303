@@ -31,6 +31,11 @@
 extern "C" {
 #endif
 
+
+typedef enum {
+    QD_A,
+    QD_B,
+}qd_sig_e_t;
 typedef struct _lsm303_reg_dsc_t {
     uint8_t addr;
     uint8_t data;
@@ -65,7 +70,7 @@ typedef union _axis_data_t {
     uint8_t bytes[6];
 }axis_data_t;
 
-typedef union _axis_mag_digital_t {
+typedef union _axis_qd_ab_sig_t {
     struct {
         uint8_t b       :1;
         uint8_t a       :1;
@@ -74,7 +79,7 @@ typedef union _axis_mag_digital_t {
         uint8_t         :4; //_reseved
     }bit;
     uint8_t byte;
-}axis_mag_digital_t;
+}axis_qd_ab_sig_t;
 
 typedef struct _axis_peak_detect_t {
     uint32_t time;
@@ -95,6 +100,43 @@ typedef struct _axis_peak_detect_t {
         .p_name = name                  \
     }
 
+typedef struct _qd_th_t {
+    uint32_t th;
+    uint32_t hysteresis;
+}qd_th_t;
+typedef struct _qd_desc_t {
+    qd_th_t th_values[2];
+    axis_qd_ab_sig_t qd;
+    int32_t qd_cnt;
+    int8_t qd_dir;
+}qd_desc_t;
+
+typedef struct _accel2_t
+{
+    qd_desc_t qd_data;
+
+    axis_data_t axis;
+    float rad;
+    uint16_t rad_int;
+    uint16_t angle;
+
+}accel2_t;
+
+typedef struct _mag2_t
+{
+    qd_desc_t qd_data;
+
+    axis_data_t axis;
+    axis_data_t axis_peak;
+
+}mag2_t;
+
+typedef struct _lsm303_data_3_t {
+    accel2_t accel;
+    mag2_t   mag;
+}lsm303_data_3_t;
+
+
 typedef struct _lsm303_data_t {
     axis_data_t accel;
     float accel_rad;
@@ -114,27 +156,38 @@ typedef struct _accel_t
     float rad;
     uint16_t rad_int;
     uint16_t angle;
-}accel_t;
 
-typedef struct _mag_t
-{
-    axis_data_t axis;
-    axis_data_t axis_peak;
-
-    axis_mag_digital_t qd;
+    qd_th_t th_values;
+    axis_qd_ab_sig_t qd;
     int32_t qd_cnt;
     int8_t qd_dir;
-}mag_t;
+}accel_t;
 
-typedef struct _lsm303_data_2_t {
-    accel_t accel;
-    mag_t   mag;
 
-    /* those are deprecated*/
-    axis_peak_detect_t peak_mag_x;
-    axis_peak_detect_t peak_mag_z;
-    uint8_t mag_dir;
-}lsm303_data_2_t;
+
+// typedef struct _mag_t
+// {
+//     axis_data_t axis;
+//     axis_data_t axis_peak;
+
+//     qd_th_t th_values;
+//     axis_qd_ab_sig_t qd;
+//     int32_t qd_cnt;
+//     int8_t qd_dir;
+// }mag_t;
+
+// typedef struct _lsm303_data_2_t {
+//     accel_t accel;
+//     mag_t   mag;
+
+//     /* those are deprecated*/
+//     axis_peak_detect_t peak_mag_x;
+//     axis_peak_detect_t peak_mag_z;
+//     uint8_t mag_dir;
+// }lsm303_data_2_t;
+
+typedef lsm303_data_3_t lsm303_data_2_t; 
+typedef mag2_t mag_t; 
 
 
 extern lsm303_reg_data_t lsm_reg_data;

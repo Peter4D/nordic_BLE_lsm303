@@ -215,11 +215,12 @@ static void app_tmr_print_out_handler(void* p_context) {
     p_lsm303_data->accel.angle, 
     p_lsm303_data->mag.axis.bit.x,
     p_lsm303_data->mag.axis.bit.z,
-    // p_lsm303_data->mag.qd.bit.a,
-    // p_lsm303_data->mag.qd.bit.b,
-    p_lsm303_data->mag.qd_dir,
-    p_lsm303_data->mag.qd_cnt,
-    //p_lsm303_data->mag.axis_peak.bit.y
+
+    // p_lsm303_data->mag.qd_dir,
+    // p_lsm303_data->mag.qd_cnt,
+    p_lsm303_data->mag.qd_data.qd_dir,
+    p_lsm303_data->mag.qd_data.qd_cnt,
+
     p_lsm303_data->mag.axis.bit.y
     );
 
@@ -239,7 +240,7 @@ static void app_tmr_print_out_handler(void* p_context) {
 
 static bool calib_handler(void* p_context) {
     lsm303_data_2_t* p_lsm303_data = lsm303_data_p_get();
-    int32_t qd_cnt = p_lsm303_data->mag.qd_cnt;
+    int32_t qd_cnt = p_lsm303_data->mag.qd_data.qd_cnt;
     
 
     if(abs(qd_cnt) > 4) {

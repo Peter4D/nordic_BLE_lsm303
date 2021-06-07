@@ -70,11 +70,25 @@ nrfx_twi_t m_twi = NRFX_TWI_INSTANCE(TWI_INSTANCE_ID);
 #define TWI_INSTANCE_ID             0
 #define MAX_PENDING_TRANSACTIONS    10
 
+#define MAG_X_TH    5000
+#define MAG_X_HYST  500
+
+#define MAG_Z_TH  6000
+#define MAG_Z_HYST  500
+
 NRF_TWI_MNGR_DEF(m_nrf_twi_mngr, MAX_PENDING_TRANSACTIONS, TWI_INSTANCE_ID);
 
-static lsm303_data_2_t lsm303_data = {
-    .peak_mag_x = AXIS_PEAK_DETECT_INIT("x"),
-    .peak_mag_z = AXIS_PEAK_DETECT_INIT("z")
+// static lsm303_data_2_t lsm303_data = {
+//     .peak_mag_x = AXIS_PEAK_DETECT_INIT("x"),
+//     .peak_mag_z = AXIS_PEAK_DETECT_INIT("z")
+// };
+
+static lsm303_data_3_t lsm303_data = {
+    .mag.qd_data.th_values[QD_A].th = MAG_X_TH,
+    .mag.qd_data.th_values[QD_A].hysteresis = MAG_X_HYST,
+    
+    .mag.qd_data.th_values[QD_B].th = MAG_Z_TH,
+    .mag.qd_data.th_values[QD_B].hysteresis = MAG_Z_HYST
 };
  
 void twi_config(void)
@@ -161,6 +175,8 @@ static void read_accel_cb(ret_code_t result, void * p_user_data) {
     /* calculate angle */
     lsm303_data.accel.rad = atan2f(lsm303_data.accel.axis.bit.z, lsm303_data.accel.axis.bit.x) + PI;
     lsm303_data.accel.angle = lsm303_data.accel.rad * (float)180.0/PI;
+
+
 
     #if (DEBUG_ACCEL_PRINT_OUT_EN == 1)
     lsm303_data.accel.rad_int = (int16_t)( lsm303_data.accel.rad * 100 + 0.5 ); 
@@ -429,33 +445,33 @@ static uint8_t NRF_TWI_MNGR_BUFFER_LOC_IND lm303_mag_xout_reg_addr = LSM303_REG_
 
 
 /* deprecated */
-void axis_peak_detect_process(void) {
-    static uint32_t event_cnt = 0;
+// void axis_peak_detect_process(void) {
+//     static uint32_t event_cnt = 0;
 
-    if(lsm303_data.peak_mag_x.peak_detected_F == 1 && lsm303_data.peak_mag_z.peak_detected_F == 1){
-        if(lsm303_data.peak_mag_z.time < lsm303_data.peak_mag_x.time) {
-            lsm303_data.mag_dir = 1;
-        }else {
-            lsm303_data.mag_dir = 0;
-        }
+//     if(lsm303_data.peak_mag_x.peak_detected_F == 1 && lsm303_data.peak_mag_z.peak_detected_F == 1){
+//         if(lsm303_data.peak_mag_z.time < lsm303_data.peak_mag_x.time) {
+//             lsm303_data.mag_dir = 1;
+//         }else {
+//             lsm303_data.mag_dir = 0;
+//         }
 
-        NRF_LOG_RAW_INFO("\n\rcnt(%d) MAG_dir[%d]. P&tm: x[%d/%d] z[%d/%d] \r\n",
-        event_cnt++, 
-        lsm303_data.mag_dir,
-        lsm303_data.peak_mag_x.value,
-        lsm303_data.peak_mag_x.time,
+//         NRF_LOG_RAW_INFO("\n\rcnt(%d) MAG_dir[%d]. P&tm: x[%d/%d] z[%d/%d] \r\n",
+//         event_cnt++, 
+//         lsm303_data.mag_dir,
+//         lsm303_data.peak_mag_x.value,
+//         lsm303_data.peak_mag_x.time,
 
-        lsm303_data.peak_mag_z.value,
-        lsm303_data.peak_mag_z.time
-        );
+//         lsm303_data.peak_mag_z.value,
+//         lsm303_data.peak_mag_z.time
+//         );
 
-        lsm303_data.peak_mag_x.peak_detected_F = 0;
-        lsm303_data.peak_mag_x.value = 0;
+//         lsm303_data.peak_mag_x.peak_detected_F = 0;
+//         lsm303_data.peak_mag_x.value = 0;
         
-        lsm303_data.peak_mag_z.peak_detected_F = 0;
-        lsm303_data.peak_mag_z.value = 0;
-    }
-}
+//         lsm303_data.peak_mag_z.peak_detected_F = 0;
+//         lsm303_data.peak_mag_z.value = 0;
+//     }
+// }
 
 static void axis_peak_detect_process_2(axis_peak_detect_t* p_axis_peak) {
     static uint32_t event_cnt = 0;
@@ -531,52 +547,51 @@ static void axis_peak_detect_2(int16_t cur_axis_val, int16_t* p_peak_axis_val) {
 }
 
 
-#define MAG_X_TH    5000
-#define MAG_X_HYST  500
+//qd_desc_t
 
-#define MAG_Z_TH  6000
-#define MAG_Z_HYST  500
-
-static void signal_condition_mag_x(mag_t* p_mag_data) {
+static void signal_condition_qd_A(mag_t* p_mag_data) {
+ 
     int16_t x = p_mag_data->axis.bit.x;
-    //int16_t x = abs(p_mag_data->axis.bit.x);
 
-    if(x > MAG_X_TH) {
-        p_mag_data->qd.bit.a = 1;
-    }else if(x < (MAG_X_TH - MAG_X_HYST) ) {
-        p_mag_data->qd.bit.a = 0;
+    if(x > p_mag_data->qd_data.th_values[QD_A].th) {
+        p_mag_data->qd_data.qd.bit.a = 1;
+    }else if(x < (p_mag_data->qd_data.th_values[QD_A].th - p_mag_data->qd_data.th_values[QD_A].hysteresis) ) {
+        p_mag_data->qd_data.qd.bit.a = 0;
     }
 }
 
-static void signal_condition_mag_z(mag_t* p_mag_data) {
+
+static void signal_condition_qd_B(mag_t* p_mag_data) {
+
     int16_t z = p_mag_data->axis.bit.z;
-    //int16_t z = abs(p_mag_data->axis.bit.z);
 
-    if(z > MAG_Z_TH) {
-        p_mag_data->qd.bit.b = 1;
-    }else if(z < (MAG_Z_TH - MAG_Z_HYST) ) {
-        p_mag_data->qd.bit.b = 0;
+    if(z > p_mag_data->qd_data.th_values[QD_B].th) {
+        p_mag_data->qd_data.qd.bit.b = 1;
+    }else if(z < (p_mag_data->qd_data.th_values[QD_B].th - p_mag_data->qd_data.th_values[QD_B].hysteresis) ) {
+        p_mag_data->qd_data.qd.bit.b = 0;
     }
 }
 
+
+/* In our case there is one full qd sequence per revolution this mean +4 or -4 count per revolution */
 static void quadrature_sig_decode(mag_t* p_mag_data) {
     static uint8_t qd_old = 0;
     static const int8_t qd_lut[] = {0,-1,1,0,1,0,0,-1,-1,0,0,1,0,1,-1,0};
 
-    if(p_mag_data->qd.byte != qd_old) {
+    if(p_mag_data->qd_data.qd.byte != qd_old) {
         /* check direction */
-        p_mag_data->qd_cnt += qd_lut[p_mag_data->qd.byte];
+        p_mag_data->qd_data.qd_cnt += qd_lut[p_mag_data->qd_data.qd.byte];
         
-        if(qd_lut[p_mag_data->qd.byte] != 0) {
-            p_mag_data->qd_dir = qd_lut[p_mag_data->qd.byte];
+        if(qd_lut[p_mag_data->qd_data.qd.byte] != 0) {
+            p_mag_data->qd_data.qd_dir = qd_lut[p_mag_data->qd_data.qd.byte];
         }
 
-        p_mag_data->qd.bit.a_old = p_mag_data->qd.bit.a;
-        p_mag_data->qd.bit.b_old = p_mag_data->qd.bit.b;
+        p_mag_data->qd_data.qd.bit.a_old = p_mag_data->qd_data.qd.bit.a;
+        p_mag_data->qd_data.qd.bit.b_old = p_mag_data->qd_data.qd.bit.b;
         
-        qd_old = p_mag_data->qd.byte;
+        qd_old = p_mag_data->qd_data.qd.byte;
     }
-} 
+}
 
 static void read_mag_cb(ret_code_t result, void * p_user_data) {
     int8_t* p_axis_data = (int8_t*)p_user_data;
@@ -601,8 +616,8 @@ static void read_mag_cb(ret_code_t result, void * p_user_data) {
     axis_peak_detect_2(lsm303_data.mag.axis.bit.y, &lsm303_data.mag.axis_peak.bit.y);
     axis_peak_detect_2(lsm303_data.mag.axis.bit.z, &lsm303_data.mag.axis_peak.bit.z);
 
-    signal_condition_mag_x(&lsm303_data.mag);
-    signal_condition_mag_z(&lsm303_data.mag);
+    signal_condition_qd_A(&lsm303_data.mag);
+    signal_condition_qd_B(&lsm303_data.mag);
 
     quadrature_sig_decode(&lsm303_data.mag);
 
