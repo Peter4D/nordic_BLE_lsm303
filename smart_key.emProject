@@ -100,6 +100,7 @@
       <file file_name="pca10040/blank/config/sdk_config.h" />
       <file file_name="include/lsm303_regs.h" />
       <file file_name="src/flash_storage.c" />
+      <file file_name="src/common.h" />
     </folder>
     <folder Name="nRF_Segger_RTT">
       <file file_name="$(NRF_SDK)/external/segger_rtt/SEGGER_RTT.c" />

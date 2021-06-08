@@ -82,14 +82,9 @@
 #include "flash_storage.h"
 #include <math.h>
 
-// #define container_of(ptr, type, member) ({                      \
-//         const typeof( ((type *)0)->member ) *__mptr = (ptr);    \
-//         (type *)( (char *)__mptr - offsetof(type,member) );})
-
 
 #define goffsetof(TYPE, MEMBER) ((size_t) &((TYPE *)0)->MEMBER)
  // Obtain a pointer to the entire structure variable according to the "pointer (ptr) of the domain member variable (member)" in the "structure (type) variable"
-//#define gcontainer_of(ptr, type, member)   ({  (type *)( (char *)ptr - goffsetof(type,member) );})
 #define gcontainer_of(ptr, type, member)     (type *)( (char *)ptr - goffsetof(type,member) );
 
 /* angle/a/b/dir/cnt/Y_peak  */
@@ -211,7 +206,7 @@ static void app_tmr_print_out_handler(void* p_context) {
 
     #elif ( DEBUG_APP_SHOW_AXIS == 1)
 
-    NRF_LOG_INFO("angle/x/z/dir/cnt/y | %3d,%d,%d,%d,%d,%d",
+    NRF_LOG_INFO("angle/x/z/dir/cnt/y | %3d,%5d,%5d,%2d,%d,%5d",
     p_lsm303_data->accel.angle, 
     p_lsm303_data->mag.axis.bit.x,
     p_lsm303_data->mag.axis.bit.z,

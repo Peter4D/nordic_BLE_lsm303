@@ -1,5 +1,6 @@
 #include "lsm303_drv.h"
 #include "app_timer.h"
+#include "common.h"
 
 #include <math.h>
 #define PI (float)3.141592654
@@ -547,28 +548,22 @@ static void axis_peak_detect_2(int16_t cur_axis_val, int16_t* p_peak_axis_val) {
 }
 
 
-//qd_desc_t
-
-static void signal_condition_qd_A(mag_t* p_mag_data) {
+static void signal_condition_qd_A(int16_t axis, qd_desc_t* p_qd_data) {
  
-    int16_t x = p_mag_data->axis.bit.x;
-
-    if(x > p_mag_data->qd_data.th_values[QD_A].th) {
-        p_mag_data->qd_data.qd.bit.a = 1;
-    }else if(x < (p_mag_data->qd_data.th_values[QD_A].th - p_mag_data->qd_data.th_values[QD_A].hysteresis) ) {
-        p_mag_data->qd_data.qd.bit.a = 0;
+    if(axis > p_qd_data->th_values[QD_A].th) {
+        p_qd_data->qd.bit.a = 1;
+    }else if(axis < (p_qd_data->th_values[QD_A].th - p_qd_data->th_values[QD_A].hysteresis) ) {
+        p_qd_data->qd.bit.a = 0;
     }
 }
 
 
-static void signal_condition_qd_B(mag_t* p_mag_data) {
+static void signal_condition_qd_B(int16_t axis, qd_desc_t* p_qd_data) {
 
-    int16_t z = p_mag_data->axis.bit.z;
-
-    if(z > p_mag_data->qd_data.th_values[QD_B].th) {
-        p_mag_data->qd_data.qd.bit.b = 1;
-    }else if(z < (p_mag_data->qd_data.th_values[QD_B].th - p_mag_data->qd_data.th_values[QD_B].hysteresis) ) {
-        p_mag_data->qd_data.qd.bit.b = 0;
+    if(axis > p_qd_data->th_values[QD_B].th) {
+        p_qd_data->qd.bit.b = 1;
+    }else if(axis < (p_qd_data->th_values[QD_B].th - p_qd_data->th_values[QD_B].hysteresis) ) {
+        p_qd_data->qd.bit.b = 0;
     }
 }
 
@@ -616,8 +611,8 @@ static void read_mag_cb(ret_code_t result, void * p_user_data) {
     axis_peak_detect_2(lsm303_data.mag.axis.bit.y, &lsm303_data.mag.axis_peak.bit.y);
     axis_peak_detect_2(lsm303_data.mag.axis.bit.z, &lsm303_data.mag.axis_peak.bit.z);
 
-    signal_condition_qd_A(&lsm303_data.mag);
-    signal_condition_qd_B(&lsm303_data.mag);
+    signal_condition_qd_A(lsm303_data.mag.axis.bit.x, (qd_desc_t*)&lsm303_data.mag );
+    signal_condition_qd_B(lsm303_data.mag.axis.bit.z, (qd_desc_t*)&lsm303_data.mag );
 
     quadrature_sig_decode(&lsm303_data.mag);
 
