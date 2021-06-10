@@ -87,9 +87,13 @@ NRF_TWI_MNGR_DEF(m_nrf_twi_mngr, MAX_PENDING_TRANSACTIONS, TWI_INSTANCE_ID);
 static lsm303_data_3_t lsm303_data = {
     .mag.qd_data.th_values[QD_A].th = MAG_X_TH,
     .mag.qd_data.th_values[QD_A].hysteresis = MAG_X_HYST,
-    
     .mag.qd_data.th_values[QD_B].th = MAG_Z_TH,
-    .mag.qd_data.th_values[QD_B].hysteresis = MAG_Z_HYST
+    .mag.qd_data.th_values[QD_B].hysteresis = MAG_Z_HYST,
+
+    .accel.qd_data.th_values[QD_A].th = INT16_MAX / 2,
+    .accel.qd_data.th_values[QD_A].hysteresis = 500,
+    .accel.qd_data.th_values[QD_B].th = INT16_MAX / 2,
+    .accel.qd_data.th_values[QD_B].hysteresis = 500
 };
  
 void twi_config(void)
@@ -569,23 +573,18 @@ static void signal_condition_qd_B(int16_t axis, qd_desc_t* p_qd_data) {
 
 
 /* In our case there is one full qd sequence per revolution this mean +4 or -4 count per revolution */
-static void quadrature_sig_decode(mag_t* p_mag_data) {
-    static uint8_t qd_old = 0;
+static void quadrature_sig_decode(qd_desc_t* p_qd_data) {
     static const int8_t qd_lut[] = {0,-1,1,0,1,0,0,-1,-1,0,0,1,0,1,-1,0};
 
-    if(p_mag_data->qd_data.qd.byte != qd_old) {
-        /* check direction */
-        p_mag_data->qd_data.qd_cnt += qd_lut[p_mag_data->qd_data.qd.byte];
-        
-        if(qd_lut[p_mag_data->qd_data.qd.byte] != 0) {
-            p_mag_data->qd_data.qd_dir = qd_lut[p_mag_data->qd_data.qd.byte];
-        }
-
-        p_mag_data->qd_data.qd.bit.a_old = p_mag_data->qd_data.qd.bit.a;
-        p_mag_data->qd_data.qd.bit.b_old = p_mag_data->qd_data.qd.bit.b;
-        
-        qd_old = p_mag_data->qd_data.qd.byte;
+    /* check direction */
+    p_qd_data->qd_cnt += qd_lut[p_qd_data->qd.byte];
+    
+    if(qd_lut[p_qd_data->qd.byte] != 0) {
+        p_qd_data->qd_dir = qd_lut[p_qd_data->qd.byte];
     }
+
+    p_qd_data->qd.bit.a_old = p_qd_data->qd.bit.a;
+    p_qd_data->qd.bit.b_old = p_qd_data->qd.bit.b;
 }
 
 static void read_mag_cb(ret_code_t result, void * p_user_data) {
@@ -613,8 +612,12 @@ static void read_mag_cb(ret_code_t result, void * p_user_data) {
 
     signal_condition_qd_A(lsm303_data.mag.axis.bit.x, (qd_desc_t*)&lsm303_data.mag );
     signal_condition_qd_B(lsm303_data.mag.axis.bit.z, (qd_desc_t*)&lsm303_data.mag );
+    
+    signal_condition_qd_A(abs(lsm303_data.accel.axis.bit.x), (qd_desc_t*)&lsm303_data.accel );
+    signal_condition_qd_B(abs(lsm303_data.accel.axis.bit.z), (qd_desc_t*)&lsm303_data.accel );
 
-    quadrature_sig_decode(&lsm303_data.mag);
+    quadrature_sig_decode((qd_desc_t*)&lsm303_data.mag);
+    quadrature_sig_decode((qd_desc_t*)&lsm303_data.accel);
 
     #if (DEBUG_MAG_PRINT_OUT_EN == 1)
     NRF_LOG_RAW_INFO("Mag x[%d] y[%d] z[%d]\r\n", 

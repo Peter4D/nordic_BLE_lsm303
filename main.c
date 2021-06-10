@@ -92,13 +92,18 @@
 #define DEBUG_APP_SHOW_QD 0
 #endif
 
+/* angle/a/b/dir/cnt/Y_peak  */
+#ifndef DEBUG_APP_SHOW_QD_ACCEL
+#define DEBUG_APP_SHOW_QD_ACCEL 0
+#endif
+
 /* show angle/x/z/dir/cnt/y */
 #ifndef DEBUG_APP_SHOW_AXIS
-#define DEBUG_APP_SHOW_AXIS 1
+#define DEBUG_APP_SHOW_AXIS 0
 #endif
 
 #ifndef DEBUG_APP_SHOW_ACCEL_AXIS
-#define DEBUG_APP_SHOW_ACCEL_AXIS 0
+#define DEBUG_APP_SHOW_ACCEL_AXIS 1
 #endif
 
 
@@ -195,13 +200,24 @@ static void app_tmr_print_out_handler(void* p_context) {
     
     NRF_LOG_INFO("angle/a/b/dir/cnt/Y_peak | %3d,%u,%u,%d,%d,%d",
     p_lsm303_data->accel.angle, 
-    // p_lsm303_data->mag.axis.bit.x,
-    // p_lsm303_data->mag.axis.bit.z,
-    p_lsm303_data->mag.qd.bit.a,
-    p_lsm303_data->mag.qd.bit.b,
-    p_lsm303_data->mag.qd_dir,
-    p_lsm303_data->mag.qd_cnt,
+
+    p_lsm303_data->mag.qd_data.qd.bit.a,
+    p_lsm303_data->mag.qd_data.qd.bit.b,
+    p_lsm303_data->mag.qd_data.qd_dir,
+    p_lsm303_data->mag.qd_data.qd_cnt,
+
     p_lsm303_data->mag.axis_peak.bit.y
+    );
+    
+    #elif ( DEBUG_APP_SHOW_QD_ACCEL == 1 )
+
+    NRF_LOG_INFO("angle/a/b/dir/cnt | %3d,%u,%u,%2d,%d",
+    p_lsm303_data->accel.angle, 
+
+    p_lsm303_data->accel.qd_data.qd.bit.a,
+    p_lsm303_data->accel.qd_data.qd.bit.b,
+    p_lsm303_data->accel.qd_data.qd_dir,
+    p_lsm303_data->accel.qd_data.qd_cnt
     );
 
     #elif ( DEBUG_APP_SHOW_AXIS == 1)
@@ -221,10 +237,12 @@ static void app_tmr_print_out_handler(void* p_context) {
 
     #elif ( DEBUG_APP_SHOW_ACCEL_AXIS == 1)
 
-    NRF_LOG_INFO("A:x/y/z | %d, %d, %d",
-    p_lsm303_data->accel.axis.bit.x, 
-    p_lsm303_data->accel.axis.bit.y, 
-    p_lsm303_data->accel.axis.bit.z
+    NRF_LOG_INFO("A: angle/x/y/z | %3d, %d, %d, %d",
+    p_lsm303_data->accel.angle, 
+
+    abs(p_lsm303_data->accel.axis.bit.x), 
+    abs(p_lsm303_data->accel.axis.bit.y), 
+    abs(p_lsm303_data->accel.axis.bit.z)
     );
 
     #endif
