@@ -92,18 +92,22 @@
 #define DEBUG_APP_SHOW_QD 0
 #endif
 
-/* angle/a/b/dir/cnt/Y_peak  */
+
 #ifndef DEBUG_APP_SHOW_QD_ACCEL
 #define DEBUG_APP_SHOW_QD_ACCEL 0
 #endif
 
+#ifndef DEBUG_APP_SHOW_QD_AXIS_ACCEL
+#define DEBUG_APP_SHOW_QD_AXIS_ACCEL 0
+#endif
+
 /* show angle/x/z/dir/cnt/y */
-#ifndef DEBUG_APP_SHOW_AXIS
-#define DEBUG_APP_SHOW_AXIS 0
+#ifndef DEBUG_APP_SHOW_AXIS_MAG
+#define DEBUG_APP_SHOW_AXIS_MAG 0
 #endif
 
 #ifndef DEBUG_APP_SHOW_ACCEL_AXIS
-#define DEBUG_APP_SHOW_ACCEL_AXIS 1
+#define DEBUG_APP_SHOW_ACCEL_AXIS 0
 #endif
 
 
@@ -220,24 +224,34 @@ static void app_tmr_print_out_handler(void* p_context) {
     p_lsm303_data->accel.qd_data.qd_cnt
     );
 
-    #elif ( DEBUG_APP_SHOW_AXIS == 1)
+    #elif ( DEBUG_APP_SHOW_QD_AXIS_ACCEL == 1 )
 
-    NRF_LOG_INFO("angle/x/z/dir/cnt/y | %3d,%5d,%5d,%2d,%d,%5d",
+    NRF_LOG_INFO("angle/a/b/x/z | %3d,%u,%u,%5d,%5d",
+    p_lsm303_data->accel.angle, 
+
+    p_lsm303_data->accel.qd_data.qd.bit.a,
+    p_lsm303_data->accel.qd_data.qd.bit.b,
+    abs(p_lsm303_data->accel.axis.bit.x),
+    abs(p_lsm303_data->accel.axis.bit.z)
+    );
+
+    #elif ( DEBUG_APP_SHOW_AXIS_MAG == 1)
+
+    NRF_LOG_INFO("angle/x/y/z/dir/cnt | %3d,%5d,%5d,%5d,%2d,%d",
     p_lsm303_data->accel.angle, 
     p_lsm303_data->mag.axis.bit.x,
+    p_lsm303_data->mag.axis.bit.y,
     p_lsm303_data->mag.axis.bit.z,
 
     // p_lsm303_data->mag.qd_dir,
     // p_lsm303_data->mag.qd_cnt,
     p_lsm303_data->mag.qd_data.qd_dir,
-    p_lsm303_data->mag.qd_data.qd_cnt,
-
-    p_lsm303_data->mag.axis.bit.y
+    p_lsm303_data->mag.qd_data.qd_cnt
     );
 
     #elif ( DEBUG_APP_SHOW_ACCEL_AXIS == 1)
 
-    NRF_LOG_INFO("A: angle/x/y/z | %3d, %d, %d, %d",
+    NRF_LOG_INFO("A: angle/x/y/z | %3d, %5d, %5d, %5d",
     p_lsm303_data->accel.angle, 
 
     abs(p_lsm303_data->accel.axis.bit.x), 
@@ -274,7 +288,8 @@ static void lsm303_read_end_callback(ret_code_t result, void * p_user_data) {
 
     p_my_container = gcontainer_of(p_user_data, struct _lsm303_reg_dsc_t, data);
     
-    NRF_LOG_INFO("reg: %s, val: %u",  p_my_container->p_name, ((uint8_t*)p_user_data)[0]);
+    NRF_LOG_INFO("reg: %s, val: 0x%X",  p_my_container->p_name, ((uint8_t*)p_user_data)[0]);
+
 }
 
 
@@ -429,6 +444,8 @@ static void accel_int_handler(nrf_drv_gpiote_pin_t pin, nrf_gpiote_polarity_t ac
 {
     (void)pin;
     (void)action;
+    
+    NRF_LOG_ERROR("accel INT");
     lsm303_read_reg(&lsm_reg_data.reg.int1_src.addr, &lsm_reg_data.reg.int1_src.data, 1, accel_int_read_cb);
 }
 

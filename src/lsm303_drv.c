@@ -90,9 +90,9 @@ static lsm303_data_3_t lsm303_data = {
     .mag.qd_data.th_values[QD_B].th = MAG_Z_TH,
     .mag.qd_data.th_values[QD_B].hysteresis = MAG_Z_HYST,
 
-    .accel.qd_data.th_values[QD_A].th = INT16_MAX / 2,
+    .accel.qd_data.th_values[QD_A].th = 12000,
     .accel.qd_data.th_values[QD_A].hysteresis = 500,
-    .accel.qd_data.th_values[QD_B].th = INT16_MAX / 2,
+    .accel.qd_data.th_values[QD_B].th = 12000,
     .accel.qd_data.th_values[QD_B].hysteresis = 500
 };
  
@@ -401,7 +401,7 @@ void lsm303_setup_read_back_check(void) {
     lsm303_reg_dsc_t* p_cfg_regs = &lsm_reg_data.reg.ctrl_1;
     for(uint8_t i = 0; i < 6; ++i) {
         p_cfg_regs[i].data = m_read_back_reg[i];
-        NRF_LOG_INFO("reg: %s, val: %u",  p_cfg_regs[i].p_name, p_cfg_regs[i].data);
+        NRF_LOG_INFO("reg: %s, val: 0x%02X",  p_cfg_regs[i].p_name, p_cfg_regs[i].data);
     }
 }
 
@@ -449,34 +449,6 @@ static uint8_t NRF_TWI_MNGR_BUFFER_LOC_IND lm303_mag_xout_reg_addr = LSM303_REG_
     LM303_READ_MAG(&lm303_mag_xout_reg_addr, p_buffer, 6)
 
 
-/* deprecated */
-// void axis_peak_detect_process(void) {
-//     static uint32_t event_cnt = 0;
-
-//     if(lsm303_data.peak_mag_x.peak_detected_F == 1 && lsm303_data.peak_mag_z.peak_detected_F == 1){
-//         if(lsm303_data.peak_mag_z.time < lsm303_data.peak_mag_x.time) {
-//             lsm303_data.mag_dir = 1;
-//         }else {
-//             lsm303_data.mag_dir = 0;
-//         }
-
-//         NRF_LOG_RAW_INFO("\n\rcnt(%d) MAG_dir[%d]. P&tm: x[%d/%d] z[%d/%d] \r\n",
-//         event_cnt++, 
-//         lsm303_data.mag_dir,
-//         lsm303_data.peak_mag_x.value,
-//         lsm303_data.peak_mag_x.time,
-
-//         lsm303_data.peak_mag_z.value,
-//         lsm303_data.peak_mag_z.time
-//         );
-
-//         lsm303_data.peak_mag_x.peak_detected_F = 0;
-//         lsm303_data.peak_mag_x.value = 0;
-        
-//         lsm303_data.peak_mag_z.peak_detected_F = 0;
-//         lsm303_data.peak_mag_z.value = 0;
-//     }
-// }
 
 static void axis_peak_detect_process_2(axis_peak_detect_t* p_axis_peak) {
     static uint32_t event_cnt = 0;
@@ -497,30 +469,7 @@ static void axis_peak_detect_process_2(axis_peak_detect_t* p_axis_peak) {
 
 #define AXIS_NOISE_FLOOR_TH     6000
 #define HYSTERYSIS      2000
-// static void axis_peak_detect(int16_t axis_val, axis_peak_detect_t* p_axis_peak) {
-    
-//     lsm303_data_2_t* p_lsm303_data = lsm303_data_p_get();
 
-//     if(axis_val < 0) {
-//         p_axis_peak->neg_val_F = 1;
-//     }
-
-//     axis_val = abs(axis_val);
-//     if(axis_val > AXIS_NOISE_FLOOR_TH) {
-//         if(axis_val > p_axis_peak->value) {
-//             p_axis_peak->peak_detected_F = 1;
-//             p_axis_peak->value = axis_val;
-//             p_axis_peak->time = app_timer_cnt_get();
-//             p_axis_peak->angle = p_lsm303_data->accel.angle;
-//         }
-//     }else if(axis_val < AXIS_NOISE_FLOOR_TH - HYSTERYSIS){
-//         if(p_axis_peak->peak_detected_F == 1) {
-//             /* peak detected do procesing */
-//             //axis_peak_detect_process();
-//             axis_peak_detect_process_2(p_axis_peak);
-//         }
-//     }
-// }
 
 static uint8_t number_sign_get(int32_t number) {
     if(number < 0) {
