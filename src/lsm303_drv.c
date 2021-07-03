@@ -79,7 +79,7 @@ nrfx_twi_t m_twi = NRFX_TWI_INSTANCE(TWI_INSTANCE_ID);
 
 NRF_TWI_MNGR_DEF(m_nrf_twi_mngr, MAX_PENDING_TRANSACTIONS, TWI_INSTANCE_ID);
 
-// static lsm303_data_2_t lsm303_data = {
+// static lsm303_data_t lsm303_data = {
 //     .peak_mag_x = AXIS_PEAK_DETECT_INIT("x"),
 //     .peak_mag_z = AXIS_PEAK_DETECT_INIT("z")
 // };
@@ -290,7 +290,7 @@ void lms303_accel_vibration_trig_setup(void)
     };
 
     static const lsm303_accel_reg_int_cfg_t int_en_val = {
-        .bit.Y_HIE = 0,
+        .bit.Y_HIE = 1,
         .bit.Y_LIE = 0, /** @note This caused constant interrupts triggering */
         .bit.Z_LIE = 0,
     };
@@ -602,7 +602,7 @@ void read_mag(void)
 
 /*=============================================================================*/
 
-lsm303_data_2_t* lsm303_data_p_get(void) {
+lsm303_data_t* lsm303_data_p_get(void) {
     return &lsm303_data;
 }
 

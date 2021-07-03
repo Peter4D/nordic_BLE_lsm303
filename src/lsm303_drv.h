@@ -137,17 +137,17 @@ typedef struct _lsm303_data_3_t {
 }lsm303_data_3_t;
 
 
-typedef struct _lsm303_data_t {
-    axis_data_t accel;
-    float accel_rad;
-    uint16_t accel_rad_int;
-    int16_t accel_angle;
+// typedef struct _lsm303_data_t {
+//     axis_data_t accel;
+//     float accel_rad;
+//     uint16_t accel_rad_int;
+//     int16_t accel_angle;
     
-    axis_data_t mag;
-    axis_peak_detect_t peak_mag_x;
-    axis_peak_detect_t peak_mag_z;
-    uint8_t mag_dir;
-}lsm303_data_t;
+//     axis_data_t mag;
+//     axis_peak_detect_t peak_mag_x;
+//     axis_peak_detect_t peak_mag_z;
+//     uint8_t mag_dir;
+// }lsm303_data_t;
 
 
 typedef struct _accel_t
@@ -184,9 +184,9 @@ typedef struct _accel_t
 //     axis_peak_detect_t peak_mag_x;
 //     axis_peak_detect_t peak_mag_z;
 //     uint8_t mag_dir;
-// }lsm303_data_2_t;
+// }lsm303_data_t;
 
-typedef lsm303_data_3_t lsm303_data_2_t; 
+typedef lsm303_data_3_t lsm303_data_t; 
 typedef mag2_t mag_t; 
 
 
@@ -207,7 +207,7 @@ void read_accel(void);
 
 void read_mag(void);
 
-lsm303_data_2_t* lsm303_data_p_get(void);
+lsm303_data_t* lsm303_data_p_get(void);
 
 void lsm303_read_reg(uint8_t* const p_reg_addr, uint8_t* p_data, size_t size,
                     void (*read_end_cb)(ret_code_t result, void * p_user_data)

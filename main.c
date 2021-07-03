@@ -89,7 +89,7 @@
 
 /* angle/a/b/dir/cnt/Y_peak  */
 #ifndef DEBUG_APP_SHOW_QD
-#define DEBUG_APP_SHOW_QD 0
+#define DEBUG_APP_SHOW_QD 1
 #endif
 
 
@@ -104,6 +104,11 @@
 /* show angle/x/z/dir/cnt/y */
 #ifndef DEBUG_APP_SHOW_AXIS_MAG
 #define DEBUG_APP_SHOW_AXIS_MAG 0
+#endif
+
+/* show angle/x/y/z */
+#ifndef DEBUG_APP_SHOW_AXIS_MAG_2
+#define DEBUG_APP_SHOW_AXIS_MAG_2 0
 #endif
 
 #ifndef DEBUG_APP_SHOW_ACCEL_AXIS
@@ -150,8 +155,15 @@ typedef enum{
 
 static uint8_t m_who_i_am = 0xFF;
 
+typedef enum {
+    STATE_IDLE = 0,
+    STATE_CALIBRATING, 
+    STATE_ACTIVE
+}app_state_e_t;
+
 typedef struct  _app_CB_t
 {
+    app_state_e_t app_state;
     int8_t key_side;
 }app_CB_t;
 
@@ -161,9 +173,12 @@ typedef struct{
   uint8_t locked      :1;
 } application_state_t;
 
-static app_CB_t m_app_CB;
+static app_CB_t m_app_CB = {
+    .app_state = STATE_IDLE,
+};
 
 static application_state_t app_state;
+
 
 /* Buffer for samples read from accelerometer sensor. */
 
@@ -198,7 +213,7 @@ static void test_i2c_read_callback(ret_code_t result, void * p_user_data) {
 
 static void app_tmr_print_out_handler(void* p_context) {
     
-    lsm303_data_2_t* p_lsm303_data = lsm303_data_p_get();
+    lsm303_data_t* p_lsm303_data = lsm303_data_p_get();
   
     #if( DEBUG_APP_SHOW_QD == 1)
     
@@ -243,10 +258,17 @@ static void app_tmr_print_out_handler(void* p_context) {
     p_lsm303_data->mag.axis.bit.y,
     p_lsm303_data->mag.axis.bit.z,
 
-    // p_lsm303_data->mag.qd_dir,
-    // p_lsm303_data->mag.qd_cnt,
     p_lsm303_data->mag.qd_data.qd_dir,
     p_lsm303_data->mag.qd_data.qd_cnt
+    );
+
+    #elif ( DEBUG_APP_SHOW_AXIS_MAG_2 == 1)
+
+    NRF_LOG_INFO("angle/x/y/z | %3d,%5d,%5d,%5d",
+    p_lsm303_data->accel.angle, 
+    p_lsm303_data->mag.axis.bit.x,
+    p_lsm303_data->mag.axis.bit.y,
+    p_lsm303_data->mag.axis.bit.z
     );
 
     #elif ( DEBUG_APP_SHOW_ACCEL_AXIS == 1)
@@ -266,7 +288,7 @@ static void app_tmr_print_out_handler(void* p_context) {
 }
 
 static bool calib_handler(void* p_context) {
-    lsm303_data_2_t* p_lsm303_data = lsm303_data_p_get();
+    lsm303_data_t* p_lsm303_data = lsm303_data_p_get();
     int32_t qd_cnt = p_lsm303_data->mag.qd_data.qd_cnt;
     
 
@@ -316,8 +338,8 @@ static void led_timeout_handler(void *led_state_s)
 static void button_short_press(void)
 {
     NRF_LOG_INFO("Short press");
-    read_accel(); /* @note When SD will be running, this might not work as currently these are synchronous read requests */
-    read_mag();
+    // read_accel(); /* @note When SD will be running, this might not work as currently these are synchronous read requests */
+    // read_mag();
 
     // Per spec, if key is in "reset" state then both leds blink
     uint32_t off_action;
@@ -340,11 +362,12 @@ static void button_short_press(void)
 
 static void calibration_start(void)
 {
-    lsm303_accel_reg_int_cfg_t cfg = {.reg = ENABLE_ALL_AXIS_INT};
-    lms303_accel_int_en(cfg);
+    // lsm303_accel_reg_int_cfg_t cfg = {.reg = ENABLE_ALL_AXIS_INT};
+    // lms303_accel_int_en(cfg);
+
     NRF_LOG_INFO("Calibration start");
-    read_accel(); /* @note When SD will be running, this might not work as currently these are synchronous read requests */
-    read_mag();
+    // read_accel(); /* @note When SD will be running, this might not work as currently these are synchronous read requests */
+    // read_mag();
     
     app_state.calibrating = true;
     ret_code_t ret = app_timer_start(app_tmr_calibration_id,APP_TIMER_TICKS(CALIBRATION_TIMEOUT_MS),NULL);
@@ -402,8 +425,8 @@ static void accel_src_handle(lsm303_accel_reg_int_src_t src)
     ASSERT(src.bit.I_A);
     static int cnt;
     if(src.bit.Y_H){
-      read_accel(); /* @note When SD will be running, this might not work as currently these are synchronous read requests */
-      read_mag();
+    //   read_accel(); /* @note When SD will be running, this might not work as currently these are synchronous read requests */
+    //   read_mag();
       NRF_LOG_INFO("Int cnt %d, int val %u",cnt++,src.reg);
       app_tmr_print_out_handler(NULL);
       NRF_LOG_FLUSH();
@@ -495,7 +518,7 @@ void read_lsm303_tmr_handler(void* p_context) {
     
     read_accel();
     read_mag();
-    lsm303_data_2_t* p_lsm303_data = lsm303_data_p_get();
+    lsm303_data_t* p_lsm303_data = lsm303_data_p_get();
 
     NRF_LOG_FLUSH();
 }
@@ -527,13 +550,35 @@ static void flash_storage_read_cb(void* data,int len)
 
 APP_TIMER_DEF(reread_timer); // This is kinda hacky for now, because I don't want to change how read_accel works
 
+static void calibration_handle(void) {
+    static uint8_t init_step = 1;
+    static uint16_t init_angle = 0;
+
+    lsm303_data_t* p_lsm303_data = lsm303_data_p_get();
+
+    if(init_step == 1) {
+        /* get initial value of angle */
+        init_angle = p_lsm303_data->accel.angle;
+
+        init_step = 0;
+    }
+}
+
 static bool timer_running = false;
 void read_lsm303(void *unused)
 {
-  read_accel();
-  read_mag();
-  timer_running = false;
+    // read_accel();
+    // read_mag();
+    timer_running = false;
+
+    if(m_app_CB.app_state == STATE_CALIBRATING) {
+        calibration_handle();
+    }
 }
+
+
+
+
 /**
  * @brief Function for main application entry.
  */
@@ -582,13 +627,15 @@ int main(void)
 
     lsm303_setup_read_back_check();
     
-    app_timer_start(read_lsm303_tmr_id,APP_TIMER_TICKS(100),NULL);
+    app_timer_start(read_lsm303_tmr_id,APP_TIMER_TICKS(10),NULL);
     app_timer_start(app_tmr_print_out_id,APP_TIMER_TICKS(100),NULL);
 
  
     app_timer_create(&reread_timer,
                     APP_TIMER_MODE_SINGLE_SHOT,
                     read_lsm303);
+
+    
     
     while (true)
     {
@@ -597,8 +644,8 @@ int main(void)
         if(app_state.calibrating)
         {
           bool calib_result;
-          lsm303_data_2_t initial_data;
-          lsm303_data_2_t* p_lsm303_data = lsm303_data_p_get();
+          lsm303_data_t initial_data;
+          lsm303_data_t* p_lsm303_data = lsm303_data_p_get();
           memcpy(&initial_data,p_lsm303_data,sizeof(initial_data));
           app_tmr_print_out_handler(NULL);
           app_timer_start(reread_timer,APP_TIMER_TICKS(10),NULL);
