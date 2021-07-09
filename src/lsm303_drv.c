@@ -71,11 +71,11 @@ nrfx_twi_t m_twi = NRFX_TWI_INSTANCE(TWI_INSTANCE_ID);
 #define TWI_INSTANCE_ID             0
 #define MAX_PENDING_TRANSACTIONS    10
 
-#define MAG_X_TH    5000
-#define MAG_X_HYST  500
+#define MAG_X_TH    1800
+#define MAG_X_HYST  50
 
-#define MAG_Z_TH  6000
-#define MAG_Z_HYST  500
+#define MAG_Z_TH  1800
+#define MAG_Z_HYST  50
 
 NRF_TWI_MNGR_DEF(m_nrf_twi_mngr, MAX_PENDING_TRANSACTIONS, TWI_INSTANCE_ID);
 

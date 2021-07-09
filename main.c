@@ -89,7 +89,7 @@
 
 /* angle/a/b/dir/cnt/Y_peak  */
 #ifndef DEBUG_APP_SHOW_QD
-#define DEBUG_APP_SHOW_QD 1
+#define DEBUG_APP_SHOW_QD 0
 #endif
 
 
@@ -103,7 +103,12 @@
 
 /* show angle/x/z/dir/cnt/y */
 #ifndef DEBUG_APP_SHOW_AXIS_MAG
-#define DEBUG_APP_SHOW_AXIS_MAG 0
+#define DEBUG_APP_SHOW_AXIS_MAG 1
+#endif
+
+/* show angle/x/z/a/b */
+#ifndef DEBUG_APP_SHOW_MAG_AB
+#define DEBUG_APP_SHOW_MAG_AB 0
 #endif
 
 /* show angle/x/y/z */
@@ -262,6 +267,17 @@ static void app_tmr_print_out_handler(void* p_context) {
     p_lsm303_data->mag.qd_data.qd_cnt
     );
 
+    #elif ( DEBUG_APP_SHOW_MAG_AB == 1)
+
+    NRF_LOG_INFO("angle/x/z/a/b | %3d,%5d,%5d,%d,%d",
+    p_lsm303_data->accel.angle, 
+    p_lsm303_data->mag.axis.bit.x,
+    p_lsm303_data->mag.axis.bit.z,
+
+    p_lsm303_data->mag.qd_data.qd.bit.a,
+    p_lsm303_data->mag.qd_data.qd.bit.b
+    );
+    
     #elif ( DEBUG_APP_SHOW_AXIS_MAG_2 == 1)
 
     NRF_LOG_INFO("angle/x/y/z | %3d,%5d,%5d,%5d",
@@ -575,7 +591,6 @@ void read_lsm303(void *unused)
         calibration_handle();
     }
 }
-
 
 
 

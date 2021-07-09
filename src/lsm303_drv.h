@@ -101,8 +101,8 @@ typedef struct _axis_peak_detect_t {
     }
 
 typedef struct _qd_th_t {
-    uint32_t th;
-    uint32_t hysteresis;
+    int32_t th;
+    int32_t hysteresis;
 }qd_th_t;
 typedef struct _qd_desc_t {
     qd_th_t th_values[2];
