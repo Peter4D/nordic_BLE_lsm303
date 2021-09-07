@@ -64,7 +64,6 @@
 #include "bsp.h"
 #include "nrf_drv_gpiote.h"
 
-
 #include "nrf_log.h"
 #include "nrf_log_ctrl.h"
 #include "nrf_log_default_backends.h"
@@ -82,16 +81,16 @@
 #include "flash_storage.h"
 #include <math.h>
 
+#include "limits.h"
 
-#define goffsetof(TYPE, MEMBER) ((size_t) &((TYPE *)0)->MEMBER)
- // Obtain a pointer to the entire structure variable according to the "pointer (ptr) of the domain member variable (member)" in the "structure (type) variable"
-#define gcontainer_of(ptr, type, member)     (type *)( (char *)ptr - goffsetof(type,member) );
+#define goffsetof(TYPE, MEMBER) ((size_t) & ((TYPE *)0)->MEMBER)
+// Obtain a pointer to the entire structure variable according to the "pointer (ptr) of the domain member variable (member)" in the "structure (type) variable"
+#define gcontainer_of(ptr, type, member) (type *)((char *)ptr - goffsetof(type, member));
 
 /* angle/a/b/dir/cnt/Y_peak  */
 #ifndef DEBUG_APP_SHOW_QD
 #define DEBUG_APP_SHOW_QD 0
 #endif
-
 
 #ifndef DEBUG_APP_SHOW_QD_ACCEL
 #define DEBUG_APP_SHOW_QD_ACCEL 0
@@ -103,7 +102,7 @@
 
 /* show angle/x/z/dir/cnt/y */
 #ifndef DEBUG_APP_SHOW_AXIS_MAG
-#define DEBUG_APP_SHOW_AXIS_MAG 1
+#define DEBUG_APP_SHOW_AXIS_MAG 2
 #endif
 
 /* show angle/x/z/a/b */
@@ -120,70 +119,147 @@
 #define DEBUG_APP_SHOW_ACCEL_AXIS 0
 #endif
 
-
 /* TWI instance ID. */
-#define TWI_INSTANCE_ID     0
+#define TWI_INSTANCE_ID 0
 
 /* UI */
-#define BTN_PIN                   5
-#define BTN_POLL_MS               100
-#define LONG_BTN_TIMEOUT_MS       5000
-#define LED_SHORT_BLINK_TIME_MS   100
-#define LED_LONG_BLINK_TIME_MS    1000
-#define LED_1                     4
-#define LED_2                     20
-#define LED_GREEN                 LED_1
-#define LED_RED                   LED_2
+#define BTN_PIN 5
+#define BTN_POLL_MS 100
+#define LONG_BTN_TIMEOUT_MS 5000
+#define LED_SHORT_BLINK_TIME_MS 100
+#define LED_LONG_BLINK_TIME_MS 1000
+#define LED_1 4
+#define LED_2 20
+#define LED_GREEN LED_1
+#define LED_RED LED_2
 
 /* Arbitary calibration constants */
-#define CALIBRATION_TIMEOUT_MS    10000 /* Timeout after enabling calibration and no action was taken */
+#define CALIBRATION_TIMEOUT_MS 20000 /* Timeout after enabling calibration and no action was taken */
 
-typedef enum{
+typedef enum
+{
   GREEN_OFF = 1 << 0,
-  RED_OFF   = 1 << 1,
-  BOTH_OFF  = GREEN_OFF | RED_OFF,
+  RED_OFF = 1 << 1,
+  BOTH_OFF = GREEN_OFF | RED_OFF,
 } led_timeout_handle_t;
 
 #define led_off nrf_gpio_pin_clear
 #define led_on nrf_gpio_pin_set
 #define led_toggle nrf_gpio_pin_toggle
 
-#define ACCEL_INT_PIN       14
+#define ACCEL_INT_PIN 14
 
-#define LM75B_REG_TEMP      0x00U
-#define LM75B_REG_CONF      0x01U
-#define LM75B_REG_THYST     0x02U
-#define LM75B_REG_TOS       0x03U
+#define LM75B_REG_TEMP 0x00U
+#define LM75B_REG_CONF 0x01U
+#define LM75B_REG_THYST 0x02U
+#define LM75B_REG_TOS 0x03U
 
 /* Mode for LM75B. */
 #define NORMAL_MODE 0U
 
 static uint8_t m_who_i_am = 0xFF;
 
-typedef enum {
-    STATE_IDLE = 0,
-    STATE_CALIBRATING, 
-    STATE_ACTIVE
-}app_state_e_t;
-
-typedef struct  _app_CB_t
+typedef enum
 {
-    app_state_e_t app_state;
-    int8_t key_side;
-}app_CB_t;
+  STATE_IDLE = 0,
+  STATE_CALIBRATING,
+  STATE_ACTIVE
+} app_state_e_t;
 
-typedef struct{
-  uint8_t calibrated  :1;
-  uint8_t calibrating :1;
-  uint8_t locked      :1;
+typedef struct _app_CB_t
+{
+  app_state_e_t app_state;
+  int8_t key_side;
+} app_CB_t;
+
+typedef struct
+{
+  uint8_t calibrated : 1;
+  uint8_t calibrating : 1;
+  uint8_t locked : 1;
+  uint8_t lockedTwice : 1;
+  uint8_t inserted : 1;
+  uint16_t area : 1;
+  uint8_t insertedInside : 1;
+  uint16_t areaId;
 } application_state_t;
 
 static app_CB_t m_app_CB = {
     .app_state = STATE_IDLE,
 };
 
+
+
+static bool calibration_active = true;
+
+
+
+
+typedef struct _cake_data_model_t {
+    uint16_t start_angle_i;
+    uint16_t end_angle_i; 
+    uint16_t start_angle;
+    uint16_t end_angle;
+    uint16_t area_id;
+    uint16_t angle_meas_taken_x;
+    uint16_t angle_meas_taken_y;
+    uint16_t angle_meas_taken_z;
+    int16_t x_peak;
+    int16_t y_peak;
+    int16_t z_peak;
+    int16_t x_avg;
+    int16_t y_avg;
+    int16_t z_avg;
+    int16_t x_set_threshold_min;
+    int16_t y_set_threshold_min;
+    int16_t z_set_threshold_min;    
+
+    int16_t x_set_threshold_min_from_avg;
+    int16_t y_set_threshold_min_from_avg;
+    int16_t z_set_threshold_min_from_avg;   
+
+    int16_t x_set_threshold_max_from_avg;
+    int16_t y_set_threshold_max_from_avg;
+    int16_t z_set_threshold_max_from_avg;    
+
+    int16_t x_set_threshold_max;
+    int16_t y_set_threshold_max;
+    int16_t z_set_threshold_max; 
+
+    uint16_t sum_abs_xyz_peaks;  
+
+    uint16_t sum_abs_xyz_peaks_min;
+    uint16_t sum_abs_xyz_peaks_max;  
+}cake_data_model_t;
+
+typedef struct _cake_data_col_t {
+    cake_data_model_t cake_data[12];
+
+    uint16_t actual_angle;
+    uint16_t actual_area_id;
+}cake_data_col_t;
+
+static cake_data_col_t cake_data_col =  {
+  .cake_data[0].start_angle = 0u,
+  .cake_data[0].end_angle = 0u,
+  .cake_data[0].area_id = 0u,
+  .cake_data[0].x_peak = 0u,
+  .cake_data[0].y_peak = 0u,
+  .cake_data[0].z_peak = 0u,
+  .cake_data[0].x_set_threshold_min = 0u,
+  .cake_data[0].y_set_threshold_min = 0u,
+  .cake_data[0].z_set_threshold_min = 0u,
+};
+
+
+
+
+
 static application_state_t app_state;
 
+static uint16_t cnt_x_axis_lowering = 0u;
+static uint16_t cnt_x_axis_lowering_wait = 0u;
+static int16_t old_x_axis = 0u;
 
 /* Buffer for samples read from accelerometer sensor. */
 
@@ -193,242 +269,299 @@ APP_TIMER_DEF(app_tmr_print_out_id);
 APP_TIMER_DEF(app_tmr_led_blink_id);
 APP_TIMER_DEF(app_tmr_calibration_id);
 
-void read_lsm303_tmr_handler(void* p_context);
+void read_lsm303_tmr_handler(void *p_context);
+void check_key_inserted(void);
+void check_area_changed(void);
+
+void update_area(void);
+void check_area_changed2(void);
+
+static uint16_t increment_angle_step(uint16_t angle);
+static uint16_t define_angle_limit(uint16_t angle, bool start_angle);
+
+
+
+
+
 
 #define APP_LED_RED BSP_LED_0
 #define APP_GREEN_RED BSP_LED_1
 
 #ifdef APP_LED_RED
-    #define PIN_OUT APP_LED_RED
+#define PIN_OUT APP_LED_RED
 #endif
 
 #ifndef PIN_OUT
-    #error "Please indicate output pin"
+#error "Please indicate output pin"
 #endif
-
 
 #ifndef APP_LED_RED
 #define APP_LED_RED BSP_BOARD_LED_0
 #endif
 
 /* test of lsm303 sensor response */
-static void test_i2c_read_callback(ret_code_t result, void * p_user_data) { 
-    NRF_LOG_INFO("who i am read %u", ((uint8_t*)p_user_data)[0]);
+static void test_i2c_read_callback(ret_code_t result, void *p_user_data)
+{
+  NRF_LOG_INFO("who i am read %u", ((uint8_t *)p_user_data)[0]);
 }
 
-static void app_tmr_print_out_handler(void* p_context) {
-    
-    lsm303_data_t* p_lsm303_data = lsm303_data_p_get();
+static void app_tmr_print_out_handler(void *p_context)
+{
+
+  lsm303_data_t *p_lsm303_data = lsm303_data_p_get();
+
+#if (DEBUG_APP_SHOW_QD == 1)
+
+  NRF_LOG_INFO("angle/a/b/dir/cnt/Y_peak | %3d,%u,%u,%d,%d,%d",
+               p_lsm303_data->accel.angle,
+
+               p_lsm303_data->mag.qd_data.qd.bit.a,
+               p_lsm303_data->mag.qd_data.qd.bit.b,
+               p_lsm303_data->mag.qd_data.qd_dir,
+               p_lsm303_data->mag.qd_data.qd_cnt,
+
+               p_lsm303_data->mag.axis_peak.bit.y);
+
+#elif (DEBUG_APP_SHOW_QD_ACCEL == 1)
+
+  NRF_LOG_INFO("angle/a/b/dir/cnt | %3d,%u,%u,%2d,%d",
+               p_lsm303_data->accel.angle,
+
+               p_lsm303_data->accel.qd_data.qd.bit.a,
+               p_lsm303_data->accel.qd_data.qd.bit.b,
+               p_lsm303_data->accel.qd_data.qd_dir,
+               p_lsm303_data->accel.qd_data.qd_cnt);
+
+#elif (DEBUG_APP_SHOW_QD_AXIS_ACCEL == 1)
+
+  NRF_LOG_INFO("angle/a/b/x/z | %3d,%u,%u,%5d,%5d",
+               p_lsm303_data->accel.angle,
+
+               p_lsm303_data->accel.qd_data.qd.bit.a,
+               p_lsm303_data->accel.qd_data.qd.bit.b,
+               abs(p_lsm303_data->accel.axis.bit.x),
+               abs(p_lsm303_data->accel.axis.bit.z));
+
+#elif (DEBUG_APP_SHOW_AXIS_MAG == 1)
+
+  NRF_LOG_INFO("angle/x/y/z/dir/cnt/ins | %3d,%5d,%5d,%5d,%2d,%d",
+               p_lsm303_data->accel.angle,
+               p_lsm303_data->mag.axis.bit.x,
+               p_lsm303_data->mag.axis.bit.y,
+               p_lsm303_data->mag.axis.bit.z,
+
+               p_lsm303_data->mag.qd_data.qd_dir,
+               p_lsm303_data->mag.qd_data.qd_cnt);
+
+#elif (DEBUG_APP_SHOW_AXIS_MAG == 2)
+
+#if 0
+    NRF_LOG_INFO("area/angle/ins | %d,%d,%3d,%d",
+    p_lsm303_data->accel.area, 
+    app_state.locked,
+    p_lsm303_data->accel.angle, 
+    app_state.inserted
+#endif
+
+#if 0
+  NRF_LOG_INFO("ins/insInd/Lck/LckTwc/areaId/angle| %5d,%5d,%5d,%3d",
+               p_lsm303_data->mag.axis.bit.x,
+               p_lsm303_data->mag.axis.bit.y,
+               p_lsm303_data->mag.axis.bit.z,
+               p_lsm303_data->accel.angle
+
+#endif
+
+
+#if 1
+  NRF_LOG_INFO("ins/insInd/Lck/LckTwc/areaId/angle| %d,%d,%d,%d,%2d,%3d",
+               app_state.inserted,
+               app_state.insertedInside,
+               app_state.locked,
+               app_state.lockedTwice,
+               app_state.areaId,
+               p_lsm303_data->accel.angle
+
+#endif
+  );
+
+
   
-    #if( DEBUG_APP_SHOW_QD == 1)
-    
-    NRF_LOG_INFO("angle/a/b/dir/cnt/Y_peak | %3d,%u,%u,%d,%d,%d",
-    p_lsm303_data->accel.angle, 
 
-    p_lsm303_data->mag.qd_data.qd.bit.a,
-    p_lsm303_data->mag.qd_data.qd.bit.b,
-    p_lsm303_data->mag.qd_data.qd_dir,
-    p_lsm303_data->mag.qd_data.qd_cnt,
+#elif (DEBUG_APP_SHOW_MAG_AB == 1)
 
-    p_lsm303_data->mag.axis_peak.bit.y
-    );
-    
-    #elif ( DEBUG_APP_SHOW_QD_ACCEL == 1 )
+  NRF_LOG_INFO("angle/x/z/a/b | %3d,%5d,%5d,%d,%d",
+               p_lsm303_data->accel.angle,
+               p_lsm303_data->mag.axis.bit.x,
+               p_lsm303_data->mag.axis.bit.z,
 
-    NRF_LOG_INFO("angle/a/b/dir/cnt | %3d,%u,%u,%2d,%d",
-    p_lsm303_data->accel.angle, 
+               p_lsm303_data->mag.qd_data.qd.bit.a,
+               p_lsm303_data->mag.qd_data.qd.bit.b);
 
-    p_lsm303_data->accel.qd_data.qd.bit.a,
-    p_lsm303_data->accel.qd_data.qd.bit.b,
-    p_lsm303_data->accel.qd_data.qd_dir,
-    p_lsm303_data->accel.qd_data.qd_cnt
-    );
+#elif (DEBUG_APP_SHOW_AXIS_MAG_2 == 1)
 
-    #elif ( DEBUG_APP_SHOW_QD_AXIS_ACCEL == 1 )
+  NRF_LOG_INFO("angle/x/y/z | %3d,%5d,%5d,%5d",
+               p_lsm303_data->accel.angle,
+               p_lsm303_data->mag.axis.bit.x,
+               p_lsm303_data->mag.axis.bit.y,
+               p_lsm303_data->mag.axis.bit.z);
 
-    NRF_LOG_INFO("angle/a/b/x/z | %3d,%u,%u,%5d,%5d",
-    p_lsm303_data->accel.angle, 
+#elif (DEBUG_APP_SHOW_ACCEL_AXIS == 1)
 
-    p_lsm303_data->accel.qd_data.qd.bit.a,
-    p_lsm303_data->accel.qd_data.qd.bit.b,
-    abs(p_lsm303_data->accel.axis.bit.x),
-    abs(p_lsm303_data->accel.axis.bit.z)
-    );
+  NRF_LOG_INFO("A: angle/x/y/z | %3d, %5d, %5d, %5d",
+               p_lsm303_data->accel.angle,
 
-    #elif ( DEBUG_APP_SHOW_AXIS_MAG == 1)
+               abs(p_lsm303_data->accel.axis.bit.x),
+               abs(p_lsm303_data->accel.axis.bit.y),
+               abs(p_lsm303_data->accel.axis.bit.z));
 
-    NRF_LOG_INFO("angle/x/y/z/dir/cnt | %3d,%5d,%5d,%5d,%2d,%d",
-    p_lsm303_data->accel.angle, 
-    p_lsm303_data->mag.axis.bit.x,
-    p_lsm303_data->mag.axis.bit.y,
-    p_lsm303_data->mag.axis.bit.z,
+#endif
 
-    p_lsm303_data->mag.qd_data.qd_dir,
-    p_lsm303_data->mag.qd_data.qd_cnt
-    );
-
-    #elif ( DEBUG_APP_SHOW_MAG_AB == 1)
-
-    NRF_LOG_INFO("angle/x/z/a/b | %3d,%5d,%5d,%d,%d",
-    p_lsm303_data->accel.angle, 
-    p_lsm303_data->mag.axis.bit.x,
-    p_lsm303_data->mag.axis.bit.z,
-
-    p_lsm303_data->mag.qd_data.qd.bit.a,
-    p_lsm303_data->mag.qd_data.qd.bit.b
-    );
-    
-    #elif ( DEBUG_APP_SHOW_AXIS_MAG_2 == 1)
-
-    NRF_LOG_INFO("angle/x/y/z | %3d,%5d,%5d,%5d",
-    p_lsm303_data->accel.angle, 
-    p_lsm303_data->mag.axis.bit.x,
-    p_lsm303_data->mag.axis.bit.y,
-    p_lsm303_data->mag.axis.bit.z
-    );
-
-    #elif ( DEBUG_APP_SHOW_ACCEL_AXIS == 1)
-
-    NRF_LOG_INFO("A: angle/x/y/z | %3d, %5d, %5d, %5d",
-    p_lsm303_data->accel.angle, 
-
-    abs(p_lsm303_data->accel.axis.bit.x), 
-    abs(p_lsm303_data->accel.axis.bit.y), 
-    abs(p_lsm303_data->accel.axis.bit.z)
-    );
-
-    #endif
-
-    // static uint8_t who_i_am_reg_addr = LSM303_REG_ACCEL_WHO_AM_I;
-    // lsm303_read_reg(&who_i_am_reg_addr, &m_who_i_am, 1, test_i2c_read_callback);
+  // static uint8_t who_i_am_reg_addr = LSM303_REG_ACCEL_WHO_AM_I;
+  // lsm303_read_reg(&who_i_am_reg_addr, &m_who_i_am, 1, test_i2c_read_callback);
 }
 
-static bool calib_handler(void* p_context) {
-    lsm303_data_t* p_lsm303_data = lsm303_data_p_get();
-    int32_t qd_cnt = p_lsm303_data->mag.qd_data.qd_cnt;
-    
+static bool calib_handler(void *p_context)
+{
+  lsm303_data_t *p_lsm303_data = lsm303_data_p_get();
+  int32_t qd_cnt = p_lsm303_data->mag.qd_data.qd_cnt;
 
-    if(abs(qd_cnt) > 4) {
-        /* key has turned more than full circle */
-        if(p_lsm303_data->mag.axis_peak.bit.y > 0) {
-            m_app_CB.key_side = 0;
-        }else {
-            m_app_CB.key_side = -1;
-        }
-        return true;
+  if (abs(qd_cnt) > 4)
+  {
+    /* key has turned more than full circle */
+    if (p_lsm303_data->mag.axis_peak.bit.y > 0)
+    {
+      m_app_CB.key_side = 0;
     }
-    return false;
+    else
+    {
+      m_app_CB.key_side = -1;
+    }
+    return true;
+  }
+  return false;
 }
 
-static void lsm303_read_end_callback(ret_code_t result, void * p_user_data) {
+static void lsm303_read_end_callback(ret_code_t result, void *p_user_data)
+{
 
-    struct _lsm303_reg_dsc_t* p_my_container = {0};
+  struct _lsm303_reg_dsc_t *p_my_container = {0};
 
-    p_my_container = gcontainer_of(p_user_data, struct _lsm303_reg_dsc_t, data);
-    
-    NRF_LOG_INFO("reg: %s, val: 0x%X",  p_my_container->p_name, ((uint8_t*)p_user_data)[0]);
+  p_my_container = gcontainer_of(p_user_data, struct _lsm303_reg_dsc_t, data);
 
+  NRF_LOG_INFO("reg: %s, val: 0x%X", p_my_container->p_name, ((uint8_t *)p_user_data)[0]);
 }
-
 
 static uint8_t reg_data[1];
 static uint8_t addr_reg = LSM303_REG_ACCEL_INT1_SOURCE;
 
-static void calibration_timeout_handler(void* calibration_ctx_s)
+static uint16_t sum = 0u;
+
+static void calibration_timeout_handler(void *calibration_ctx_s)
 {
-    app_state.calibrating = false;
-    NRF_LOG_INFO("Calibration timeout");
+  app_state.calibrating = false;
+  NRF_LOG_INFO("Calibration timeout");
 }
 
 static void led_timeout_handler(void *led_state_s)
 {
-    led_timeout_handle_t led_state = (led_timeout_handle_t)led_state_s;
-    if(led_state & GREEN_OFF){
-      led_off(LED_GREEN);
-    }
-    if(led_state & RED_OFF){
-      led_off(LED_RED);
-    } 
+  led_timeout_handle_t led_state = (led_timeout_handle_t)led_state_s;
+  if (led_state & GREEN_OFF)
+  {
+    led_off(LED_GREEN);
+  }
+  if (led_state & RED_OFF)
+  {
+    led_off(LED_RED);
+  }
 }
 
 static void button_short_press(void)
 {
-    NRF_LOG_INFO("Short press");
-    // read_accel(); /* @note When SD will be running, this might not work as currently these are synchronous read requests */
-    // read_mag();
+  NRF_LOG_INFO("Short press");
+  // read_accel(); /* @note When SD will be running, this might not work as currently these are synchronous read requests */
+  // read_mag();
 
-    // Per spec, if key is in "reset" state then both leds blink
-    uint32_t off_action;
-    if(app_state.calibrated){
-      led_on(LED_GREEN);
-      led_on(LED_RED);
-      off_action = BOTH_OFF;
-    }
-    else if(app_state.locked){
-      led_on(LED_GREEN);
-      off_action = GREEN_OFF;
-      // Signal if door is locked or not
-    }
-    else{
-      led_on(LED_RED);
-      off_action = RED_OFF;
-    }
-    app_timer_start(app_tmr_led_blink_id,APP_TIMER_TICKS(LED_SHORT_BLINK_TIME_MS),(void*)off_action);
+  // Per spec, if key is in "reset" state then both leds blink
+  uint32_t off_action;
+  if (app_state.calibrated)
+  {
+    led_on(LED_GREEN);
+    led_on(LED_RED);
+    off_action = BOTH_OFF;
+  }
+  else if (app_state.locked)
+  {
+    led_on(LED_GREEN);
+    off_action = GREEN_OFF;
+    // Signal if door is locked or not
+  }
+  else
+  {
+    led_on(LED_RED);
+    off_action = RED_OFF;
+  }
+  app_timer_start(app_tmr_led_blink_id, APP_TIMER_TICKS(LED_SHORT_BLINK_TIME_MS), (void *)off_action);
 }
 
 static void calibration_start(void)
 {
-    // lsm303_accel_reg_int_cfg_t cfg = {.reg = ENABLE_ALL_AXIS_INT};
-    // lms303_accel_int_en(cfg);
+  // lsm303_accel_reg_int_cfg_t cfg = {.reg = ENABLE_ALL_AXIS_INT};
+  // lms303_accel_int_en(cfg);
 
-    NRF_LOG_INFO("Calibration start");
-    // read_accel(); /* @note When SD will be running, this might not work as currently these are synchronous read requests */
-    // read_mag();
-    
-    app_state.calibrating = true;
-    ret_code_t ret = app_timer_start(app_tmr_calibration_id,APP_TIMER_TICKS(CALIBRATION_TIMEOUT_MS),NULL);
-    APP_ERROR_CHECK(ret);
+  NRF_LOG_INFO("Calibration start");
+  // read_accel(); /* @note When SD will be running, this might not work as currently these are synchronous read requests */
+  // read_mag();
+
+  app_state.calibrating = true;
+  ret_code_t ret = app_timer_start(app_tmr_calibration_id, APP_TIMER_TICKS(CALIBRATION_TIMEOUT_MS), NULL);
+  APP_ERROR_CHECK(ret);
 }
 
 static void button_long_press(void)
 {
-    if(!app_state.calibrating)
-    {
-      calibration_start();
-      led_on(LED_GREEN);
-      app_timer_start(app_tmr_led_blink_id,APP_TIMER_TICKS(LED_SHORT_BLINK_TIME_MS),(void*)GREEN_OFF);
-    }
-    else{
-      NRF_LOG_INFO("Already calibrating");
-    }
-}
-
-static void button_timeout_handler(void* unused)
-{
-  (void)unused;
-  static uint8_t btn_hold_cnt = 0;
-  if(app_button_is_pushed(0)) {
-      if(++btn_hold_cnt >= LONG_BTN_TIMEOUT_MS/BTN_POLL_MS){
-        btn_hold_cnt = 0;
-        button_long_press();
-      }
-      else{
-        app_timer_start(app_tmr_btn_long_press_id,APP_TIMER_TICKS(BTN_POLL_MS),NULL);
-      }
+  if (!app_state.calibrating)
+  {
+    calibration_start();
+    led_on(LED_GREEN);
+    app_timer_start(app_tmr_led_blink_id, APP_TIMER_TICKS(LED_SHORT_BLINK_TIME_MS), (void *)GREEN_OFF);
   }
   else
   {
-      btn_hold_cnt = 0;
-      button_short_press();
+    NRF_LOG_INFO("Already calibrating");
   }
 }
 
-static void button_handler(uint8_t pin_no, uint8_t button_action) {
-    (void)pin_no;
-    if (button_action == APP_BUTTON_PUSH)
+static void button_timeout_handler(void *unused)
+{
+  (void)unused;
+  static uint8_t btn_hold_cnt = 0;
+  if (app_button_is_pushed(0))
+  {
+    if (++btn_hold_cnt >= LONG_BTN_TIMEOUT_MS / BTN_POLL_MS)
     {
-        app_timer_start(app_tmr_btn_long_press_id, APP_TIMER_TICKS(BTN_POLL_MS),NULL); 
+      btn_hold_cnt = 0;
+      button_long_press();
     }
+    else
+    {
+      app_timer_start(app_tmr_btn_long_press_id, APP_TIMER_TICKS(BTN_POLL_MS), NULL);
+    }
+  }
+  else
+  {
+    btn_hold_cnt = 0;
+    button_short_press();
+  }
+}
+
+static void button_handler(uint8_t pin_no, uint8_t button_action)
+{
+  (void)pin_no;
+  if (button_action == APP_BUTTON_PUSH)
+  {
+    app_timer_start(app_tmr_btn_long_press_id, APP_TIMER_TICKS(BTN_POLL_MS), NULL);
+  }
 }
 
 static void bsp_evt_handler(bsp_event_t bsp_event) {}
@@ -438,108 +571,114 @@ static uint8_t compare_counters[8];
 
 static void accel_src_handle(lsm303_accel_reg_int_src_t src)
 {
-    ASSERT(src.bit.I_A);
-    static int cnt;
-    if(src.bit.Y_H){
+  ASSERT(src.bit.I_A);
+  static int cnt;
+  if (src.bit.Y_H)
+  {
     //   read_accel(); /* @note When SD will be running, this might not work as currently these are synchronous read requests */
     //   read_mag();
-      NRF_LOG_INFO("Int cnt %d, int val %u",cnt++,src.reg);
-      app_tmr_print_out_handler(NULL);
-      NRF_LOG_FLUSH();
-    }
-    else if(src.bit.Y_L){
-      NRF_LOG_INFO("Y_L");
-    }
-    else if(src.bit.Z_H){
-      NRF_LOG_INFO("Z_H");
-    }
-    else if(src.bit.Z_L){
-      NRF_LOG_INFO("Z_L");
-    }
-    else if(src.bit.X_H){
-      NRF_LOG_INFO("X_H");
-    }
-    else if(src.bit.X_L){
-      NRF_LOG_INFO("X_L");
-    }
-
+    NRF_LOG_INFO("Int cnt %d, int val %u", cnt++, src.reg);
+    app_tmr_print_out_handler(NULL);
+    NRF_LOG_FLUSH();
+  }
+  else if (src.bit.Y_L)
+  {
+    NRF_LOG_INFO("Y_L");
+  }
+  else if (src.bit.Z_H)
+  {
+    NRF_LOG_INFO("Z_H");
+  }
+  else if (src.bit.Z_L)
+  {
+    NRF_LOG_INFO("Z_L");
+  }
+  else if (src.bit.X_H)
+  {
+    NRF_LOG_INFO("X_H");
+  }
+  else if (src.bit.X_L)
+  {
+    NRF_LOG_INFO("X_L");
+  }
 }
 
-static void accel_int_read_cb(ret_code_t result, void * p_user_data)
+static void accel_int_read_cb(ret_code_t result, void *p_user_data)
 {
-    if(result == NRF_SUCCESS)
-    {
-      struct _lsm303_reg_dsc_t* reg = gcontainer_of(p_user_data, struct _lsm303_reg_dsc_t, data);
-      ASSERT(reg->addr == LSM303_REG_ACCEL_CLICK_SRC);
-      accel_src_handle((lsm303_accel_reg_int_src_t)reg->data);
-    }
-    else
-    {
-      NRF_LOG_ERROR("Error in %s %08X",__FUNCTION__,result);
-    }
+  if (result == NRF_SUCCESS)
+  {
+    struct _lsm303_reg_dsc_t *reg = gcontainer_of(p_user_data, struct _lsm303_reg_dsc_t, data);
+    ASSERT(reg->addr == LSM303_REG_ACCEL_CLICK_SRC);
+    accel_src_handle((lsm303_accel_reg_int_src_t)reg->data);
+  }
+  else
+  {
+    NRF_LOG_ERROR("Error in %s %08X", __FUNCTION__, result);
+  }
 }
 
 static void accel_int_handler(nrf_drv_gpiote_pin_t pin, nrf_gpiote_polarity_t action)
 {
-    (void)pin;
-    (void)action;
-    
-    NRF_LOG_ERROR("accel INT");
-    lsm303_read_reg(&lsm_reg_data.reg.int1_src.addr, &lsm_reg_data.reg.int1_src.data, 1, accel_int_read_cb);
+  (void)pin;
+  (void)action;
+
+  NRF_LOG_ERROR("accel INT");
+  lsm303_read_reg(&lsm_reg_data.reg.int1_src.addr, &lsm_reg_data.reg.int1_src.data, 1, accel_int_read_cb);
 }
 
 static void setup_accel_pin_int(void)
 {
-    nrf_drv_gpiote_in_config_t config = GPIOTE_CONFIG_IN_SENSE_TOGGLE(true);
-    config.pull = NRF_GPIO_PIN_PULLUP;
-    uint32_t err_code = nrf_drv_gpiote_in_init(ACCEL_INT_PIN, &config, accel_int_handler);
-    APP_ERROR_CHECK(err_code);
-    nrf_drv_gpiote_in_event_enable(ACCEL_INT_PIN, true);
+  nrf_drv_gpiote_in_config_t config = GPIOTE_CONFIG_IN_SENSE_TOGGLE(true);
+  config.pull = NRF_GPIO_PIN_PULLUP;
+  uint32_t err_code = nrf_drv_gpiote_in_init(ACCEL_INT_PIN, &config, accel_int_handler);
+  APP_ERROR_CHECK(err_code);
+  nrf_drv_gpiote_in_event_enable(ACCEL_INT_PIN, true);
 }
 
 static void ui_init(void)
 {
-    static const app_button_cfg_t btn_cfg = {
+  static const app_button_cfg_t btn_cfg = {
       .pull_cfg = NRF_GPIO_PIN_PULLUP,
       .button_handler = button_handler,
       .active_state = 0,
       .pin_no = BTN_PIN,
-    }; // Must be static
-    app_timer_create(&app_tmr_btn_long_press_id,
-                      APP_TIMER_MODE_SINGLE_SHOT,
-                      button_timeout_handler);
+  }; // Must be static
+  app_timer_create(&app_tmr_btn_long_press_id,
+                   APP_TIMER_MODE_SINGLE_SHOT,
+                   button_timeout_handler);
 
-    uint32_t err_code = app_button_init(&btn_cfg,1,BTN_POLL_MS);
-    APP_ERROR_CHECK(err_code);
+  uint32_t err_code = app_button_init(&btn_cfg, 1, BTN_POLL_MS);
+  
+  APP_ERROR_CHECK(err_code);
 
-    err_code = app_button_enable();
-    APP_ERROR_CHECK(err_code);
+  err_code = app_button_enable();
+  APP_ERROR_CHECK(err_code);
 
-    nrf_gpio_cfg_output(LED_GREEN);
-    nrf_gpio_cfg_output(LED_RED);
+  nrf_gpio_cfg_output(LED_GREEN);
+  nrf_gpio_cfg_output(LED_RED);
 }
 
 static void utils_setup(void)
 {
-    ret_code_t err_code = app_timer_init();
-    APP_ERROR_CHECK(err_code);
-    ui_init();
+  ret_code_t err_code = app_timer_init();
+  APP_ERROR_CHECK(err_code);
+  ui_init();
 
-    err_code = nrf_pwr_mgmt_init();
-    APP_ERROR_CHECK(err_code);
+  err_code = nrf_pwr_mgmt_init();
+  APP_ERROR_CHECK(err_code);
 }
 
+void read_lsm303_tmr_handler(void *p_context)
+{
 
-void read_lsm303_tmr_handler(void* p_context) {
-    
-    read_accel();
-    read_mag();
-    lsm303_data_t* p_lsm303_data = lsm303_data_p_get();
+  read_accel();
+  read_mag();
+  lsm303_data_t *p_lsm303_data = lsm303_data_p_get();
 
-    NRF_LOG_FLUSH();
+  NRF_LOG_FLUSH();
 }
 
-void clock_event_handler(nrfx_clock_evt_type_t event){}
+void clock_event_handler(nrfx_clock_evt_type_t event) {}
 
 /**@brief Function starting the internal LFCLK oscillator.
  *
@@ -548,48 +687,376 @@ void clock_event_handler(nrfx_clock_evt_type_t event){}
  */
 static void lfclk_request(void)
 {
-    ret_code_t err_code;
-    err_code = nrfx_clock_init(clock_event_handler);
-    //err_code = nrf_drv_clock_init();
-    
-    APP_ERROR_CHECK(err_code);
+  ret_code_t err_code;
+  err_code = nrfx_clock_init(clock_event_handler);
+  //err_code = nrf_drv_clock_init();
 
-    //nrf_drv_clock_lfclk_request(NULL);
-    nrfx_clock_lfclk_start();
+  APP_ERROR_CHECK(err_code);
+
+  //nrf_drv_clock_lfclk_request(NULL);
+  nrfx_clock_lfclk_start();
 }
 
-static void flash_storage_read_cb(void* data,int len)
+static void flash_storage_read_cb(void *data, int len)
 {
-    
 }
-
 
 APP_TIMER_DEF(reread_timer); // This is kinda hacky for now, because I don't want to change how read_accel works
 
-static void calibration_handle(void) {
-    static uint8_t init_step = 1;
-    static uint16_t init_angle = 0;
 
-    lsm303_data_t* p_lsm303_data = lsm303_data_p_get();
 
-    if(init_step == 1) {
-        /* get initial value of angle */
-        init_angle = p_lsm303_data->accel.angle;
 
-        init_step = 0;
+
+
+
+
+static void calibration_handle_keyinserted(void)
+{
+lsm303_data_t *p_lsm303_data = lsm303_data_p_get();
+  uint16_t tmp_angle = p_lsm303_data->accel.angle; /* can be different from the lock to lock */
+
+  /* create a tree of data */
+    for (int i = 0u; i < 12u; i++)
+    {
+      cake_data_col.cake_data[i].start_angle_i = (int16_t)(tmp_angle-14);
+      cake_data_col.cake_data[i].end_angle_i = (int16_t)(tmp_angle+15);
+
+      cake_data_col.cake_data[i].start_angle = define_angle_limit(tmp_angle, true);
+      cake_data_col.cake_data[i].end_angle = define_angle_limit(tmp_angle, false);
+      cake_data_col.cake_data[i].area_id = i;
+
+      tmp_angle = increment_angle_step(tmp_angle);
     }
+}
+
+static void calibration_handle(void)
+{
+  static uint8_t step = 0u;
+  static uint16_t curr_angle = 0u;
+  static uint16_t num_of_meas = 0u;
+
+  lsm303_data_t *p_lsm303_data = lsm303_data_p_get();
+  curr_angle = p_lsm303_data->accel.angle; /* can be different from the lock to lock */
+
+  if (12u > step >= 0u)
+  {
+    if (step == cake_data_col.cake_data[step].area_id)
+    {
+      if ( ((curr_angle+30u) >= (uint16_t)(cake_data_col.cake_data[step].start_angle_i + 30)) && ((curr_angle+30u) <= (uint16_t)(cake_data_col.cake_data[step].end_angle + 30)) )
+      {
+        num_of_meas++;
+
+        if (num_of_meas == 1u)
+        {
+          cake_data_col.cake_data[step].x_avg = p_lsm303_data->mag.axis.bit.x;
+          cake_data_col.cake_data[step].y_avg = p_lsm303_data->mag.axis.bit.y;
+          cake_data_col.cake_data[step].z_avg = p_lsm303_data->mag.axis.bit.z;
+        }
+        else
+        {
+          cake_data_col.cake_data[step].x_avg = (cake_data_col.cake_data[step].x_avg + p_lsm303_data->mag.axis.bit.x) >> 1;
+          cake_data_col.cake_data[step].y_avg = (cake_data_col.cake_data[step].y_avg + p_lsm303_data->mag.axis.bit.y) >> 1;
+          cake_data_col.cake_data[step].z_avg = (cake_data_col.cake_data[step].z_avg + p_lsm303_data->mag.axis.bit.z) >> 1;
+        }
+        
+
+        if (abs(p_lsm303_data->mag.axis.bit.x) > abs(cake_data_col.cake_data[step].x_peak))
+        {
+          cake_data_col.cake_data[step].x_peak = p_lsm303_data->mag.axis.bit.x;
+          cake_data_col.cake_data[step].angle_meas_taken_x = curr_angle;
+        }
+
+        if (abs(p_lsm303_data->mag.axis.bit.y) > abs(cake_data_col.cake_data[step].y_peak))
+        {
+          cake_data_col.cake_data[step].y_peak = p_lsm303_data->mag.axis.bit.y;
+          cake_data_col.cake_data[step].angle_meas_taken_y = curr_angle;
+        }
+
+        if (abs(p_lsm303_data->mag.axis.bit.z) > abs(cake_data_col.cake_data[step].z_peak))
+        {
+          cake_data_col.cake_data[step].z_peak = p_lsm303_data->mag.axis.bit.z;
+          cake_data_col.cake_data[step].angle_meas_taken_z = curr_angle;
+        }
+
+        if ((cake_data_col.cake_data[step].x_peak != 0) && (cake_data_col.cake_data[step].y_peak != 0) && (cake_data_col.cake_data[step].z_peak != 0) && (num_of_meas > 15u))
+        {
+          step++;
+          num_of_meas=0u;
+        } 
+      }
+    }
+  }
+
+  if (step == 12u)
+  {
+    // post analysis
+    for (int i = 0u; i < 12u; i++)
+    {
+
+
+      #if 0
+      cake_data_col.cake_data[i].sum_abs_xyz_peaks = abs(cake_data_col.cake_data[i].x_peak) + abs(cake_data_col.cake_data[i].y_peak) + abs(cake_data_col.cake_data[i].z_peak);
+
+
+      cake_data_col.cake_data[i].sum_abs_xyz_peaks_min = (uint16_t) ( (uint32_t)( (cake_data_col.cake_data[i].sum_abs_xyz_peaks*7) )/10);
+      cake_data_col.cake_data[i].sum_abs_xyz_peaks_max = (uint16_t) ( (uint32_t)( (cake_data_col.cake_data[i].sum_abs_xyz_peaks*10) )/10);
+#endif
+
+
+      #if 1
+      // set treshold to 70%
+      cake_data_col.cake_data[i].x_set_threshold_min = (int16_t) ( (int32_t)( (cake_data_col.cake_data[i].x_peak*8) )/10);
+      cake_data_col.cake_data[i].y_set_threshold_min = (int16_t) ( (int32_t)( (cake_data_col.cake_data[i].y_peak*9) )/10);
+      cake_data_col.cake_data[i].z_set_threshold_min = (int16_t) ( (int32_t)( (cake_data_col.cake_data[i].z_peak*9) )/10);
+
+      cake_data_col.cake_data[i].x_set_threshold_min_from_avg = (int16_t) ( (int32_t)( (cake_data_col.cake_data[i].x_avg*9) )/10);
+      cake_data_col.cake_data[i].y_set_threshold_min_from_avg = (int16_t) ( (int32_t)( (cake_data_col.cake_data[i].y_avg*9) )/10);
+      cake_data_col.cake_data[i].z_set_threshold_min_from_avg = (int16_t) ( (int32_t)( (cake_data_col.cake_data[i].z_avg*9) )/10);
+      #endif
+
+
+#if 0
+      if (cake_data_col.cake_data[i].x_peak > 0)
+      {
+            cake_data_col.cake_data[i].x_set_threshold_min = cake_data_col.cake_data[i].x_peak-600;
+      }
+      else
+      {
+        cake_data_col.cake_data[i].x_set_threshold_min = cake_data_col.cake_data[i].x_peak+600;
+      }
+
+      if (cake_data_col.cake_data[i].y_peak > 0)
+      {
+      cake_data_col.cake_data[i].y_set_threshold_min = cake_data_col.cake_data[i].y_peak-300;
+
+      }
+      else
+      {
+      cake_data_col.cake_data[i].y_set_threshold_min = cake_data_col.cake_data[i].y_peak+300;
+      }
+
+      if (cake_data_col.cake_data[i].z_peak > 0)
+      {
+      cake_data_col.cake_data[i].z_set_threshold_min = cake_data_col.cake_data[i].z_peak-300;
+      }
+      else
+      {
+        cake_data_col.cake_data[i].z_set_threshold_min = cake_data_col.cake_data[i].z_peak+300;
+      }
+      #endif
+
+#if 0
+if (cake_data_col.cake_data[i].x_peak > 0)
+{
+cake_data_col.cake_data[i].x_set_threshold_min = cake_data_col.cake_data[i].x_peak-100;
+      
+}
+else
+{
+  cake_data_col.cake_data[i].x_set_threshold_min = cake_data_col.cake_data[i].x_peak+100;
+}
+      
+if (cake_data_col.cake_data[i].y_peak > 0)
+{
+cake_data_col.cake_data[i].y_set_threshold_min = cake_data_col.cake_data[i].y_peak-100;
+}
+else
+{
+cake_data_col.cake_data[i].y_set_threshold_min = cake_data_col.cake_data[i].y_peak+100;
+}
+
+
+if (cake_data_col.cake_data[i].z_peak > 0)
+{
+  cake_data_col.cake_data[i].z_set_threshold_min = cake_data_col.cake_data[i].z_peak-100;
+}
+else
+{
+cake_data_col.cake_data[i].z_set_threshold_min = cake_data_col.cake_data[i].z_peak+100;
+}
+#endif
+
+
+      
+
+
+      // set treshold to 70%
+      #if 0
+      if (abs(cake_data_col.cake_data[i].x_peak) > 27500 /* 21800*/ )
+      {
+        if (cake_data_col.cake_data[i].x_peak > 0)
+        {
+          cake_data_col.cake_data[i].x_set_threshold_max = 32766;
+        }
+        else
+        {
+          cake_data_col.cake_data[i].x_set_threshold_max = -32766;
+        }
+      }
+      else
+      {
+        cake_data_col.cake_data[i].x_set_threshold_max = (int16_t)((((int32_t)cake_data_col.cake_data[i].x_peak*10))/10);
+      }
+      /*cake_data_col.cake_data[i].x_set_threshold_max = (int16_t)((((int32_t)cake_data_col.cake_data[i].x_peak*15))/10);*/
+      #endif
+
+#if 0
+      cake_data_col.cake_data[i].x_set_threshold_max = (int16_t)((((int32_t)cake_data_col.cake_data[i].x_peak*10))/10) + 50;
+      cake_data_col.cake_data[i].y_set_threshold_max = (int16_t)((((int32_t)cake_data_col.cake_data[i].y_peak*10))/10) + 50;
+      cake_data_col.cake_data[i].z_set_threshold_max = (int16_t)((((int32_t)cake_data_col.cake_data[i].z_peak*10))/10) + 50;
+#endif
+
+#if 1
+if (cake_data_col.cake_data[i].x_peak > 0)
+{
+      cake_data_col.cake_data[i].x_set_threshold_max = cake_data_col.cake_data[i].x_peak+25;
+}
+else
+{
+  cake_data_col.cake_data[i].x_set_threshold_max = cake_data_col.cake_data[i].x_peak-25;
+}
+
+if (cake_data_col.cake_data[i].y_peak > 0)
+{
+cake_data_col.cake_data[i].y_set_threshold_max = cake_data_col.cake_data[i].y_peak+25;
+
+}
+else
+{
+cake_data_col.cake_data[i].y_set_threshold_max = cake_data_col.cake_data[i].y_peak-25;
+}
+
+if (cake_data_col.cake_data[i].z_peak > 0)
+{
+cake_data_col.cake_data[i].z_set_threshold_max = cake_data_col.cake_data[i].z_peak+25;
+}
+else
+{
+  cake_data_col.cake_data[i].z_set_threshold_max = cake_data_col.cake_data[i].z_peak-25;
+}
+
+#endif
+
+#if 0
+
+if (cake_data_col.cake_data[i].x_avg > 0)
+{
+      cake_data_col.cake_data[i].x_set_threshold_max_from_avg = cake_data_col.cake_data[i].x_avg+25;
+}
+else
+{
+  cake_data_col.cake_data[i].x_set_threshold_max_from_avg = cake_data_col.cake_data[i].x_avg-25;
+}
+
+if (cake_data_col.cake_data[i].y_avg > 0)
+{
+  cake_data_col.cake_data[i].y_set_threshold_max_from_avg = cake_data_col.cake_data[i].y_avg+25;
+}
+else
+{
+  cake_data_col.cake_data[i].y_set_threshold_max_from_avg = cake_data_col.cake_data[i].y_avg-25;
+}
+
+if (cake_data_col.cake_data[i].z_avg > 0)
+{
+  cake_data_col.cake_data[i].z_set_threshold_max_from_avg = cake_data_col.cake_data[i].z_avg+25;
+}
+else
+{
+  cake_data_col.cake_data[i].z_set_threshold_max_from_avg = cake_data_col.cake_data[i].z_avg-25;
+}
+
+#endif
+
+#if 1
+
+      cake_data_col.cake_data[i].x_set_threshold_max_from_avg = (int16_t)((((int32_t)cake_data_col.cake_data[i].x_avg*11))/10);
+      cake_data_col.cake_data[i].y_set_threshold_max_from_avg = (int16_t)((((int32_t)cake_data_col.cake_data[i].y_avg*11))/10);
+      cake_data_col.cake_data[i].z_set_threshold_max_from_avg = (int16_t)((((int32_t)cake_data_col.cake_data[i].z_avg*11))/10);  
+
+#endif
+      
+      
+    }
+
+    uint16_t keks = 0u;
+
+    NRF_LOG_INFO("Calibration Ends");
+    calibration_active = false;
+  }
+
+  
+}
+
+
+
+static uint16_t increment_angle_step(uint16_t angle)
+{
+  uint16_t tmp = angle + 30u;
+  
+  if (tmp >= 360u)
+  {
+    tmp = tmp - 360u;
+  }
+
+  return tmp;
+}
+
+static uint16_t define_angle_limit(uint16_t angle, bool start_angle)
+{
+  uint16_t temp = 0u;
+
+  if (start_angle)
+  {
+    /* if angle is close to 0*/
+    if (angle < 15u)
+    {
+      uint16_t cnt2angle = 0u;
+      while (cnt2angle <= angle)
+      {
+        cnt2angle++;
+      }
+
+      temp = 360u - (15u - cnt2angle);
+    }
+    else
+    {
+      temp = angle - 14u;
+    }
+  }
+  else
+  {
+    /* if angle is close to 360 */
+    if (angle > 345)
+    {
+      uint16_t cnt2angle = 0u;
+      while ((cnt2angle + angle) >= 360u)
+      {
+        cnt2angle++;
+      }
+      temp = 0u + (15u - cnt2angle);
+    }
+    else
+    {
+      temp = angle + 15u;
+    }
+  }
+
+  return temp;
 }
 
 static bool timer_running = false;
 void read_lsm303(void *unused)
 {
-    // read_accel();
-    // read_mag();
-    timer_running = false;
+  // read_accel();
+  // read_mag();
+  timer_running = false;
 
-    if(m_app_CB.app_state == STATE_CALIBRATING) {
-        calibration_handle();
-    }
+
+  if (m_app_CB.app_state == STATE_CALIBRATING)
+  {
+    calibration_handle();
+  }
 }
 
 
@@ -599,92 +1066,599 @@ void read_lsm303(void *unused)
  */
 int main(void)
 {
-    STATIC_ASSERT_MSG(sizeof(app_state) <= 4,"Size too big");
-    
-    int32_t reset_reason = NRF_POWER->RESETREAS;
+  STATIC_ASSERT_MSG(sizeof(app_state) <= 4, "Size too big");
 
-    APP_ERROR_CHECK(NRF_LOG_INIT(NULL));
-    NRF_LOG_DEFAULT_BACKENDS_INIT();
+  int32_t reset_reason = NRF_POWER->RESETREAS;
 
-    utils_setup();
+  APP_ERROR_CHECK(NRF_LOG_INIT(NULL));
+  NRF_LOG_DEFAULT_BACKENDS_INIT();
 
-    //APP_GPIOTE_INIT(1);
-    
-    lfclk_request();
+  utils_setup();
 
-    flash_storage_init(flash_storage_read_cb);
+  //APP_GPIOTE_INIT(1);
 
-    app_timer_create(&read_lsm303_tmr_id,
-                        APP_TIMER_MODE_REPEATED,
-                        read_lsm303_tmr_handler);
-    
-    app_timer_create(&app_tmr_print_out_id,
-                        APP_TIMER_MODE_REPEATED,
-                        app_tmr_print_out_handler);
+  lfclk_request();
 
-    app_timer_create(&app_tmr_led_blink_id,
-                        APP_TIMER_MODE_SINGLE_SHOT,
-                        led_timeout_handler);
+  flash_storage_init(flash_storage_read_cb);
 
-    app_timer_create(&app_tmr_calibration_id,
-                        APP_TIMER_MODE_SINGLE_SHOT,
-                        calibration_timeout_handler);
+  app_timer_create(&read_lsm303_tmr_id,
+                   APP_TIMER_MODE_REPEATED,
+                   read_lsm303_tmr_handler);
 
-    twi_config();
+  app_timer_create(&app_tmr_print_out_id,
+                   APP_TIMER_MODE_REPEATED,
+                   app_tmr_print_out_handler);
 
-    nrf_delay_us(6000); // Datasheet says 5ms of boot time, stay safe
-    
-    setup_accel_pin_int();
-    lms303_accel_vibration_trig_setup();
-    lsm303_read_reg(&lsm_reg_data.reg.who_i_am.addr, &lsm_reg_data.reg.who_i_am.data, 1, lsm303_read_end_callback);
+  app_timer_create(&app_tmr_led_blink_id,
+                   APP_TIMER_MODE_SINGLE_SHOT,
+                   led_timeout_handler);
 
-    lsm303_mag_setup();
+  app_timer_create(&app_tmr_calibration_id,
+                   APP_TIMER_MODE_SINGLE_SHOT,
+                   calibration_timeout_handler);
 
-    lsm303_setup_read_back_check();
-    
-    app_timer_start(read_lsm303_tmr_id,APP_TIMER_TICKS(10),NULL);
-    app_timer_start(app_tmr_print_out_id,APP_TIMER_TICKS(100),NULL);
+  twi_config();
 
- 
-    app_timer_create(&reread_timer,
-                    APP_TIMER_MODE_SINGLE_SHOT,
-                    read_lsm303);
+  nrf_delay_us(6000); // Datasheet says 5ms of boot time, stay safe
 
-    
-    
-    while (true)
+  setup_accel_pin_int();
+  lms303_accel_vibration_trig_setup();
+  lsm303_read_reg(&lsm_reg_data.reg.who_i_am.addr, &lsm_reg_data.reg.who_i_am.data, 1, lsm303_read_end_callback);
+
+  lsm303_mag_setup();
+
+  lsm303_setup_read_back_check();
+
+  app_timer_start(read_lsm303_tmr_id, APP_TIMER_TICKS(10), NULL);
+  app_timer_start(app_tmr_print_out_id, APP_TIMER_TICKS(100), NULL);
+
+  app_timer_create(&reread_timer,
+                   APP_TIMER_MODE_SINGLE_SHOT,
+                   read_lsm303);
+
+static uint16_t cnt;
+
+
+calibration_handle_keyinserted();
+
+NRF_LOG_INFO("Calibration Start");
+
+  while (true)
+  {
+    NRF_LOG_FLUSH();
+    nrf_pwr_mgmt_run();
+
+    if (calibration_active)
     {
-        NRF_LOG_FLUSH();
-        nrf_pwr_mgmt_run();
-        if(app_state.calibrating)
-        {
-          bool calib_result;
-          lsm303_data_t initial_data;
-          lsm303_data_t* p_lsm303_data = lsm303_data_p_get();
-          memcpy(&initial_data,p_lsm303_data,sizeof(initial_data));
-          app_tmr_print_out_handler(NULL);
-          app_timer_start(reread_timer,APP_TIMER_TICKS(10),NULL);
-          timer_running = true;
-          while(app_state.calibrating && !(calib_result = calib_handler(NULL)))
-          {
-            if(!timer_running){
-              app_timer_start(reread_timer,APP_TIMER_TICKS(10),NULL);
-              timer_running = true;
-            }
-            if(NRF_LOG_PROCESS() == false){
-              nrf_pwr_mgmt_run();
-            }
-          }
-          if(calib_result){
-            NRF_LOG_INFO("Key turned full circle");
-          }
-         
-          NRF_LOG_INFO("calibrating %d calib_result %d",app_state.calibrating,calib_result);
-          app_timer_stop(app_tmr_calibration_id);
-          app_state.calibrating = false;
-          timer_running = false;
-        }
+      calibration_handle();
     }
+    
+
+    if (app_state.calibrating)
+    {
+      bool calib_result;
+      lsm303_data_t initial_data;
+      lsm303_data_t *p_lsm303_data = lsm303_data_p_get();
+      memcpy(&initial_data, p_lsm303_data, sizeof(initial_data));
+      app_tmr_print_out_handler(NULL);
+      app_timer_start(reread_timer, APP_TIMER_TICKS(10), NULL);
+      timer_running = true;
+      while (app_state.calibrating && !(calib_result = calib_handler(NULL)))
+      {
+        if (!timer_running)
+        {
+          app_timer_start(reread_timer, APP_TIMER_TICKS(10), NULL);
+          timer_running = true;
+        }
+        if (NRF_LOG_PROCESS() == false)
+        {
+          nrf_pwr_mgmt_run();
+        }
+      }
+      if (calib_result)
+      {
+        NRF_LOG_INFO("Key turned full circle");
+      }
+
+      NRF_LOG_INFO("calibrating %d calib_result %d", app_state.calibrating, calib_result);
+      app_timer_stop(app_tmr_calibration_id);
+      app_state.calibrating = false;
+      timer_running = false;
+    }
+
+    /*if (!app_state.calibrating)*/
+    if (!calibration_active)
+    {
+      
+
+      update_area_id();
+      /*check_area_changed2();*/
+      
+      #if 0
+      check_key_inserted();
+      check_area_changed();
+      
+      update_area();
+      check_area_changed2();
+      #endif
+
+    }
+
+    
+  }
 }
+
+static int16_t pass = false;
+  static bool have_actually_pass = false;
+  static uint16_t old_area_id = 0u;
+  static uint16_t area_id = 0u;
+  
+
+void update_area_id(void)
+{
+  lsm303_data_t *p_lsm303_data = lsm303_data_p_get();
+
+  bool passx = false;
+  bool passy = false; 
+  bool passz = false;
+  bool passsum = false;
+  
+  for (int i = 0u; i < 12u; i++)
+  {
+
+    #if 0
+    if (p_lsm303_data->mag.axis.bit.x > 0)
+    {
+      if ((p_lsm303_data->mag.axis.bit.x > cake_data_col.cake_data[i].x_set_threshold_min ))
+      {
+        if ((cake_data_col.cake_data[i].x_set_threshold_max > p_lsm303_data->mag.axis.bit.x ))
+        {
+          passx = true;
+        }
+      }
+    }
+    else
+    {
+      if ((cake_data_col.cake_data[i].x_set_threshold_min > p_lsm303_data->mag.axis.bit.x))
+      {
+        if ((p_lsm303_data->mag.axis.bit.x > cake_data_col.cake_data[i].x_set_threshold_max ))
+        {
+          passx = true;
+        }
+      }
+    }
+
+    if (p_lsm303_data->mag.axis.bit.y > 0)
+    {
+      if ((p_lsm303_data->mag.axis.bit.y > cake_data_col.cake_data[i].y_set_threshold_min ) )
+      {
+        if ((cake_data_col.cake_data[i].y_set_threshold_max > p_lsm303_data->mag.axis.bit.y ))
+        {
+          passy = true;
+        }
+      }
+    }
+    else
+    {
+      if ((cake_data_col.cake_data[i].y_set_threshold_min > p_lsm303_data->mag.axis.bit.y))
+      {
+        if ((p_lsm303_data->mag.axis.bit.y > cake_data_col.cake_data[i].y_set_threshold_max ))
+        {
+          passy = true;
+        }
+      }
+    }
+
+    if (p_lsm303_data->mag.axis.bit.z > 0)
+    {
+      if ((p_lsm303_data->mag.axis.bit.z > cake_data_col.cake_data[i].z_set_threshold_min ))
+      {
+        if ((cake_data_col.cake_data[i].z_set_threshold_max > p_lsm303_data->mag.axis.bit.z))
+        {
+          passz = true; 
+        }
+      }
+    }
+    else
+    {
+      if ((cake_data_col.cake_data[i].z_set_threshold_min > p_lsm303_data->mag.axis.bit.z))
+      {
+        if ((p_lsm303_data->mag.axis.bit.z > cake_data_col.cake_data[i].z_set_threshold_max ))
+        {
+          passz = true;
+        }
+      }
+    }
+
+    if ((p_lsm303_data->mag.sum_abs_xyz > cake_data_col.cake_data[i].sum_abs_xyz_peaks_min ))
+    {
+      if (cake_data_col.cake_data[i].sum_abs_xyz_peaks_max > p_lsm303_data->mag.sum_abs_xyz)
+      {
+          passsum = true;
+      }
+    }
+    #endif
+
+    #if 1
+    if (p_lsm303_data->mag.axis.bit.x > 0)
+    {
+      if ((p_lsm303_data->mag.axis.bit.x > cake_data_col.cake_data[i].x_set_threshold_min_from_avg ))
+      {
+        if ((cake_data_col.cake_data[i].x_set_threshold_max_from_avg > p_lsm303_data->mag.axis.bit.x ))
+        {
+          passx = true;
+        }
+      }
+    }
+    else
+    {
+      if ((cake_data_col.cake_data[i].x_set_threshold_min_from_avg > p_lsm303_data->mag.axis.bit.x))
+      {
+        if ((p_lsm303_data->mag.axis.bit.x > cake_data_col.cake_data[i].x_set_threshold_max_from_avg ))
+        {
+          passx = true;
+        }
+      }
+    }
+
+    if (p_lsm303_data->mag.axis.bit.y > 0)
+    {
+      if ((p_lsm303_data->mag.axis.bit.y > cake_data_col.cake_data[i].y_set_threshold_min_from_avg ) )
+      {
+        if ((cake_data_col.cake_data[i].y_set_threshold_max_from_avg > p_lsm303_data->mag.axis.bit.y ))
+        {
+          passy = true;
+        }
+      }
+    }
+    else
+    {
+      if ((cake_data_col.cake_data[i].y_set_threshold_min_from_avg > p_lsm303_data->mag.axis.bit.y))
+      {
+        if ((p_lsm303_data->mag.axis.bit.y > cake_data_col.cake_data[i].y_set_threshold_max_from_avg ))
+        {
+          passy = true;
+        }
+      }
+    }
+
+    if (p_lsm303_data->mag.axis.bit.z > 0)
+    {
+      if ((p_lsm303_data->mag.axis.bit.z > cake_data_col.cake_data[i].z_set_threshold_min_from_avg ))
+      {
+        if ((cake_data_col.cake_data[i].z_set_threshold_max_from_avg > p_lsm303_data->mag.axis.bit.z))
+        {
+          passz = true; 
+        }
+      }
+    }
+    else
+    {
+      if ((cake_data_col.cake_data[i].z_set_threshold_min_from_avg > p_lsm303_data->mag.axis.bit.z))
+      {
+        if ((p_lsm303_data->mag.axis.bit.z > cake_data_col.cake_data[i].z_set_threshold_max_from_avg ))
+        {
+          passz = true;
+        }
+      }
+    }
+
+    if ((p_lsm303_data->mag.sum_abs_xyz > cake_data_col.cake_data[i].sum_abs_xyz_peaks_min ))
+    {
+      if (cake_data_col.cake_data[i].sum_abs_xyz_peaks_max > p_lsm303_data->mag.sum_abs_xyz)
+      {
+          passsum = true;
+      }
+    }
+    #endif
+
+
+    
+
+    if ((passx == true) && (passy == true) && (passz == true) /*&& (passsum == true)*/)
+    {
+      have_actually_pass = true;
+      area_id = cake_data_col.cake_data[i].area_id;
+      return;
+    }
+
+#if 0
+    if ( (p_lsm303_data->mag.axis.bit.x > cake_data_col.cake_data[i].x_set_threshold_min ) && (p_lsm303_data->mag.axis.bit.x < cake_data_col.cake_data[i].x_set_threshold_max ) &&
+    ( p_lsm303_data->mag.axis.bit.y > cake_data_col.cake_data[i].y_set_threshold_min ) && (p_lsm303_data->mag.axis.bit.y < cake_data_col.cake_data[i].y_set_threshold_max ) &&
+    ( p_lsm303_data->mag.axis.bit.z > cake_data_col.cake_data[i].z_set_threshold_min ) && (p_lsm303_data->mag.axis.bit.z < cake_data_col.cake_data[i].z_set_threshold_max ) )
+    {
+      app_state.areaId = cake_data_col.cake_data[i].area_id;
+    }
+
+#endif
+  }
+
+
+if (have_actually_pass)
+{
+  have_actually_pass = false;
+  pass++;
+  app_state.areaId = area_id;
+
+  if (old_area_id != area_id)
+  {
+    pass = 0u;
+  }
+
+  old_area_id = area_id;
+
+#if 0
+  if (pass > 2u)
+  {
+    app_state.areaId = area_id;
+  }
+#endif
+  
+}
+
+  
+}
+
+
+static uint8_t areaIdBuf[6];
+
+void check_area_changed2(void)
+{
+  if (app_state.inserted)
+  {
+    lsm303_data_t *p_lsm303_data = lsm303_data_p_get();
+
+    if (areaIdBuf[0] != p_lsm303_data->accel.area2)
+    {
+      /* shifting buffer values to right */
+      for (uint8_t i = (3 - 1); i > 0; i--)
+      {
+        areaIdBuf[i] = areaIdBuf[i - 1];
+      }
+
+      areaIdBuf[0] = p_lsm303_data->accel.area2;
+
+      if ((areaIdBuf[5] == 6u) && (areaIdBuf[4] == 5u) && (areaIdBuf[3] == 4u) && (areaIdBuf[2] == 3u) && (areaIdBuf[1] == 2u) && (areaIdBuf[0] == 1u))
+      {
+        if (app_state.insertedInside)
+        {
+          if (app_state.locked)
+          {
+            app_state.lockedTwice = true;
+          }
+
+          app_state.locked = true;
+        }
+        else
+        {
+          if (app_state.lockedTwice)
+          {
+            app_state.lockedTwice = false;
+          }
+          else
+          {
+            app_state.locked = false;
+          }
+        }
+      }
+
+      if ((areaIdBuf[5] == 1u) && (areaIdBuf[4] == 2u) && (areaIdBuf[3] == 3u) && (areaIdBuf[2] == 4u) && (areaIdBuf[1] == 5u) && (areaIdBuf[0] == 6u))
+      {
+        if (app_state.insertedInside)
+        {
+          if (app_state.lockedTwice)
+          {
+            app_state.lockedTwice = false;
+          }
+          else
+          {
+            app_state.locked = false;
+          }
+        }
+        else
+        {
+          if (app_state.locked)
+          {
+            app_state.lockedTwice = true;
+          }
+
+          app_state.locked = true;
+        }
+      }
+    }
+  }
+}
+
+#if 0
+void update_area(void)
+{
+  lsm303_data_t *p_lsm303_data = lsm303_data_p_get();
+
+  for (int i = 0u; i < 12; i++)
+  {
+    if ((p_lsm303_data->accel.angle >= cake_data_col.cake_data[i].start_angle) || (p_lsm303_data->accel.angle >= cake_data_col.cake_data[i].end_angle))
+    {
+      p_lsm303_data->accel.area2 = cake_data_col.cake_data[i].area_id;
+    }
+  }
+}
+
+
+void check_key_inserted(void)
+{
+  lsm303_data_t *p_lsm303_data = lsm303_data_p_get();
+
+  if (app_state.inserted == true)
+  {
+    // check if key has gone out
+    if (((p_lsm303_data->accel.angle >= 350u) || (p_lsm303_data->accel.angle <= 10u)))
+    {
+      if (p_lsm303_data->mag.axis.bit.x < 2000)
+      {
+        app_state.inserted = false;
+        app_state.insertedInside = false;
+      }
+    }
+  }
+  else
+  {
+    // check if key was inserted
+    if (((p_lsm303_data->accel.angle >= 350u) || (p_lsm303_data->accel.angle <= 10u)) && (p_lsm303_data->mag.axis.bit_sum >= 4000u))
+    {
+      app_state.inserted = true;
+
+      if (p_lsm303_data->mag.axis.bit.y > 0)
+      {
+        app_state.insertedInside = false;
+      }
+      else
+      {
+        app_state.insertedInside = true;
+      }
+    }
+  }
+}
+
+static uint8_t areaIdBuf[12];
+
+void check_area_changed2(void)
+{
+  if (app_state.inserted)
+  {
+    lsm303_data_t *p_lsm303_data = lsm303_data_p_get();
+
+    if (areaIdBuf[0] != p_lsm303_data->accel.area2)
+    {
+      /* shifting buffer values to right */
+      for (uint8_t i = (3 - 1); i > 0; i--)
+      {
+        areaIdBuf[i] = areaIdBuf[i - 1];
+      }
+
+      areaIdBuf[0] = p_lsm303_data->accel.area2;
+
+      if ((areaIdBuf[5] == 6u) && (areaIdBuf[4] == 5u) && (areaIdBuf[3] == 4u) && (areaIdBuf[2] == 3u) && (areaIdBuf[1] == 2u) && (areaIdBuf[0] == 1u))
+      {
+        if (app_state.insertedInside)
+        {
+          if (app_state.locked)
+          {
+            app_state.lockedTwice = true;
+          }
+
+          app_state.locked = true;
+        }
+        else
+        {
+          if (app_state.lockedTwice)
+          {
+            app_state.lockedTwice = false;
+          }
+          else
+          {
+            app_state.locked = false;
+          }
+        }
+      }
+
+      if ((areaIdBuf[5] == 1u) && (areaIdBuf[4] == 2u) && (areaIdBuf[3] == 3u) && (areaIdBuf[2] == 4u) && (areaIdBuf[1] == 5u) && (areaIdBuf[0] == 6u))
+      {
+        if (app_state.insertedInside)
+        {
+          if (app_state.lockedTwice)
+          {
+            app_state.lockedTwice = false;
+          }
+          else
+          {
+            app_state.locked = false;
+          }
+        }
+        else
+        {
+          if (app_state.locked)
+          {
+            app_state.lockedTwice = true;
+          }
+
+          app_state.locked = true;
+        }
+      }
+    }
+  }
+}
+
+
+
+
+static uint8_t areaBuf[3];
+
+void check_area_changed(void)
+{
+  if (app_state.inserted)
+  {
+    lsm303_data_t *p_lsm303_data = lsm303_data_p_get();
+
+    if (areaBuf[0] != p_lsm303_data->accel.area)
+    {
+      /* shifting buffer values to right */
+      for (uint8_t i = (3 - 1); i > 0; i--)
+      {
+        areaBuf[i] = areaBuf[i - 1];
+      }
+
+      areaBuf[0] = p_lsm303_data->accel.area;
+
+      if ((areaBuf[2] == 3u) && (areaBuf[1] == 2u) && (areaBuf[0] == 1u))
+      {
+        if (app_state.insertedInside)
+        {
+          if (app_state.locked)
+          {
+            app_state.lockedTwice = true;
+          }
+
+          app_state.locked = true;
+        }
+        else
+        {
+          if (app_state.lockedTwice)
+          {
+            app_state.lockedTwice = false;
+          }
+          else
+          {
+            app_state.locked = false;
+          }
+        }
+      }
+
+      if ((areaBuf[2] == 1u) && (areaBuf[1] == 2u) && (areaBuf[0] == 3u))
+      {
+        if (app_state.insertedInside)
+        {
+          if (app_state.lockedTwice)
+          {
+            app_state.lockedTwice = false;
+          }
+          else
+          {
+            app_state.locked = false;
+          }
+        }
+        else
+        {
+          if (app_state.locked)
+          {
+            app_state.lockedTwice = true;
+          }
+
+          app_state.locked = true;
+        }
+      }
+    }
+  }
+}
+#endif
 
 /** @} */

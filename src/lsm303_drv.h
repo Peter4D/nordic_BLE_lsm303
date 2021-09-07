@@ -67,6 +67,7 @@ typedef union _axis_data_t {
         int16_t y;
         int16_t z;
     }bit;
+    int16_t bit_sum;
     uint8_t bytes[6];
 }axis_data_t;
 
@@ -119,7 +120,8 @@ typedef struct _accel2_t
     float rad;
     uint16_t rad_int;
     uint16_t angle;
-
+    uint8_t area;
+uint8_t area2;
 }accel2_t;
 
 typedef struct _mag2_t
@@ -128,6 +130,7 @@ typedef struct _mag2_t
 
     axis_data_t axis;
     axis_data_t axis_peak;
+    uint16_t sum_abs_xyz;
 
 }mag2_t;
 
