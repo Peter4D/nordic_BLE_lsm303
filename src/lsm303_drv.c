@@ -176,26 +176,11 @@ static void read_accel_cb(ret_code_t result, void * p_user_data) {
     if(lsm303_data.accel.axis.bit.y == 0) { lsm303_data.accel.axis.bit.y = 1; }
     if(lsm303_data.accel.axis.bit.z == 0) { lsm303_data.accel.axis.bit.z = 1; }
     
+
     /* calculate angle */
     lsm303_data.accel.rad = atan2f(lsm303_data.accel.axis.bit.z, lsm303_data.accel.axis.bit.x) + PI;
     lsm303_data.accel.angle = lsm303_data.accel.rad * (float)180.0/PI;
 
-
-    if ( ( lsm303_data.accel.angle >= 0u) && (120u > lsm303_data.accel.angle) )
-    {
-        lsm303_data.accel.area = (uint8_t) 1u;
-    }
-    else if ((lsm303_data.accel.angle >= 120u ) && (240u > lsm303_data.accel.angle))
-    {
-        lsm303_data.accel.area = (uint8_t) 2u;
-    }
-    else
-    {
-        lsm303_data.accel.area = (uint8_t) 3u;
-    }
-
-
-    lsm303_data.mag.sum_abs_xyz = abs(lsm303_data.accel.axis.bit.x)+abs(lsm303_data.accel.axis.bit.y)+abs(lsm303_data.accel.axis.bit.z);
 
 
     #if (DEBUG_ACCEL_PRINT_OUT_EN == 1)
@@ -566,8 +551,6 @@ static void read_mag_cb(ret_code_t result, void * p_user_data) {
         lsm303_data.mag.axis.bytes[i] = p_axis_data[i];
     }
 
-    lsm303_data.mag.axis.bit_sum = ( (abs(lsm303_data.mag.axis.bit.x)) + (abs(lsm303_data.mag.axis.bit.y)) + (abs(lsm303_data.mag.axis.bit.z)) );
-
     /* peak detect */
     // axis_peak_detect(lsm303_data.mag.axis.bit.x, &lsm303_data.peak_mag_x);
     // axis_peak_detect(lsm303_data.mag.axis.bit.z, &lsm303_data.peak_mag_z);
@@ -623,3 +606,7 @@ lsm303_data_t* lsm303_data_p_get(void) {
     return &lsm303_data;
 }
 
+
+lsm303_data_3_t lsm303_data_p_get_new(void) {
+    return lsm303_data;
+}

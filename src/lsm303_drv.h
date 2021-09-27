@@ -211,6 +211,7 @@ void read_accel(void);
 void read_mag(void);
 
 lsm303_data_t* lsm303_data_p_get(void);
+lsm303_data_3_t lsm303_data_p_get_new(void);
 
 void lsm303_read_reg(uint8_t* const p_reg_addr, uint8_t* p_data, size_t size,
                     void (*read_end_cb)(ret_code_t result, void * p_user_data)

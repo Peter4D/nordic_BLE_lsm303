@@ -47,16 +47,14 @@
  </TraceWindow>
  <Watch1>
   <Watches active="1" update="Never">
-   <Watchpoint expression="cake_data_col" name="cake_data_col" radix="10" linenumber="679" filename="main.c"/>
-   <Watchpoint expression="step" name="step" radix="10" linenumber="706" filename="main.c"/>
-   <Watchpoint expression="curr_angle" name="curr_angle" radix="10" linenumber="705" filename="main.c"/>
-   <Watchpoint expression="i" name="i" radix="10" linenumber="744" filename="main.c"/>
-   <Watchpoint expression="p_lsm303_data" name="p_lsm303_data" radix="10" linenumber="983" filename="main.c"/>
-   <Watchpoint expression="app_state" name="app_state" radix="10" linenumber="1035" filename="main.c"/>
-   <Watchpoint expression="passx" name="passx" radix="-1" linenumber="1044" filename="main.c"/>
-   <Watchpoint expression="passy" name="passy" radix="-1" linenumber="1044" filename="main.c"/>
-   <Watchpoint expression="passz" name="passz" radix="-1" linenumber="1039" filename="main.c"/>
-   <Watchpoint expression="pass" name="pass" radix="-1" linenumber="1095" filename="main.c"/>
+   <Watchpoint expression="areaIdBuf" name="areaIdBuf" radix="10" linenumber="1491" filename="main.c"/>
+   <Watchpoint expression="chk" name="chk" radix="10" linenumber="1496" filename="main.c"/>
+   <Watchpoint expression="tmp" name="tmp" radix="10" linenumber="1496" filename="main.c"/>
+   <Watchpoint expression="cake_data_col" name="cake_data_col" radix="10" linenumber="1360" filename="main.c"/>
+   <Watchpoint expression="bit" name="bit" radix="16" linenumber="1351" filename="main.c"/>
+   <Watchpoint expression="p_lsm303_data" name="p_lsm303_data" radix="-1" linenumber="1351" filename="main.c"/>
+   <Watchpoint expression="passx" name="passx" radix="-1" linenumber="1433" filename="main.c"/>
+   <Watchpoint expression="area_id" name="area_id" radix="-1" linenumber="1475" filename="main.c"/>
   </Watches>
  </Watch1>
  <Watch2>
@@ -69,25 +67,17 @@
   <Watches active="0" update="Never"/>
  </Watch4>
  <Files>
-  <SessionOpenFile windowGroup="DockEditLeft" x="0" y="1067" useTextEdit="1" openedFrom="" useBinaryEdit="0" left="0" path="main.c" selected="1" top="1057" codecName="Default"/>
+  <SessionOpenFile windowGroup="DockEditLeft" x="9" y="1200" useTextEdit="1" openedFrom="" useBinaryEdit="0" left="0" path="main.c" selected="1" top="1186" codecName="Default"/>
   <SessionOpenFile windowGroup="DockEditLeft" x="0" y="96" useTextEdit="1" openedFrom="" useBinaryEdit="0" left="0" path="smart_key.emProject" selected="0" top="45" codecName="Default"/>
-  <SessionOpenFile windowGroup="DockEditLeft" x="74" y="179" useTextEdit="1" openedFrom="" useBinaryEdit="0" left="42" path="src/lsm303_drv.c" selected="0" top="178" codecName="Default"/>
-  <SessionOpenFile windowGroup="DockEditLeft" x="13" y="121" useTextEdit="1" openedFrom="/Users/mirobudja/Documents/MonkeyKey/NordicCodePeterMedvesek/nordic_BLE_lsm303-develop/main.c" useBinaryEdit="0" left="0" path="src/lsm303_drv.h" selected="0" top="186" codecName="Default"/>
+  <SessionOpenFile windowGroup="DockEditLeft" x="0" y="198" useTextEdit="1" openedFrom="" useBinaryEdit="0" left="0" path="src/lsm303_drv.c" selected="0" top="47" codecName="Default"/>
+  <SessionOpenFile windowGroup="DockEditLeft" x="0" y="121" useTextEdit="1" openedFrom="/Users/mirobudja/Documents/MonkeyKey/NordicCodePeterMedvesek/nordic_BLE_lsm303-develop/main.c" useBinaryEdit="0" left="0" path="src/lsm303_drv.h" selected="0" top="186" codecName="Default"/>
   <SessionOpenFile windowGroup="DockEditLeft" x="0" y="0" useTextEdit="1" openedFrom="" useBinaryEdit="0" left="0" path="src/common.h" selected="0" top="2" codecName="Default"/>
   <SessionOpenFile windowGroup="DockEditLeft" x="1" y="265" useTextEdit="1" openedFrom="" useBinaryEdit="0" left="0" path="pca10040/blank/config/sdk_config.h" selected="0" top="247" codecName="Default"/>
-  <SessionOpenFile windowGroup="DockEditLeft" x="99" y="159" useTextEdit="1" openedFrom="" useBinaryEdit="0" left="0" path="../../nRF5_SDK_17.0.2_d674dde/components/libraries/log/src/nrf_log_internal.h" selected="0" top="79" codecName="Default"/>
-  <SessionOpenFile windowGroup="DockEditLeft" x="0" y="99" useTextEdit="1" openedFrom="" useBinaryEdit="0" left="0" path="../../nRF5_SDK_17.0.2_d674dde/components/libraries/util/app_error_weak.c" selected="0" top="89" codecName="Default"/>
-  <SessionOpenFile windowGroup="DockEditLeft" x="0" y="0" useTextEdit="1" openedFrom="/Users/mirobudja/Documents/MonkeyKey/NordicCodePeterMedvesek/nordic_BLE_lsm303-develop/src/lsm303_drv.c" useBinaryEdit="0" left="0" path="../../nRF5_SDK_17.0.2_d674dde/components/libraries/pwr_mgmt/nrf_pwr_mgmt.h" selected="0" top="44" codecName="Default"/>
-  <SessionOpenFile windowGroup="DockEditLeft" x="0" y="1756" useTextEdit="1" openedFrom="/Users/mirobudja/Documents/MonkeyKey/NordicCodePeterMedvesek/nordic_BLE_lsm303-develop/main.c" useBinaryEdit="0" left="0" path="../../nRF5_SDK_17.0.2_d674dde/components/toolchain/cmsis/include/core_cm4.h" selected="0" top="1744" codecName="Default"/>
-  <SessionOpenFile windowGroup="DockEditLeft" x="0" y="355" useTextEdit="1" openedFrom="" useBinaryEdit="0" left="0" path="../../nRF5_SDK_17.0.2_d674dde/components/libraries/twi_mngr/nrf_twi_mngr.c" selected="0" top="337" codecName="Default"/>
-  <SessionOpenFile windowGroup="DockEditLeft" x="40" y="219" useTextEdit="1" openedFrom="" useBinaryEdit="0" left="0" path="../../nRF5_SDK_17.0.2_d674dde/components/libraries/util/app_util.h" selected="0" top="200" codecName="Default"/>
-  <SessionOpenFile windowGroup="DockEditLeft" x="0" y="482" useTextEdit="1" openedFrom="" useBinaryEdit="0" left="0" path="../../nRF5_SDK_17.0.2_d674dde/components/libraries/timer/app_timer2.c" selected="0" top="470" codecName="Default"/>
-  <SessionOpenFile windowGroup="DockEditLeft" x="0" y="336" useTextEdit="1" openedFrom="" useBinaryEdit="0" left="0" path="../../nRF5_SDK_17.0.2_d674dde/components/libraries/timer/drv_rtc.c" selected="0" top="318" codecName="Default"/>
-  <SessionOpenFile windowGroup="DockEditLeft" x="0" y="375" useTextEdit="1" openedFrom="" useBinaryEdit="0" left="0" path="../../nRF5_SDK_17.0.2_d674dde/modules/nrfx/hal/nrf_rtc.h" selected="0" top="361" codecName="Default"/>
-  <SessionOpenFile windowGroup="DockEditLeft" x="0" y="139" useTextEdit="1" openedFrom="" useBinaryEdit="0" left="0" path="../../nRF5_SDK_17.0.2_d674dde/components/libraries/atomic_fifo/nrf_atfifo.c" selected="0" top="117" codecName="Default"/>
-  <SessionOpenFile windowGroup="DockEditLeft" x="0" y="434" useTextEdit="1" openedFrom="" useBinaryEdit="0" left="0" path="../../nRF5_SDK_17.0.2_d674dde/components/libraries/atomic_fifo/nrf_atfifo_internal.h" selected="0" top="423" codecName="Default"/>
-  <SessionOpenFile windowGroup="DockEditLeft" x="0" y="286" useTextEdit="1" openedFrom="" useBinaryEdit="0" left="0" path="../../arm_segger_embedded_studio_v550d_macos_x64_nordic/source/thumb_crt0.s" selected="0" top="275" codecName="Default"/>
-  <SessionOpenFile windowGroup="DockEditLeft" x="0" y="360" useTextEdit="1" openedFrom="" useBinaryEdit="0" left="0" path="../../nRF5_SDK_17.0.2_d674dde/components/libraries/pwr_mgmt/nrf_pwr_mgmt.c" selected="0" top="64" codecName="Default"/>
+  <SessionOpenFile windowGroup="DockEditLeft" x="0" y="99" useTextEdit="1" openedFrom="" useBinaryEdit="0" left="0" path="../../../nRF5_SDK_17.0.2_d674dde/components/libraries/util/app_error_weak.c" selected="0" top="88" codecName="Default"/>
+  <SessionOpenFile windowGroup="DockEditLeft" x="0" y="482" useTextEdit="1" openedFrom="" useBinaryEdit="0" left="0" path="../../../nRF5_SDK_17.0.2_d674dde/components/libraries/pwr_mgmt/nrf_pwr_mgmt.c" selected="0" top="482" codecName="Default"/>
+  <SessionOpenFile windowGroup="DockEditLeft" x="34" y="261" useTextEdit="1" openedFrom="" useBinaryEdit="0" left="0" path="../../../nRF5_SDK_17.0.2_d674dde/components/libraries/queue/nrf_queue.c" selected="0" top="247" codecName="Default"/>
+  <SessionOpenFile windowGroup="DockEditLeft" x="1" y="351" useTextEdit="1" openedFrom="" useBinaryEdit="0" left="0" path="../../../nRF5_SDK_17.0.2_d674dde/modules/nrfx/hal/nrf_twi.h" selected="0" top="0" codecName="Default"/>
+  <SessionOpenFile windowGroup="DockEditLeft" x="5" y="217" useTextEdit="1" openedFrom="" useBinaryEdit="0" left="0" path="../../../nRF5_SDK_17.0.2_d674dde/components/libraries/util/app_util.h" selected="0" top="208" codecName="Default"/>
  </Files>
  <ARMCrossStudioWindow activeProject="altron_smart_key" fileDialogDefaultFilter="*.c;*.cpp;*.cxx;*.cc;*.h;*.hpp;*.hxx" autoConnectTarget="J-Link" buildConfiguration="Debug" sessionSettings="" debugSearchFileMap="" fileDialogInitialDirectory="C:/Users/peter.medvesek/Documents/PeterMedvek_Gorenje_RD/ostali_projekti/BLE/Nordic/nRF5_SDK_17.0.2_d674dde/examples/peripheral/nordic_BLE_lsm303/src" debugSearchPath="" autoConnectCapabilities="3711"/>
 </session>

@@ -234,7 +234,8 @@ typedef struct _cake_data_model_t {
 
 typedef struct _cake_data_col_t {
     cake_data_model_t cake_data[12];
-
+    
+    int16_t x_set_insert_threshold;
     uint16_t actual_angle;
     uint16_t actual_area_id;
 }cake_data_col_t;
@@ -373,12 +374,22 @@ static void app_tmr_print_out_handler(void *p_context)
 #endif
 
 
-#if 1
-  NRF_LOG_INFO("ins/insInd/Lck/LckTwc/areaId/angle| %d,%d,%d,%d,%2d,%3d",
+#if 0
+  NRF_LOG_INFO("ins/insInd/Lck/LckTwc/areaId/angle| %5d,%5d,%5d,%d,%d,%3d",
+               p_lsm303_data->mag.axis.bit.x,
+               p_lsm303_data->mag.axis.bit.y,
+               p_lsm303_data->mag.axis.bit.z,
                app_state.inserted,
-               app_state.insertedInside,
+               app_state.areaId,
+               p_lsm303_data->accel.angle
+
+#endif
+
+
+#if 1
+  NRF_LOG_INFO("ins/Lck/areaId/angle| %d,%d,%d,%3d",
+               app_state.inserted,
                app_state.locked,
-               app_state.lockedTwice,
                app_state.areaId,
                p_lsm303_data->accel.angle
 
@@ -738,6 +749,7 @@ static void calibration_handle(void)
   lsm303_data_t *p_lsm303_data = lsm303_data_p_get();
   curr_angle = p_lsm303_data->accel.angle; /* can be different from the lock to lock */
 
+  /* TODO: In area ID 0 we take first 15 degrees and not also the "last"15 degress */
   if (12u > step >= 0u)
   {
     if (step == cake_data_col.cake_data[step].area_id)
@@ -792,192 +804,16 @@ static void calibration_handle(void)
     // post analysis
     for (int i = 0u; i < 12u; i++)
     {
+      cake_data_col.cake_data[i].x_set_threshold_min_from_avg = (int16_t) ( (int32_t)( (cake_data_col.cake_data[i].x_avg*40) )/100);
+      cake_data_col.cake_data[i].y_set_threshold_min_from_avg = (int16_t) ( (int32_t)( (cake_data_col.cake_data[i].y_avg*40) )/100);
+      cake_data_col.cake_data[i].z_set_threshold_min_from_avg = (int16_t) ( (int32_t)( (cake_data_col.cake_data[i].z_avg*40) )/100);
 
-
-      #if 0
-      cake_data_col.cake_data[i].sum_abs_xyz_peaks = abs(cake_data_col.cake_data[i].x_peak) + abs(cake_data_col.cake_data[i].y_peak) + abs(cake_data_col.cake_data[i].z_peak);
-
-
-      cake_data_col.cake_data[i].sum_abs_xyz_peaks_min = (uint16_t) ( (uint32_t)( (cake_data_col.cake_data[i].sum_abs_xyz_peaks*7) )/10);
-      cake_data_col.cake_data[i].sum_abs_xyz_peaks_max = (uint16_t) ( (uint32_t)( (cake_data_col.cake_data[i].sum_abs_xyz_peaks*10) )/10);
-#endif
-
-
-      #if 1
-      // set treshold to 70%
-      cake_data_col.cake_data[i].x_set_threshold_min = (int16_t) ( (int32_t)( (cake_data_col.cake_data[i].x_peak*8) )/10);
-      cake_data_col.cake_data[i].y_set_threshold_min = (int16_t) ( (int32_t)( (cake_data_col.cake_data[i].y_peak*9) )/10);
-      cake_data_col.cake_data[i].z_set_threshold_min = (int16_t) ( (int32_t)( (cake_data_col.cake_data[i].z_peak*9) )/10);
-
-      cake_data_col.cake_data[i].x_set_threshold_min_from_avg = (int16_t) ( (int32_t)( (cake_data_col.cake_data[i].x_avg*9) )/10);
-      cake_data_col.cake_data[i].y_set_threshold_min_from_avg = (int16_t) ( (int32_t)( (cake_data_col.cake_data[i].y_avg*9) )/10);
-      cake_data_col.cake_data[i].z_set_threshold_min_from_avg = (int16_t) ( (int32_t)( (cake_data_col.cake_data[i].z_avg*9) )/10);
-      #endif
-
-
-#if 0
-      if (cake_data_col.cake_data[i].x_peak > 0)
-      {
-            cake_data_col.cake_data[i].x_set_threshold_min = cake_data_col.cake_data[i].x_peak-600;
-      }
-      else
-      {
-        cake_data_col.cake_data[i].x_set_threshold_min = cake_data_col.cake_data[i].x_peak+600;
-      }
-
-      if (cake_data_col.cake_data[i].y_peak > 0)
-      {
-      cake_data_col.cake_data[i].y_set_threshold_min = cake_data_col.cake_data[i].y_peak-300;
-
-      }
-      else
-      {
-      cake_data_col.cake_data[i].y_set_threshold_min = cake_data_col.cake_data[i].y_peak+300;
-      }
-
-      if (cake_data_col.cake_data[i].z_peak > 0)
-      {
-      cake_data_col.cake_data[i].z_set_threshold_min = cake_data_col.cake_data[i].z_peak-300;
-      }
-      else
-      {
-        cake_data_col.cake_data[i].z_set_threshold_min = cake_data_col.cake_data[i].z_peak+300;
-      }
-      #endif
-
-#if 0
-if (cake_data_col.cake_data[i].x_peak > 0)
-{
-cake_data_col.cake_data[i].x_set_threshold_min = cake_data_col.cake_data[i].x_peak-100;
-      
-}
-else
-{
-  cake_data_col.cake_data[i].x_set_threshold_min = cake_data_col.cake_data[i].x_peak+100;
-}
-      
-if (cake_data_col.cake_data[i].y_peak > 0)
-{
-cake_data_col.cake_data[i].y_set_threshold_min = cake_data_col.cake_data[i].y_peak-100;
-}
-else
-{
-cake_data_col.cake_data[i].y_set_threshold_min = cake_data_col.cake_data[i].y_peak+100;
-}
-
-
-if (cake_data_col.cake_data[i].z_peak > 0)
-{
-  cake_data_col.cake_data[i].z_set_threshold_min = cake_data_col.cake_data[i].z_peak-100;
-}
-else
-{
-cake_data_col.cake_data[i].z_set_threshold_min = cake_data_col.cake_data[i].z_peak+100;
-}
-#endif
-
-
-      
-
-
-      // set treshold to 70%
-      #if 0
-      if (abs(cake_data_col.cake_data[i].x_peak) > 27500 /* 21800*/ )
-      {
-        if (cake_data_col.cake_data[i].x_peak > 0)
-        {
-          cake_data_col.cake_data[i].x_set_threshold_max = 32766;
-        }
-        else
-        {
-          cake_data_col.cake_data[i].x_set_threshold_max = -32766;
-        }
-      }
-      else
-      {
-        cake_data_col.cake_data[i].x_set_threshold_max = (int16_t)((((int32_t)cake_data_col.cake_data[i].x_peak*10))/10);
-      }
-      /*cake_data_col.cake_data[i].x_set_threshold_max = (int16_t)((((int32_t)cake_data_col.cake_data[i].x_peak*15))/10);*/
-      #endif
-
-#if 0
-      cake_data_col.cake_data[i].x_set_threshold_max = (int16_t)((((int32_t)cake_data_col.cake_data[i].x_peak*10))/10) + 50;
-      cake_data_col.cake_data[i].y_set_threshold_max = (int16_t)((((int32_t)cake_data_col.cake_data[i].y_peak*10))/10) + 50;
-      cake_data_col.cake_data[i].z_set_threshold_max = (int16_t)((((int32_t)cake_data_col.cake_data[i].z_peak*10))/10) + 50;
-#endif
-
-#if 1
-if (cake_data_col.cake_data[i].x_peak > 0)
-{
-      cake_data_col.cake_data[i].x_set_threshold_max = cake_data_col.cake_data[i].x_peak+25;
-}
-else
-{
-  cake_data_col.cake_data[i].x_set_threshold_max = cake_data_col.cake_data[i].x_peak-25;
-}
-
-if (cake_data_col.cake_data[i].y_peak > 0)
-{
-cake_data_col.cake_data[i].y_set_threshold_max = cake_data_col.cake_data[i].y_peak+25;
-
-}
-else
-{
-cake_data_col.cake_data[i].y_set_threshold_max = cake_data_col.cake_data[i].y_peak-25;
-}
-
-if (cake_data_col.cake_data[i].z_peak > 0)
-{
-cake_data_col.cake_data[i].z_set_threshold_max = cake_data_col.cake_data[i].z_peak+25;
-}
-else
-{
-  cake_data_col.cake_data[i].z_set_threshold_max = cake_data_col.cake_data[i].z_peak-25;
-}
-
-#endif
-
-#if 0
-
-if (cake_data_col.cake_data[i].x_avg > 0)
-{
-      cake_data_col.cake_data[i].x_set_threshold_max_from_avg = cake_data_col.cake_data[i].x_avg+25;
-}
-else
-{
-  cake_data_col.cake_data[i].x_set_threshold_max_from_avg = cake_data_col.cake_data[i].x_avg-25;
-}
-
-if (cake_data_col.cake_data[i].y_avg > 0)
-{
-  cake_data_col.cake_data[i].y_set_threshold_max_from_avg = cake_data_col.cake_data[i].y_avg+25;
-}
-else
-{
-  cake_data_col.cake_data[i].y_set_threshold_max_from_avg = cake_data_col.cake_data[i].y_avg-25;
-}
-
-if (cake_data_col.cake_data[i].z_avg > 0)
-{
-  cake_data_col.cake_data[i].z_set_threshold_max_from_avg = cake_data_col.cake_data[i].z_avg+25;
-}
-else
-{
-  cake_data_col.cake_data[i].z_set_threshold_max_from_avg = cake_data_col.cake_data[i].z_avg-25;
-}
-
-#endif
-
-#if 1
-
-      cake_data_col.cake_data[i].x_set_threshold_max_from_avg = (int16_t)((((int32_t)cake_data_col.cake_data[i].x_avg*11))/10);
-      cake_data_col.cake_data[i].y_set_threshold_max_from_avg = (int16_t)((((int32_t)cake_data_col.cake_data[i].y_avg*11))/10);
-      cake_data_col.cake_data[i].z_set_threshold_max_from_avg = (int16_t)((((int32_t)cake_data_col.cake_data[i].z_avg*11))/10);  
-
-#endif
-      
-      
+      cake_data_col.cake_data[i].x_set_threshold_max_from_avg = (int16_t)((((int32_t)cake_data_col.cake_data[i].x_avg*160))/100);
+      cake_data_col.cake_data[i].y_set_threshold_max_from_avg = (int16_t)((((int32_t)cake_data_col.cake_data[i].y_avg*160))/100);
+      cake_data_col.cake_data[i].z_set_threshold_max_from_avg = (int16_t)((((int32_t)cake_data_col.cake_data[i].z_avg*160))/100);  
     }
+
+    cake_data_col.x_set_insert_threshold = (int16_t) ( (int32_t)( (cake_data_col.cake_data[0].x_avg*40) )/100);
 
     uint16_t keks = 0u;
 
@@ -1170,12 +1006,11 @@ NRF_LOG_INFO("Calibration Start");
     if (!calibration_active)
     {
       
-
+      check_key_inserted();
       update_area_id();
-      /*check_area_changed2();*/
+      check_area_changed2();
       
       #if 0
-      check_key_inserted();
       check_area_changed();
       
       update_area();
@@ -1188,9 +1023,46 @@ NRF_LOG_INFO("Calibration Start");
   }
 }
 
+void check_key_inserted(void)
+{
+  lsm303_data_t *p_lsm303_data = lsm303_data_p_get();
+
+  if (app_state.inserted == true)
+  {
+    // check if key has gone out
+    if (((p_lsm303_data->accel.angle >= 350u) || (p_lsm303_data->accel.angle <= 10u)))
+    {
+      if (abs(p_lsm303_data->mag.axis.bit.x) < abs(cake_data_col.x_set_insert_threshold))
+      {
+        app_state.inserted = false;
+        app_state.insertedInside = false;
+      }
+    }
+  }
+  else
+  {
+    // check if key was inserted
+    if ( ((p_lsm303_data->accel.angle >= 350u) || (p_lsm303_data->accel.angle <= 10u)) && (app_state.areaId == 0u) 
+    && (abs(p_lsm303_data->mag.axis.bit.x) > abs(cake_data_col.x_set_insert_threshold)) )
+    {
+      app_state.inserted = true;
+
+      if (p_lsm303_data->mag.axis.bit.y > 0)
+      {
+        app_state.insertedInside = false;
+      }
+      else
+      {
+        app_state.insertedInside = true;
+      }
+    }
+  }
+}
+
+
 static int16_t pass = false;
   static bool have_actually_pass = false;
-  static uint16_t old_area_id = 0u;
+  static uint16_t old_area_id = 98u;
   static uint16_t area_id = 0u;
   
 
@@ -1205,81 +1077,10 @@ void update_area_id(void)
   
   for (int i = 0u; i < 12u; i++)
   {
+     passx = false;
+     passy = false; 
+     passz = false;
 
-    #if 0
-    if (p_lsm303_data->mag.axis.bit.x > 0)
-    {
-      if ((p_lsm303_data->mag.axis.bit.x > cake_data_col.cake_data[i].x_set_threshold_min ))
-      {
-        if ((cake_data_col.cake_data[i].x_set_threshold_max > p_lsm303_data->mag.axis.bit.x ))
-        {
-          passx = true;
-        }
-      }
-    }
-    else
-    {
-      if ((cake_data_col.cake_data[i].x_set_threshold_min > p_lsm303_data->mag.axis.bit.x))
-      {
-        if ((p_lsm303_data->mag.axis.bit.x > cake_data_col.cake_data[i].x_set_threshold_max ))
-        {
-          passx = true;
-        }
-      }
-    }
-
-    if (p_lsm303_data->mag.axis.bit.y > 0)
-    {
-      if ((p_lsm303_data->mag.axis.bit.y > cake_data_col.cake_data[i].y_set_threshold_min ) )
-      {
-        if ((cake_data_col.cake_data[i].y_set_threshold_max > p_lsm303_data->mag.axis.bit.y ))
-        {
-          passy = true;
-        }
-      }
-    }
-    else
-    {
-      if ((cake_data_col.cake_data[i].y_set_threshold_min > p_lsm303_data->mag.axis.bit.y))
-      {
-        if ((p_lsm303_data->mag.axis.bit.y > cake_data_col.cake_data[i].y_set_threshold_max ))
-        {
-          passy = true;
-        }
-      }
-    }
-
-    if (p_lsm303_data->mag.axis.bit.z > 0)
-    {
-      if ((p_lsm303_data->mag.axis.bit.z > cake_data_col.cake_data[i].z_set_threshold_min ))
-      {
-        if ((cake_data_col.cake_data[i].z_set_threshold_max > p_lsm303_data->mag.axis.bit.z))
-        {
-          passz = true; 
-        }
-      }
-    }
-    else
-    {
-      if ((cake_data_col.cake_data[i].z_set_threshold_min > p_lsm303_data->mag.axis.bit.z))
-      {
-        if ((p_lsm303_data->mag.axis.bit.z > cake_data_col.cake_data[i].z_set_threshold_max ))
-        {
-          passz = true;
-        }
-      }
-    }
-
-    if ((p_lsm303_data->mag.sum_abs_xyz > cake_data_col.cake_data[i].sum_abs_xyz_peaks_min ))
-    {
-      if (cake_data_col.cake_data[i].sum_abs_xyz_peaks_max > p_lsm303_data->mag.sum_abs_xyz)
-      {
-          passsum = true;
-      }
-    }
-    #endif
-
-    #if 1
     if (p_lsm303_data->mag.axis.bit.x > 0)
     {
       if ((p_lsm303_data->mag.axis.bit.x > cake_data_col.cake_data[i].x_set_threshold_min_from_avg ))
@@ -1343,64 +1144,22 @@ void update_area_id(void)
       }
     }
 
-    if ((p_lsm303_data->mag.sum_abs_xyz > cake_data_col.cake_data[i].sum_abs_xyz_peaks_min ))
-    {
-      if (cake_data_col.cake_data[i].sum_abs_xyz_peaks_max > p_lsm303_data->mag.sum_abs_xyz)
-      {
-          passsum = true;
-      }
-    }
-    #endif
-
-
-    
-
-    if ((passx == true) && (passy == true) && (passz == true) /*&& (passsum == true)*/)
+    if ( (passx == true) && (passy == true) && (passz == true) )
     {
       have_actually_pass = true;
       area_id = cake_data_col.cake_data[i].area_id;
+      app_state.areaId = area_id;
       return;
     }
-
-#if 0
-    if ( (p_lsm303_data->mag.axis.bit.x > cake_data_col.cake_data[i].x_set_threshold_min ) && (p_lsm303_data->mag.axis.bit.x < cake_data_col.cake_data[i].x_set_threshold_max ) &&
-    ( p_lsm303_data->mag.axis.bit.y > cake_data_col.cake_data[i].y_set_threshold_min ) && (p_lsm303_data->mag.axis.bit.y < cake_data_col.cake_data[i].y_set_threshold_max ) &&
-    ( p_lsm303_data->mag.axis.bit.z > cake_data_col.cake_data[i].z_set_threshold_min ) && (p_lsm303_data->mag.axis.bit.z < cake_data_col.cake_data[i].z_set_threshold_max ) )
+    else
     {
-      app_state.areaId = cake_data_col.cake_data[i].area_id;
+      area_id = 99u;
     }
-
-#endif
   }
-
-
-if (have_actually_pass)
-{
-  have_actually_pass = false;
-  pass++;
-  app_state.areaId = area_id;
-
-  if (old_area_id != area_id)
-  {
-    pass = 0u;
-  }
-
-  old_area_id = area_id;
-
-#if 0
-  if (pass > 2u)
-  {
-    app_state.areaId = area_id;
-  }
-#endif
-  
-}
-
-  
 }
 
 
-static uint8_t areaIdBuf[6];
+static uint8_t areaIdBuf[4];
 
 void check_area_changed2(void)
 {
@@ -1408,257 +1167,90 @@ void check_area_changed2(void)
   {
     lsm303_data_t *p_lsm303_data = lsm303_data_p_get();
 
-    if (areaIdBuf[0] != p_lsm303_data->accel.area2)
+    if (areaIdBuf[0] != app_state.areaId)
     {
       /* shifting buffer values to right */
-      for (uint8_t i = (3 - 1); i > 0; i--)
+      for (uint8_t i = (4 - 1); i > 0; i--)
       {
         areaIdBuf[i] = areaIdBuf[i - 1];
       }
 
-      areaIdBuf[0] = p_lsm303_data->accel.area2;
-
-      if ((areaIdBuf[5] == 6u) && (areaIdBuf[4] == 5u) && (areaIdBuf[3] == 4u) && (areaIdBuf[2] == 3u) && (areaIdBuf[1] == 2u) && (areaIdBuf[0] == 1u))
-      {
-        if (app_state.insertedInside)
-        {
-          if (app_state.locked)
-          {
-            app_state.lockedTwice = true;
-          }
-
-          app_state.locked = true;
-        }
-        else
-        {
-          if (app_state.lockedTwice)
-          {
-            app_state.lockedTwice = false;
-          }
-          else
-          {
-            app_state.locked = false;
-          }
-        }
-      }
-
-      if ((areaIdBuf[5] == 1u) && (areaIdBuf[4] == 2u) && (areaIdBuf[3] == 3u) && (areaIdBuf[2] == 4u) && (areaIdBuf[1] == 5u) && (areaIdBuf[0] == 6u))
-      {
-        if (app_state.insertedInside)
-        {
-          if (app_state.lockedTwice)
-          {
-            app_state.lockedTwice = false;
-          }
-          else
-          {
-            app_state.locked = false;
-          }
-        }
-        else
-        {
-          if (app_state.locked)
-          {
-            app_state.lockedTwice = true;
-          }
-
-          app_state.locked = true;
-        }
-      }
-    }
-  }
-}
+      /* Fresh value */
+      areaIdBuf[0] = app_state.areaId;
 
 #if 0
-void update_area(void)
-{
-  lsm303_data_t *p_lsm303_data = lsm303_data_p_get();
-
-  for (int i = 0u; i < 12; i++)
-  {
-    if ((p_lsm303_data->accel.angle >= cake_data_col.cake_data[i].start_angle) || (p_lsm303_data->accel.angle >= cake_data_col.cake_data[i].end_angle))
-    {
-      p_lsm303_data->accel.area2 = cake_data_col.cake_data[i].area_id;
-    }
-  }
-}
-
-
-void check_key_inserted(void)
-{
-  lsm303_data_t *p_lsm303_data = lsm303_data_p_get();
-
-  if (app_state.inserted == true)
-  {
-    // check if key has gone out
-    if (((p_lsm303_data->accel.angle >= 350u) || (p_lsm303_data->accel.angle <= 10u)))
-    {
-      if (p_lsm303_data->mag.axis.bit.x < 2000)
-      {
-        app_state.inserted = false;
-        app_state.insertedInside = false;
-      }
-    }
-  }
-  else
-  {
-    // check if key was inserted
-    if (((p_lsm303_data->accel.angle >= 350u) || (p_lsm303_data->accel.angle <= 10u)) && (p_lsm303_data->mag.axis.bit_sum >= 4000u))
-    {
-      app_state.inserted = true;
-
-      if (p_lsm303_data->mag.axis.bit.y > 0)
-      {
-        app_state.insertedInside = false;
-      }
-      else
-      {
-        app_state.insertedInside = true;
-      }
-    }
-  }
-}
-
-static uint8_t areaIdBuf[12];
-
-void check_area_changed2(void)
-{
-  if (app_state.inserted)
-  {
-    lsm303_data_t *p_lsm303_data = lsm303_data_p_get();
-
-    if (areaIdBuf[0] != p_lsm303_data->accel.area2)
-    {
-      /* shifting buffer values to right */
-      for (uint8_t i = (3 - 1); i > 0; i--)
-      {
-        areaIdBuf[i] = areaIdBuf[i - 1];
-      }
-
-      areaIdBuf[0] = p_lsm303_data->accel.area2;
-
       if ((areaIdBuf[5] == 6u) && (areaIdBuf[4] == 5u) && (areaIdBuf[3] == 4u) && (areaIdBuf[2] == 3u) && (areaIdBuf[1] == 2u) && (areaIdBuf[0] == 1u))
-      {
-        if (app_state.insertedInside)
-        {
-          if (app_state.locked)
-          {
-            app_state.lockedTwice = true;
-          }
-
-          app_state.locked = true;
-        }
-        else
-        {
-          if (app_state.lockedTwice)
-          {
-            app_state.lockedTwice = false;
-          }
-          else
-          {
-            app_state.locked = false;
-          }
-        }
-      }
-
-      if ((areaIdBuf[5] == 1u) && (areaIdBuf[4] == 2u) && (areaIdBuf[3] == 3u) && (areaIdBuf[2] == 4u) && (areaIdBuf[1] == 5u) && (areaIdBuf[0] == 6u))
-      {
-        if (app_state.insertedInside)
-        {
-          if (app_state.lockedTwice)
-          {
-            app_state.lockedTwice = false;
-          }
-          else
-          {
-            app_state.locked = false;
-          }
-        }
-        else
-        {
-          if (app_state.locked)
-          {
-            app_state.lockedTwice = true;
-          }
-
-          app_state.locked = true;
-        }
-      }
-    }
-  }
-}
-
-
-
-
-static uint8_t areaBuf[3];
-
-void check_area_changed(void)
-{
-  if (app_state.inserted)
-  {
-    lsm303_data_t *p_lsm303_data = lsm303_data_p_get();
-
-    if (areaBuf[0] != p_lsm303_data->accel.area)
-    {
-      /* shifting buffer values to right */
-      for (uint8_t i = (3 - 1); i > 0; i--)
-      {
-        areaBuf[i] = areaBuf[i - 1];
-      }
-
-      areaBuf[0] = p_lsm303_data->accel.area;
-
-      if ((areaBuf[2] == 3u) && (areaBuf[1] == 2u) && (areaBuf[0] == 1u))
-      {
-        if (app_state.insertedInside)
-        {
-          if (app_state.locked)
-          {
-            app_state.lockedTwice = true;
-          }
-
-          app_state.locked = true;
-        }
-        else
-        {
-          if (app_state.lockedTwice)
-          {
-            app_state.lockedTwice = false;
-          }
-          else
-          {
-            app_state.locked = false;
-          }
-        }
-      }
-
-      if ((areaBuf[2] == 1u) && (areaBuf[1] == 2u) && (areaBuf[0] == 3u))
-      {
-        if (app_state.insertedInside)
-        {
-          if (app_state.lockedTwice)
-          {
-            app_state.lockedTwice = false;
-          }
-          else
-          {
-            app_state.locked = false;
-          }
-        }
-        else
-        {
-          if (app_state.locked)
-          {
-            app_state.lockedTwice = true;
-          }
-
-          app_state.locked = true;
-        }
-      }
-    }
-  }
-}
 #endif
+      if ((areaIdBuf[3] == (areaIdBuf[2]+1)) && (areaIdBuf[2] == (areaIdBuf[1]+1)) && (areaIdBuf[1] == (areaIdBuf[0]+1)))
+      {
+      #if 0
+        if (app_state.insertedInside)
+        {
+        #endif
+        #if 0
+          if (app_state.locked)
+          {
+            app_state.lockedTwice = true;
+          }
+          #endif
+
+          app_state.locked = false;
+          #if 0
+        }
+        else
+        {
+        #endif
+        #if 0
+          if (app_state.lockedTwice)
+          {
+            app_state.lockedTwice = false;
+          }
+          else
+          {
+            app_state.locked = false;
+          }
+          #endif
+          #if 0
+        }
+        #endif
+      }
+
+#if 0
+      if ((areaIdBuf[5] == 1u) && (areaIdBuf[4] == 2u) && (areaIdBuf[3] == 3u) && (areaIdBuf[2] == 4u) && (areaIdBuf[1] == 5u) && (areaIdBuf[0] == 6u))
+#endif
+      if ((areaIdBuf[3] == (areaIdBuf[2]-1)) && (areaIdBuf[2] == (areaIdBuf[1]-1)) && (areaIdBuf[1] == (areaIdBuf[0]-1)))
+      {
+      #if 0
+        if (app_state.insertedInside)
+        {
+        #endif
+        #if 0
+          if (app_state.lockedTwice)
+          {
+            app_state.lockedTwice = false;
+          }
+          else
+          {
+            app_state.locked = false;
+          }
+          #endif
+          #if 0
+        }
+        else
+        {
+        #endif
+          if (app_state.locked)
+          {
+            app_state.lockedTwice = true;
+          }
+
+          app_state.locked = true;
+        }
+        #if 0
+      }
+      #endif
+    }
+  }
+}
 
 /** @} */
