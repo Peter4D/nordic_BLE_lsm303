@@ -190,9 +190,12 @@ static app_CB_t m_app_CB = {
 
 
 
-static bool calibration_active = true;
+static bool calibration_active = false;
 
 
+static uint8_t step = 0u;
+  static uint16_t curr_angle = 0u;
+  static uint16_t num_of_meas = 0u;
 
 
 typedef struct _cake_data_model_t {
@@ -261,6 +264,8 @@ static application_state_t app_state;
 static uint16_t cnt_x_axis_lowering = 0u;
 static uint16_t cnt_x_axis_lowering_wait = 0u;
 static int16_t old_x_axis = 0u;
+
+static bool timer_running = false;
 
 /* Buffer for samples read from accelerometer sensor. */
 
@@ -471,6 +476,7 @@ static uint16_t sum = 0u;
 static void calibration_timeout_handler(void *calibration_ctx_s)
 {
   app_state.calibrating = false;
+  calibration_active = false;
   NRF_LOG_INFO("Calibration timeout");
 }
 
@@ -495,7 +501,14 @@ static void button_short_press(void)
 
   // Per spec, if key is in "reset" state then both leds blink
   uint32_t off_action;
-  if (app_state.calibrated)
+
+  if (app_state.calibrating)
+  {
+    led_on(LED_GREEN);
+    led_on(LED_RED);
+    off_action = BOTH_OFF;
+  }
+  else if (!app_state.calibrated)
   {
     led_on(LED_GREEN);
     led_on(LED_RED);
@@ -525,6 +538,11 @@ static void calibration_start(void)
   // read_mag();
 
   app_state.calibrating = true;
+
+  step = 0u;
+  curr_angle = 0u;
+  num_of_meas = 0u;
+
   ret_code_t ret = app_timer_start(app_tmr_calibration_id, APP_TIMER_TICKS(CALIBRATION_TIMEOUT_MS), NULL);
   APP_ERROR_CHECK(ret);
 }
@@ -737,26 +755,33 @@ lsm303_data_t *p_lsm303_data = lsm303_data_p_get();
       cake_data_col.cake_data[i].area_id = i;
 
       tmp_angle = increment_angle_step(tmp_angle);
+
     }
+
+    calibration_active = true;
 }
+
 
 static void calibration_handle(void)
 {
-  static uint8_t step = 0u;
-  static uint16_t curr_angle = 0u;
-  static uint16_t num_of_meas = 0u;
+  
 
   lsm303_data_t *p_lsm303_data = lsm303_data_p_get();
   curr_angle = p_lsm303_data->accel.angle; /* can be different from the lock to lock */
+
+
+
+  int16_t keks = 34u;
 
   /* TODO: In area ID 0 we take first 15 degrees and not also the "last"15 degress */
   if (12u > step >= 0u)
   {
     if (step == cake_data_col.cake_data[step].area_id)
     {
-      if ( ((curr_angle+30u) >= (uint16_t)(cake_data_col.cake_data[step].start_angle_i + 30)) && ((curr_angle+30u) <= (uint16_t)(cake_data_col.cake_data[step].end_angle + 30)) )
+      if ( ((curr_angle+30u) >= (uint16_t)(cake_data_col.cake_data[step].start_angle_i + 30)) && ((curr_angle+30u) <= (uint16_t)(cake_data_col.cake_data[step].end_angle_i + 30)) )
       {
         num_of_meas++;
+        NRF_LOG_INFO("Number of meas %d", num_of_meas);
 
         if (num_of_meas == 1u)
         {
@@ -794,6 +819,7 @@ static void calibration_handle(void)
         {
           step++;
           num_of_meas=0u;
+          NRF_LOG_INFO("Step %d", step);
         } 
       }
     }
@@ -801,6 +827,7 @@ static void calibration_handle(void)
 
   if (step == 12u)
   {
+    NRF_LOG_INFO("Post analysis");
     // post analysis
     for (int i = 0u; i < 12u; i++)
     {
@@ -819,6 +846,16 @@ static void calibration_handle(void)
 
     NRF_LOG_INFO("Calibration Ends");
     calibration_active = false;
+
+    #if 1
+    app_timer_stop(app_tmr_calibration_id);
+      app_state.calibrating = false;
+      app_state.calibrated = true;
+      timer_running = false;
+      app_state.locked = true;
+      led_on(LED_GREEN);
+      app_timer_start(app_tmr_led_blink_id, APP_TIMER_TICKS(LED_LONG_BLINK_TIME_MS), (void *)GREEN_OFF);
+      #endif
   }
 
   
@@ -866,7 +903,7 @@ static uint16_t define_angle_limit(uint16_t angle, bool start_angle)
     if (angle > 345)
     {
       uint16_t cnt2angle = 0u;
-      while ((cnt2angle + angle) >= 360u)
+      while (!((cnt2angle + angle) >= 360u))
       {
         cnt2angle++;
       }
@@ -881,7 +918,7 @@ static uint16_t define_angle_limit(uint16_t angle, bool start_angle)
   return temp;
 }
 
-static bool timer_running = false;
+
 void read_lsm303(void *unused)
 {
   // read_accel();
@@ -954,24 +991,17 @@ int main(void)
 
 static uint16_t cnt;
 
-
-calibration_handle_keyinserted();
-
-NRF_LOG_INFO("Calibration Start");
-
   while (true)
   {
     NRF_LOG_FLUSH();
     nrf_pwr_mgmt_run();
 
-    if (calibration_active)
-    {
-      calibration_handle();
-    }
     
 
     if (app_state.calibrating)
     {
+
+    #if 0
       bool calib_result;
       lsm303_data_t initial_data;
       lsm303_data_t *p_lsm303_data = lsm303_data_p_get();
@@ -997,13 +1027,29 @@ NRF_LOG_INFO("Calibration Start");
       }
 
       NRF_LOG_INFO("calibrating %d calib_result %d", app_state.calibrating, calib_result);
+
+      #endif
+
+      calibration_handle_keyinserted();
+
+      while (calibration_active == true)
+      {
+        calibration_handle();
+      }
+      
+
+      
+
+#if 0
       app_timer_stop(app_tmr_calibration_id);
       app_state.calibrating = false;
+      app_state.calibrated = true;
       timer_running = false;
+#endif
     }
 
     /*if (!app_state.calibrating)*/
-    if (!calibration_active)
+    if (app_state.calibrated)
     {
       
       check_key_inserted();
@@ -1181,7 +1227,10 @@ void check_area_changed2(void)
 #if 0
       if ((areaIdBuf[5] == 6u) && (areaIdBuf[4] == 5u) && (areaIdBuf[3] == 4u) && (areaIdBuf[2] == 3u) && (areaIdBuf[1] == 2u) && (areaIdBuf[0] == 1u))
 #endif
+#if 0
       if ((areaIdBuf[3] == (areaIdBuf[2]+1)) && (areaIdBuf[2] == (areaIdBuf[1]+1)) && (areaIdBuf[1] == (areaIdBuf[0]+1)))
+#endif
+  if ( (areaIdBuf[2] > areaIdBuf[1]) && (areaIdBuf[1] > areaIdBuf[0]) && (areaIdBuf[1] != 11u || areaIdBuf[1] != 10u) )
       {
       #if 0
         if (app_state.insertedInside)
@@ -1218,7 +1267,10 @@ void check_area_changed2(void)
 #if 0
       if ((areaIdBuf[5] == 1u) && (areaIdBuf[4] == 2u) && (areaIdBuf[3] == 3u) && (areaIdBuf[2] == 4u) && (areaIdBuf[1] == 5u) && (areaIdBuf[0] == 6u))
 #endif
+#if 0
       if ((areaIdBuf[3] == (areaIdBuf[2]-1)) && (areaIdBuf[2] == (areaIdBuf[1]-1)) && (areaIdBuf[1] == (areaIdBuf[0]-1)))
+#endif
+      if ( (areaIdBuf[2] < areaIdBuf[1]) && (areaIdBuf[1] < areaIdBuf[0]) && (areaIdBuf[1] != 0u || areaIdBuf[1] != 1u) )
       {
       #if 0
         if (app_state.insertedInside)
