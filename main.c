@@ -133,6 +133,14 @@
 #define LED_GREEN LED_1
 #define LED_RED LED_2
 
+/* ***************************************************** */
+#define NUM_AREAS 36u
+#define AREA_ANGLE ( (uint16_t) ( ((uint32_t) 360u) / ((uint16_t) NUM_AREAS) ) )
+#define AREA_ANGLE_START (uint16_t) ((AREA_ANGLE/2)-1)
+#define AREA_ANGLE_END (uint16_t) ((AREA_ANGLE/2))
+
+/* ***************************************************** */
+
 /* Arbitary calibration constants */
 #define CALIBRATION_TIMEOUT_MS 20000 /* Timeout after enabling calibration and no action was taken */
 
@@ -189,6 +197,9 @@ static app_CB_t m_app_CB = {
 };
 
 
+void InitCalibParams(void);
+void update_area_id(void);
+
 
 static bool calibration_active = false;
 
@@ -232,11 +243,13 @@ typedef struct _cake_data_model_t {
     uint16_t sum_abs_xyz_peaks;  
 
     uint16_t sum_abs_xyz_peaks_min;
-    uint16_t sum_abs_xyz_peaks_max;  
+    uint16_t sum_abs_xyz_peaks_max; 
+
+    uint16_t numOfMeasTaken; 
 }cake_data_model_t;
 
 typedef struct _cake_data_col_t {
-    cake_data_model_t cake_data[12];
+    cake_data_model_t cake_data[NUM_AREAS];
     
     int16_t x_set_insert_threshold;
     uint16_t actual_angle;
@@ -256,7 +269,8 @@ static cake_data_col_t cake_data_col =  {
 };
 
 
-
+#define NUM_MEAS_AREA ( ( ( (uint32_t) AREA_ANGLE) / ( (uint16_t) 4u ) )  )
+uint16_t angle_meas_taken[NUM_MEAS_AREA];
 
 
 static application_state_t app_state;
@@ -539,12 +553,23 @@ static void calibration_start(void)
 
   app_state.calibrating = true;
 
+  InitCalibParams();
+
   step = 0u;
   curr_angle = 0u;
   num_of_meas = 0u;
 
   ret_code_t ret = app_timer_start(app_tmr_calibration_id, APP_TIMER_TICKS(CALIBRATION_TIMEOUT_MS), NULL);
   APP_ERROR_CHECK(ret);
+}
+
+void InitCalibParams(void)
+{
+  /*Init counter */
+    for (int i = 0u; i < NUM_AREAS; i++) 
+  {
+    cake_data_col.cake_data[i].numOfMeasTaken = 0u;
+  }
 }
 
 static void button_long_press(void)
@@ -565,8 +590,19 @@ static void button_timeout_handler(void *unused)
 {
   (void)unused;
   static uint8_t btn_hold_cnt = 0;
+  static bool last_state = 0;
+
   if (app_button_is_pushed(0))
   {
+    /*if (!short_executed)
+    {*/
+      /* execute only once - when button is just pressed */
+      /*button_short_press();
+      short_executed = 1;
+    }*/
+
+    last_state = 1;
+
     if (++btn_hold_cnt >= LONG_BTN_TIMEOUT_MS / BTN_POLL_MS)
     {
       btn_hold_cnt = 0;
@@ -579,8 +615,17 @@ static void button_timeout_handler(void *unused)
   }
   else
   {
+    if (last_state == 1)
+    {
+      last_state = 0;
+      button_short_press();
+    }
+
     btn_hold_cnt = 0;
-    button_short_press();
+
+    /* reset short button pressed */
+    
+    /*button_short_press();*/
   }
 }
 
@@ -745,10 +790,10 @@ lsm303_data_t *p_lsm303_data = lsm303_data_p_get();
   uint16_t tmp_angle = p_lsm303_data->accel.angle; /* can be different from the lock to lock */
 
   /* create a tree of data */
-    for (int i = 0u; i < 12u; i++)
+    for (int i = 0u; i < NUM_AREAS; i++)
     {
-      cake_data_col.cake_data[i].start_angle_i = (int16_t)(tmp_angle-14);
-      cake_data_col.cake_data[i].end_angle_i = (int16_t)(tmp_angle+15);
+      cake_data_col.cake_data[i].start_angle_i = (int16_t)(tmp_angle-AREA_ANGLE_START);
+      cake_data_col.cake_data[i].end_angle_i = (int16_t)(tmp_angle+AREA_ANGLE_END);
 
       cake_data_col.cake_data[i].start_angle = define_angle_limit(tmp_angle, true);
       cake_data_col.cake_data[i].end_angle = define_angle_limit(tmp_angle, false);
@@ -762,6 +807,7 @@ lsm303_data_t *p_lsm303_data = lsm303_data_p_get();
 }
 
 
+
 static void calibration_handle(void)
 {
   
@@ -769,11 +815,137 @@ static void calibration_handle(void)
   lsm303_data_t *p_lsm303_data = lsm303_data_p_get();
   curr_angle = p_lsm303_data->accel.angle; /* can be different from the lock to lock */
 
+  bool allDone = true;
+
+  /* Find actual location of the key */
+  uint16_t stepLocation = 99U;
+  for (int i = 0u; i < NUM_AREAS; i++)
+  {
+    if (cake_data_col.cake_data[i].numOfMeasTaken < NUM_MEAS_AREA)
+    {
+      allDone = false;
+    }
+
+    if ( ((curr_angle+AREA_ANGLE) >= (uint16_t)(cake_data_col.cake_data[i].start_angle_i + AREA_ANGLE)) && ((curr_angle+AREA_ANGLE) <= (uint16_t)(cake_data_col.cake_data[i].end_angle_i + AREA_ANGLE)) )
+    {
+      stepLocation = i;
+    }
+  }
+
+  /* Calibration is done when taking of measurment of every 1/12 at least 15 times */
+  if (stepLocation != 99U && cake_data_col.cake_data[stepLocation].numOfMeasTaken < NUM_MEAS_AREA)
+  {
+    cake_data_col.cake_data[stepLocation].numOfMeasTaken++;
+    /*NRF_LOG_INFO("Number of meas %d", cake_data_col.cake_data[stepLocation].numOfMeasTaken);*/
+
+    /*NRF_LOG_INFO("Step location %d", stepLocation);*/
+    uint16_t nmt = cake_data_col.cake_data[stepLocation].numOfMeasTaken;
+
+    if (cake_data_col.cake_data[stepLocation].numOfMeasTaken < NUM_MEAS_AREA)
+    {
+      if (cake_data_col.cake_data[stepLocation].numOfMeasTaken == 1u)
+      {
+        /* Init meas angle list */
+        for(int i = 0u; i < NUM_MEAS_AREA; i++)
+        {
+          angle_meas_taken[i] = 999u;
+        }
+
+        
+
+        cake_data_col.cake_data[stepLocation].x_avg = p_lsm303_data->mag.axis.bit.x;
+        cake_data_col.cake_data[stepLocation].y_avg = p_lsm303_data->mag.axis.bit.y;
+        cake_data_col.cake_data[stepLocation].z_avg = p_lsm303_data->mag.axis.bit.z;
+
+        angle_meas_taken[nmt-1] = p_lsm303_data->accel.angle;
+      }
+      else
+      {
+        /*NRF_LOG_INFO("X %d", p_lsm303_data->mag.axis.bit.x);
+        NRF_LOG_INFO("Y %d", p_lsm303_data->mag.axis.bit.y);
+        NRF_LOG_INFO("Z %d", p_lsm303_data->mag.axis.bit.z);*/
+
+        uint16_t angle = p_lsm303_data->accel.angle;
+
+        bool angle_used = false;
+
+        for(int i = 0u; i < NUM_MEAS_AREA; i++)
+        {
+          if (angle == angle_meas_taken[i])
+          {
+            angle_used = true;
+          }
+        }
+
+        if (angle_used == false)
+        {
+          angle_meas_taken[nmt-1] = angle;
+
+          cake_data_col.cake_data[stepLocation].x_avg = (cake_data_col.cake_data[stepLocation].x_avg + p_lsm303_data->mag.axis.bit.x) >> 1;
+          cake_data_col.cake_data[stepLocation].y_avg = (cake_data_col.cake_data[stepLocation].y_avg + p_lsm303_data->mag.axis.bit.y) >> 1;
+          cake_data_col.cake_data[stepLocation].z_avg = (cake_data_col.cake_data[stepLocation].z_avg + p_lsm303_data->mag.axis.bit.z) >> 1;
+
+          NRF_LOG_INFO("X avg %d", cake_data_col.cake_data[stepLocation].x_avg);
+        NRF_LOG_INFO("Y avg %d", cake_data_col.cake_data[stepLocation].y_avg);
+        NRF_LOG_INFO("Z avg %d", cake_data_col.cake_data[stepLocation].z_avg);
+        }
+        else
+        {
+          cake_data_col.cake_data[stepLocation].numOfMeasTaken--;
+        }
+        
+        
+      }
+    }
+    else
+    {
+      cake_data_col.cake_data[stepLocation].numOfMeasTaken = 99u;
+    }
+  }
+
+  if (allDone)
+  {
+    NRF_LOG_INFO("Post analysis");
+    // post analysis
+    for (int i = 0u; i < NUM_AREAS; i++)
+    {
+      cake_data_col.cake_data[i].x_set_threshold_min_from_avg = (int16_t) ( (int32_t)( (cake_data_col.cake_data[i].x_avg*40) )/100);
+      cake_data_col.cake_data[i].y_set_threshold_min_from_avg = (int16_t) ( (int32_t)( (cake_data_col.cake_data[i].y_avg*40) )/100);
+      cake_data_col.cake_data[i].z_set_threshold_min_from_avg = (int16_t) ( (int32_t)( (cake_data_col.cake_data[i].z_avg*40) )/100);
+
+      cake_data_col.cake_data[i].x_set_threshold_max_from_avg = (int16_t)((((int32_t)cake_data_col.cake_data[i].x_avg*160))/100);
+      cake_data_col.cake_data[i].y_set_threshold_max_from_avg = (int16_t)((((int32_t)cake_data_col.cake_data[i].y_avg*160))/100);
+      cake_data_col.cake_data[i].z_set_threshold_max_from_avg = (int16_t)((((int32_t)cake_data_col.cake_data[i].z_avg*160))/100);  
+    }
+
+    cake_data_col.x_set_insert_threshold = (int16_t) ( (int32_t)( (cake_data_col.cake_data[0].x_avg*40) )/100);
+
+    uint16_t keks = 0u;
+
+    NRF_LOG_INFO("Calibration Ends");
+    calibration_active = false;
+
+    app_timer_stop(app_tmr_calibration_id);
+    app_state.calibrating = false;
+    app_state.calibrated = true;
+    timer_running = false;
+    app_state.locked = true;
+    led_on(LED_GREEN);
+    app_timer_start(app_tmr_led_blink_id, APP_TIMER_TICKS(LED_LONG_BLINK_TIME_MS), (void *)GREEN_OFF);
+  }
 
 
-  int16_t keks = 34u;
+
+
+
+
+
+
+
+
 
   /* TODO: In area ID 0 we take first 15 degrees and not also the "last"15 degress */
+  #if 0
   if (12u > step >= 0u)
   {
     if (step == cake_data_col.cake_data[step].area_id)
@@ -846,8 +1018,9 @@ static void calibration_handle(void)
 
     NRF_LOG_INFO("Calibration Ends");
     calibration_active = false;
+    #endif
 
-    #if 1
+    #if 0
     app_timer_stop(app_tmr_calibration_id);
       app_state.calibrating = false;
       app_state.calibrated = true;
@@ -856,7 +1029,6 @@ static void calibration_handle(void)
       led_on(LED_GREEN);
       app_timer_start(app_tmr_led_blink_id, APP_TIMER_TICKS(LED_LONG_BLINK_TIME_MS), (void *)GREEN_OFF);
       #endif
-  }
 
   
 }
@@ -865,7 +1037,7 @@ static void calibration_handle(void)
 
 static uint16_t increment_angle_step(uint16_t angle)
 {
-  uint16_t tmp = angle + 30u;
+  uint16_t tmp = angle + AREA_ANGLE;
   
   if (tmp >= 360u)
   {
@@ -882,7 +1054,7 @@ static uint16_t define_angle_limit(uint16_t angle, bool start_angle)
   if (start_angle)
   {
     /* if angle is close to 0*/
-    if (angle < 15u)
+    if (angle < AREA_ANGLE_END)
     {
       uint16_t cnt2angle = 0u;
       while (cnt2angle <= angle)
@@ -890,28 +1062,28 @@ static uint16_t define_angle_limit(uint16_t angle, bool start_angle)
         cnt2angle++;
       }
 
-      temp = 360u - (15u - cnt2angle);
+      temp = 360u - (AREA_ANGLE_END - cnt2angle);
     }
     else
     {
-      temp = angle - 14u;
+      temp = angle - AREA_ANGLE_START;
     }
   }
   else
   {
     /* if angle is close to 360 */
-    if (angle > 345)
+    if (angle > (360-AREA_ANGLE_END))
     {
       uint16_t cnt2angle = 0u;
       while (!((cnt2angle + angle) >= 360u))
       {
         cnt2angle++;
       }
-      temp = 0u + (15u - cnt2angle);
+      temp = 0u + (AREA_ANGLE_END - cnt2angle);
     }
     else
     {
-      temp = angle + 15u;
+      temp = angle + AREA_ANGLE_END;
     }
   }
 
@@ -989,7 +1161,9 @@ int main(void)
                    APP_TIMER_MODE_SINGLE_SHOT,
                    read_lsm303);
 
-static uint16_t cnt;
+  static uint16_t cnt;
+
+  init_areas();
 
   while (true)
   {
@@ -1121,7 +1295,7 @@ void update_area_id(void)
   bool passz = false;
   bool passsum = false;
   
-  for (int i = 0u; i < 12u; i++)
+  for (int i = 0u; i < NUM_AREAS; i++)
   {
      passx = false;
      passy = false; 
@@ -1205,10 +1379,35 @@ void update_area_id(void)
 }
 
 
-static uint8_t areaIdBuf[4];
+static uint8_t areaIdBuf[6];
+
+void init_areas(void)
+{
+  for (uint8_t i = (6 - 1); i > 0; i--)
+  {
+        areaIdBuf[i] = 99u;
+  }
+}
+
+bool check_init_areas(void)
+{
+  bool ready_to_go = true;
+
+  for (uint8_t i = (6 - 1); i > 0; i--)
+  {
+    if (areaIdBuf[i] == 99u)
+    {
+      ready_to_go = false;
+    }
+  }
+
+  return ready_to_go;
+}
 
 void check_area_changed2(void)
 {
+  
+
   if (app_state.inserted)
   {
     lsm303_data_t *p_lsm303_data = lsm303_data_p_get();
@@ -1216,7 +1415,7 @@ void check_area_changed2(void)
     if (areaIdBuf[0] != app_state.areaId)
     {
       /* shifting buffer values to right */
-      for (uint8_t i = (4 - 1); i > 0; i--)
+      for (uint8_t i = (6 - 1); i > 0; i--)
       {
         areaIdBuf[i] = areaIdBuf[i - 1];
       }
@@ -1230,7 +1429,7 @@ void check_area_changed2(void)
 #if 0
       if ((areaIdBuf[3] == (areaIdBuf[2]+1)) && (areaIdBuf[2] == (areaIdBuf[1]+1)) && (areaIdBuf[1] == (areaIdBuf[0]+1)))
 #endif
-  if ( (areaIdBuf[2] > areaIdBuf[1]) && (areaIdBuf[1] > areaIdBuf[0]) && (areaIdBuf[1] != 11u || areaIdBuf[1] != 10u) )
+  if ( (areaIdBuf[2] > areaIdBuf[1]) && (areaIdBuf[1] > areaIdBuf[0] && check_init_areas()) /*&& (areaIdBuf[1] != 11u || areaIdBuf[1] != 10u)*/ )
       {
       #if 0
         if (app_state.insertedInside)
@@ -1244,6 +1443,7 @@ void check_area_changed2(void)
           #endif
 
           app_state.locked = false;
+          init_areas();
           #if 0
         }
         else
@@ -1270,7 +1470,7 @@ void check_area_changed2(void)
 #if 0
       if ((areaIdBuf[3] == (areaIdBuf[2]-1)) && (areaIdBuf[2] == (areaIdBuf[1]-1)) && (areaIdBuf[1] == (areaIdBuf[0]-1)))
 #endif
-      if ( (areaIdBuf[2] < areaIdBuf[1]) && (areaIdBuf[1] < areaIdBuf[0]) && (areaIdBuf[1] != 0u || areaIdBuf[1] != 1u) )
+      if ( (areaIdBuf[3] < areaIdBuf[2]) && (areaIdBuf[2] < areaIdBuf[1]) && check_init_areas() /*&& (areaIdBuf[1] != 0u || areaIdBuf[1] != 1u)*/ )
       {
       #if 0
         if (app_state.insertedInside)
@@ -1297,6 +1497,7 @@ void check_area_changed2(void)
           }
 
           app_state.locked = true;
+          init_areas();
         }
         #if 0
       }
