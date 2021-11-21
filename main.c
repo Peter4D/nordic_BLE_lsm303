@@ -133,6 +133,11 @@
 #define LED_GREEN LED_1
 #define LED_RED LED_2
 
+#define SW_VERSION_0 0
+#define SW_VERSION_1 0
+#define SW_VERSION_2 0
+#define SW_VERSION_3 2
+
 /* ***************************************************** */
 #define NUM_AREAS 36u
 #define AREA_ANGLE ( (uint16_t) ( ((uint32_t) 360u) / ((uint16_t) NUM_AREAS) ) )
@@ -189,7 +194,8 @@ typedef struct
   uint8_t inserted : 1;
   uint16_t area : 1;
   uint8_t insertedInside : 1;
-  uint16_t areaId;
+  uint16_t areaIdGB : 2;
+  uint16_t areaId ;
 } application_state_t;
 
 static app_CB_t m_app_CB = {
@@ -252,6 +258,15 @@ typedef struct _cake_data_col_t {
     cake_data_model_t cake_data[NUM_AREAS];
     
     int16_t x_set_insert_threshold;
+    
+    int16_t insert_threshold_x_ins;
+    int16_t insert_threshold_y_ins;
+    int16_t insert_threshold_z_ins;
+
+    int16_t insert_threshold_x_nns;
+    int16_t insert_threshold_y_nns;
+    int16_t insert_threshold_z_nns;
+
     uint16_t actual_angle;
     uint16_t actual_area_id;
 }cake_data_col_t;
@@ -406,12 +421,13 @@ static void app_tmr_print_out_handler(void *p_context)
 
 
 #if 1
-  NRF_LOG_INFO("ins/Lck/areaId/angle| %d,%d,%d,%3d",
+  NRF_LOG_INFO("clb/ins/Lck/areaId/areaIdGB/angle| %d,%d,%d,%d,%d,%3d",
+               app_state.calibrated,
                app_state.inserted,
                app_state.locked,
                app_state.areaId,
+               app_state.areaIdGB,
                p_lsm303_data->accel.angle
-
 #endif
   );
 
@@ -747,7 +763,14 @@ void read_lsm303_tmr_handler(void *p_context)
 
   read_accel();
   read_mag();
+
   lsm303_data_t *p_lsm303_data = lsm303_data_p_get();
+  /*if (app_state.calibrated)
+  {*/
+    update_area_id();
+    check_area_changed3();
+    check_key_inserted2();
+  /*}*/
 
   NRF_LOG_FLUSH();
 }
@@ -918,7 +941,18 @@ static void calibration_handle(void)
       cake_data_col.cake_data[i].z_set_threshold_max_from_avg = (int16_t)((((int32_t)cake_data_col.cake_data[i].z_avg*160))/100);  
     }
 
-    cake_data_col.x_set_insert_threshold = (int16_t) ( (int32_t)( (cake_data_col.cake_data[0].x_avg*40) )/100);
+    cake_data_col.x_set_insert_threshold = (int16_t) ( (int32_t)( (cake_data_col.cake_data[0].x_avg*50) )/100);
+
+    cake_data_col.insert_threshold_x_ins = abs ( (int16_t) ( (int32_t)( (cake_data_col.cake_data[0].x_avg*60) )/100) );
+    cake_data_col.insert_threshold_y_ins = abs ( (int16_t) ( (int32_t)( (cake_data_col.cake_data[0].y_avg*60) )/100) );
+    cake_data_col.insert_threshold_z_ins = abs ( (int16_t) ( (int32_t)( (cake_data_col.cake_data[0].z_avg*60) )/100) );
+
+
+
+    cake_data_col.insert_threshold_x_nns = abs ( (int16_t) ( (int32_t)( (cake_data_col.cake_data[0].x_avg*40) )/100) );
+    cake_data_col.insert_threshold_y_nns = abs ( (int16_t) ( (int32_t)( (cake_data_col.cake_data[0].y_avg*40) )/100) );
+    cake_data_col.insert_threshold_z_nns = abs ( (int16_t) ( (int32_t)( (cake_data_col.cake_data[0].z_avg*40) )/100) );
+
 
     uint16_t keks = 0u;
 
@@ -1154,7 +1188,7 @@ int main(void)
 
   lsm303_setup_read_back_check();
 
-  app_timer_start(read_lsm303_tmr_id, APP_TIMER_TICKS(10), NULL);
+  app_timer_start(read_lsm303_tmr_id, APP_TIMER_TICKS(5), NULL);
   app_timer_start(app_tmr_print_out_id, APP_TIMER_TICKS(100), NULL);
 
   app_timer_create(&reread_timer,
@@ -1226,9 +1260,9 @@ int main(void)
     if (app_state.calibrated)
     {
       
-      check_key_inserted();
-      update_area_id();
-      check_area_changed2();
+      /*check_key_inserted();*/
+      /*update_area_id();*/
+      /*check_area_changed3();*/
       
       #if 0
       check_area_changed();
@@ -1243,39 +1277,73 @@ int main(void)
   }
 }
 
+void check_key_inserted2(void)
+{
+  if (app_state.areaId == 0u)
+  {
+    lsm303_data_t *p_lsm303_data = lsm303_data_p_get();
+
+    if ( (app_state.inserted == true) && ( 
+          (abs(p_lsm303_data->mag.axis.bit.x) < abs(cake_data_col.insert_threshold_x_nns)) && 
+          (abs(p_lsm303_data->mag.axis.bit.y) < abs(cake_data_col.insert_threshold_y_nns)) && 
+          (abs(p_lsm303_data->mag.axis.bit.z) < abs(cake_data_col.insert_threshold_z_nns)) ) )
+    {
+      app_state.inserted = false;
+      app_state.insertedInside = false;
+
+    }
+
+    if ( (app_state.inserted == false) && ( 
+          (abs(p_lsm303_data->mag.axis.bit.x) > abs(cake_data_col.insert_threshold_x_ins)) && 
+          (abs(p_lsm303_data->mag.axis.bit.y) > abs(cake_data_col.insert_threshold_y_ins)) && 
+          (abs(p_lsm303_data->mag.axis.bit.z) > abs(cake_data_col.insert_threshold_z_ins)) ) )
+    {
+      app_state.inserted = true;
+      
+
+    }
+  }
+  
+}
+
 void check_key_inserted(void)
 {
-  lsm303_data_t *p_lsm303_data = lsm303_data_p_get();
+  
 
-  if (app_state.inserted == true)
+  if (app_state.areaId == 0u)
   {
-    // check if key has gone out
-    if (((p_lsm303_data->accel.angle >= 350u) || (p_lsm303_data->accel.angle <= 10u)))
+    lsm303_data_t *p_lsm303_data = lsm303_data_p_get();
+
+    if (app_state.inserted == true)
     {
+    // check if key has gone out
+    /*if (((p_lsm303_data->accel.angle >= 350u) || (p_lsm303_data->accel.angle <= 10u)))*/
+    
       if (abs(p_lsm303_data->mag.axis.bit.x) < abs(cake_data_col.x_set_insert_threshold))
       {
         app_state.inserted = false;
         app_state.insertedInside = false;
       }
     }
-  }
-  else
-  {
-    // check if key was inserted
-    if ( ((p_lsm303_data->accel.angle >= 350u) || (p_lsm303_data->accel.angle <= 10u)) && (app_state.areaId == 0u) 
-    && (abs(p_lsm303_data->mag.axis.bit.x) > abs(cake_data_col.x_set_insert_threshold)) )
+    else
     {
-      app_state.inserted = true;
+    // check if key was inserted
+      if ( /*((p_lsm303_data->accel.angle >= 350u) || (p_lsm303_data->accel.angle <= 10u))*/
+      /*&&*/ (abs(p_lsm303_data->mag.axis.bit.x) > abs(cake_data_col.x_set_insert_threshold)) )
+      {
+        app_state.inserted = true;
 
-      if (p_lsm303_data->mag.axis.bit.y > 0)
-      {
-        app_state.insertedInside = false;
-      }
-      else
-      {
-        app_state.insertedInside = true;
+        if (p_lsm303_data->mag.axis.bit.y > 0)
+        {
+          app_state.insertedInside = false;
+        }
+        else
+        {
+          app_state.insertedInside = true;
+        }
       }
     }
+
   }
 }
 
@@ -1364,17 +1432,39 @@ void update_area_id(void)
       }
     }
 
+
     if ( (passx == true) && (passy == true) && (passz == true) )
     {
       have_actually_pass = true;
       area_id = cake_data_col.cake_data[i].area_id;
       app_state.areaId = area_id;
+
+
+
+#if 1
+      if ((app_state.areaId < 5u) || (app_state.areaId > 31u))
+      {
+        app_state.areaIdGB = 0;
+      }
+      else if (app_state.areaId > 18)
+      {
+        app_state.areaIdGB = 2;
+      }
+      else
+      {
+        app_state.areaIdGB = 1;
+      }
+#endif
+
       return;
     }
     else
     {
       area_id = 99u;
     }
+
+
+
   }
 }
 
@@ -1402,6 +1492,55 @@ bool check_init_areas(void)
   }
 
   return ready_to_go;
+}
+
+void check_area_changed3(void)
+{
+  if (app_state.inserted)
+  {
+    /*lsm303_data_t *p_lsm303_data = lsm303_data_p_get();*/
+
+    if (areaIdBuf[0] != app_state.areaIdGB)
+    {
+      /* shifting buffer values to right */
+      for (uint8_t i = (6 - 1); i > 0; i--)
+      {
+        areaIdBuf[i] = areaIdBuf[i - 1];
+      }
+
+      /* Fresh value */
+      areaIdBuf[0] = app_state.areaIdGB;
+
+
+      NRF_LOG_INFO("X avg %d, %d, %d, %d, %d, %d", areaIdBuf[5],areaIdBuf[4],areaIdBuf[3],areaIdBuf[2],areaIdBuf[1],areaIdBuf[0]);
+
+      /*              0              2                 2              1                 1              0 */
+      /*if ( (areaIdBuf[3] < areaIdBuf[2]) && (areaIdBuf[2] > areaIdBuf[1]) && (areaIdBuf[1] > areaIdBuf[0]))*/
+      if ((areaIdBuf[0] < areaIdBuf[1]) && (areaIdBuf[1] < areaIdBuf[2]))
+      {
+        app_state.locked = false;
+
+        
+      }
+
+      /*              0              1                 1              2                 2              0 */
+      /*if ( (areaIdBuf[3] < areaIdBuf[2]) && (areaIdBuf[2] < areaIdBuf[1]) && (areaIdBuf[1] > areaIdBuf[0]) )*/
+      if ((areaIdBuf[0] > areaIdBuf[1]) && (areaIdBuf[1] > areaIdBuf[2]))
+      {
+        if (app_state.locked)
+        {
+            app_state.lockedTwice = true;
+        }
+
+          app_state.locked = true;
+      }
+
+    }
+
+  }
+
+
+
 }
 
 void check_area_changed2(void)
