@@ -1491,7 +1491,7 @@
 // <4=> Debug 
 
 #ifndef UART_CONFIG_LOG_LEVEL
-#define UART_CONFIG_LOG_LEVEL 3
+#define UART_CONFIG_LOG_LEVEL 4
 #endif
 
 // <o> UART_CONFIG_INFO_COLOR  - ANSI escape code prefix.

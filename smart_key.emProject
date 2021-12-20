@@ -73,6 +73,9 @@
       <file file_name="$(NRF_SDK)/components/libraries/strerror/nrf_strerror.c" />
       <file file_name="$(NRF_SDK)/components/libraries/fstorage/nrf_fstorage.c" />
       <file file_name="$(NRF_SDK)/components/libraries/fstorage/nrf_fstorage_nvmc.c" />
+      <file file_name="../../../nRF5_SDK_17.0.2_d674dde/components/libraries/uart/app_uart_fifo.c" />
+      <file file_name="../../../nRF5_SDK_17.0.2_d674dde/components/libraries/uart/app_uart.c" />
+      <file file_name="../../../nRF5_SDK_17.0.2_d674dde/components/libraries/uart/retarget.c" />
     </folder>
     <folder Name="None">
       <file file_name="$(NRF_SDK)/modules/nrfx/mdk/ses_startup_nrf_common.s" />
@@ -101,6 +104,8 @@
       <file file_name="include/lsm303_regs.h" />
       <file file_name="src/flash_storage.c" />
       <file file_name="src/common.h" />
+      <file file_name="src/uart.c" />
+      <file file_name="src/uart.h" />
     </folder>
     <folder Name="nRF_Segger_RTT">
       <file file_name="$(NRF_SDK)/external/segger_rtt/SEGGER_RTT.c" />
@@ -123,8 +128,11 @@
     c_preprocessor_definitions="NDEBUG"
     gcc_optimization_level="Optimize For Size"
     link_time_optimization="No" />
-  <configuration Name="Debug" />
+  <configuration
+    Name="Debug"
+    c_user_include_directories="$(NRF_SDK)/components/libraries/uart/" />
   <configuration
     Name="Common"
+    c_user_include_directories="/../../../../../components/libraries/cli/uart"
     debug_additional_load_file="$(NRF_SDK)/components/softdevice/s112/hex/s112_nrf52_7.2.0_softdevice.hex" />
 </solution>

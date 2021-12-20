@@ -81,6 +81,8 @@
 #include "flash_storage.h"
 #include <math.h>
 
+#include "uart.h"
+
 #include "limits.h"
 
 #define goffsetof(TYPE, MEMBER) ((size_t) & ((TYPE *)0)->MEMBER)
@@ -1198,6 +1200,8 @@ int main(void)
   static uint16_t cnt;
 
   init_areas();
+
+  uart_init();
 
   while (true)
   {
